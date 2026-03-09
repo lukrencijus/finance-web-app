@@ -1,0 +1,112 @@
+@startuml
+skinparam monochrome false
+skinparam packageStyle rectangle
+skinparam shadowing true
+
+title Personal Finance Tracker - Detailed Activity Flow
+
+start
+
+:User enters the application;
+
+' --- Authentication & Admin Bootstrap ---
+if (User is registered?) then (no)
+  :User fills registration form;
+  if (Is this the first user?) then (yes)
+    :Set Role to ADMIN & Status to APPROVED;
+  else (no)
+    :Set Role to USER & Status to PENDING;
+    :Wait for Admin Approval;
+    stop
+  endif
+else (yes)
+  :User logs in;
+endif
+
+if (Is account status APPROVED?) then (no)
+  :Display "Waiting for Approval" screen;
+  stop
+else (yes)
+  ' --- Automated Monthly Sheet Initialization ---
+  :System checks current date;
+  if (MonthlySheet exists?) then (no)
+    :Create New MonthlySheet;
+    :Migrate Capital & Insert recurring items;
+  else (yes)
+    :Load current MonthlySheet;
+  endif
+endif
+
+' --- Main Dashboard / Home Hub ---
+:Display Home Dashboard;
+
+repeat
+  if (Select Global Action) then (General Settings)
+    split
+      :Toggle Dark/White Theme;
+    split again
+      :Manage Recurring Transactions;
+    split again
+      :Share Profile with other users;
+    split again
+      if (Is Admin?) then (yes)
+        :Access Admin Panel (User CRUD);
+      else (no)
+        :Access Denied;
+      endif
+    end split
+
+  elseif (Enter/Switch Monthly Sheet) then (Select Month)
+    :Load selected MonthlySheet data;
+    
+    repeat
+      :Display Sheet Interface (Tabbed View);
+      
+      split
+        ' --- Income Tab Branch ---
+        :Select Income Tab;
+        :Display Income Transactions;
+        if (Add Transaction?) then (yes)
+          if (Manage Categories?) then (yes)
+            :Add/Edit/Delete Income Categories;
+          endif
+          :Filter Income Categories;
+          :Input Amount and Date;
+          :Save Income Transaction;
+        endif
+        
+      split again
+        ' --- Expenses Tab Branch ---
+        :Select Expenses Tab;
+        :Display Expense Transactions;
+        if (Add Transaction?) then (yes)
+          if (Manage Categories?) then (yes)
+            :Add/Edit/Delete Expense Categories;
+          endif
+          :Filter Expense Categories;
+          :Input Amount and Date;
+          :Save Expense Transaction;
+        endif
+
+      split again
+        ' --- Monthly View Tab Branch ---
+        :Select Monthly View Tab;
+        :Calculate Monthly Balance (Income - Expenses);
+        :Generate Visual Charts (Categories & Sums);
+        :Display ML Insights (e.g. "20% more on food");
+        if (Update Capital?) then (yes)
+          :Edit Asset values (Crypto, Cash, Savings);
+          :Save Capital Snapshot;
+        endif
+      end split
+      
+    backward:Continue in Sheet;
+    repeat while (Stay in this Monthly Sheet?) is (yes)
+  endif
+
+backward:Return to Main Menu;
+repeat while (User remains logged in?) is (yes)
+
+:User logs out;
+stop
+@enduml

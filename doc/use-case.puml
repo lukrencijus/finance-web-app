@@ -1,0 +1,44 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam packageStyle rectangle
+
+actor "Vartotojas" as User
+actor "Kitas Vartotojas" as OtherUser
+actor "Administratorius" as Admin
+
+Admin --|> User
+
+package "Asmeninių finansų sistema" {
+  usecase "Registruotis / Prisijungti" as UC1
+  usecase "Valdyti kategorijas" as UC2
+  usecase "Valdyti operacijas" as UC3
+  usecase "Naviguoti per mėnesius" as UC4
+  usecase "Fiksuoti mėnesio turtą" as UC5
+  usecase "Peržiūrėti ML įžvalgas" as UC6
+  usecase "Keisti temą" as UC7
+  usecase "Pasidalinti profiliu" as UC8
+  usecase "Peržiūrėti kito vartotojo profilį" as UC9
+  
+  package "Admin Funkcijos" {
+    usecase "Patvirtinti naujus vartotojus" as UC_Approve
+    usecase "Vartotojų valdymas (CRUD)" as UC_UserCRUD
+  }
+}
+
+' Userio sąsajos
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+
+Admin --> UC_Approve
+Admin --> UC_UserCRUD
+
+UC8 ..> UC9 : <<extend>>
+UC9 <-- OtherUser
+@enduml

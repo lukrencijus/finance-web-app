@@ -1,0 +1,67 @@
+@startuml
+hide circle
+skinparam linetype ortho
+
+entity "User" as user {
+  id : INTEGER <<PK>>
+  --
+  email : TEXT <<unique>>
+  password_hash : TEXT
+  role : TEXT (ADMIN, USER)
+  status : TEXT (PENDING, APPROVED)
+  created_at : DATETIME
+}
+
+entity "MonthlySheet" as sheet {
+  id : INTEGER <<PK>>
+  --
+  user_id : INTEGER <<FK>>
+  month : INTEGER
+  year : INTEGER
+}
+
+entity "Category" as cat {
+  id : INTEGER <<PK>>
+  --
+  user_id : INTEGER <<FK>>
+  name : TEXT
+  type : TEXT (INCOME, EXPENSE)
+}
+
+entity "Transaction" as trans {
+  id : INTEGER <<PK>>
+  --
+  sheet_id : INTEGER <<FK>>
+  category_id : INTEGER <<FK>>
+  amount : DECIMAL
+  type : TEXT (INCOME, EXPENSE)
+  date : DATE
+}
+
+entity "CapitalEntry" as capital {
+  id : INTEGER <<PK>>
+  --
+  sheet_id : INTEGER <<FK>>
+  asset_name : TEXT
+  amount : DECIMAL
+}
+
+entity "SharedAccess" as sharing {
+  id : INTEGER <<PK>>
+  --
+  owner_id : INTEGER <<FK>>
+  viewer_id : INTEGER <<FK>>
+}
+
+' Relationships
+user ||--o{ sheet : "manages"
+user ||--o{ cat : "creates"
+user ||--o{ sharing : "grants access"
+user ||--o{ sharing : "views"
+
+sheet ||--o{ trans : "contains"
+sheet ||--o{ capital : "tracks"
+
+cat ||--o{ trans : "classifies"
+
+@enduml

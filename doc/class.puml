@@ -1,0 +1,97 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype polyline
+
+title Personal Finance Tracker - Class Diagram
+
+' --- Classes ---
+
+class User {
+  +id: int
+  +email: string
+  +passwordHash: string
+  +role: RoleType
+  +status: StatusType
+  +createdAt: DateTime
+  +login(): boolean
+  +register(): void
+}
+
+class Admin {
+  +approveUser(userId: int): void
+  +manageUsers(): void
+}
+
+class MonthlySheet {
+  +id: int
+  +userId: int
+  +month: int
+  +year: int
+  +calculateTotalBalance(): float
+  +getMLInsights(): string
+  +generateChartData(): JSON
+}
+
+class Transaction {
+  +id: int
+  +sheetId: int
+  +categoryId: int
+  +amount: float
+  +type: TransactionType
+  +description: string
+  +date: Date
+  +crud(): void
+}
+
+class Category {
+  +id: int
+  +userId: int
+  +name: string
+  +type: TransactionType
+  +color: string
+  +manageCategory(): void
+}
+
+class CapitalEntry {
+  +id: int
+  +sheetId: int
+  +assetName: string
+  +amount: float
+  +updateValue(): void
+}
+
+class SharedAccess {
+  +id: int
+  +ownerId: int
+  +viewerId: int
+  +revokeAccess(): void
+}
+
+' --- Enumerations (Types) ---
+
+enum RoleType {
+  ADMIN
+  USER
+}
+
+enum StatusType {
+  PENDING
+  APPROVED
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+' --- Relationships ---
+
+Admin --|> User : inheritance
+User "1" *-- "0..*" MonthlySheet : owns >
+User "1" *-- "0..*" Category : defines >
+MonthlySheet "1" *-- "0..*" Transaction : contains >
+MonthlySheet "1" *-- "0..*" CapitalEntry : tracks snapshots >
+Category "1" -- "0..*" Transaction : classifies >
+User "1" -- "0..*" SharedAccess : shares profile >
+
+@enduml
