@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  password      String
+  name          String?
+  role          String         @default("USER") // ADMIN, USER
+  status        String         @default("PENDING") // PENDING, APPROVED
+  createdAt     DateTime       @default(now())
+  
+  // Ryšiai
+  sheets        MonthlySheet[]
+  categories    Category[]
+  sharedWithMe  SharedAccess[] @relation("SharedTo")
+  sharedByMe    SharedAccess[] @relation("SharedFrom")
+}
+
+model Category {
+  id           String        @id @default(cuid())
+  name         String
+  type         String        // INCOME, EXPENSE
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+}
+
+model MonthlySheet {
+  id           String        @id @default(cuid())
+  month        Int
+  year         Int
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+  assets       AssetRecord[]
+
+  @@unique([month, year, userId])
+}
+
+model Transaction {
+  id             String       @id @default(cuid())
+  amount         Float
+  date           DateTime     @default(now())
+  description    String?
+  type           String       // INCOME, EXPENSE
+  categoryId     String
+  category       Category     @relation(fields: [categoryId], references: [id])
+  monthlySheetId String
+  monthlySheet   MonthlySheet @relation(fields: [monthlySheetId], references: [id])
+}
+
+model AssetRecord {
+  id             String       @id @default(cuid())
+  name           String       // Savings, Cash, etc.
+  amount         Float
+  monthlySheetId String
+  monthlySheet   MonthlySheet @relation(fields: [monthlySheetId], references: [id])
+}
+
+model SharedAccess {
+  id           String @id @default(cuid())
+  ownerId      String
+  owner        User   @relation("SharedFrom", fields: [ownerId], references: [id])
+  sharedWithId String
+  sharedWith   User   @relation("SharedTo", fields: [sharedWithId], references: [id])
+}
