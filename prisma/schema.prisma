@@ -14,9 +14,11 @@ model User {
   name          String?
   role          String         @default("USER") // ADMIN arba USER
   status        String         @default("PENDING") // PENDING arba ACTIVE
+  imageUrl      String?
   
   // Ryšiai
   sheets        MonthlySheet[]
+  categories    Category[]
   sharedWithMe  SharedAccess[] @relation("SharedToUser")
   myShares      SharedAccess[] @relation("SharedFromUser")
   createdAt     DateTime       @default(now())
@@ -26,10 +28,14 @@ model User {
 model Category {
   id            String        @id @default(cuid())
   name          String
-  type          String        // INCOME arba EXPENSE
+  type          String
   icon          String?
-  
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   transactions  Transaction[]
+
+  @@unique([userId, type, name])
 }
 
 model MonthlySheet {
