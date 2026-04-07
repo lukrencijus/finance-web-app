@@ -1,3 +1,5 @@
+import { UserButton, ClerkLoading, ClerkLoaded } from "@clerk/nextjs";
+
 export default function PendingPage() {
     return (
         <main className="min-h-screen flex items-center justify-center p-6">
@@ -6,6 +8,9 @@ export default function PendingPage() {
                 <p className="mt-4 text-sm text-muted-foreground">
                     Your account is still pending approval from the administrator. Once you receive access, you will be able to use the system.
                 </p>
+                <div>
+                    <UserButton />
+                </div>
             </div>
         </main>
     );
