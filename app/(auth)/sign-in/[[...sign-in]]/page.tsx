@@ -26,7 +26,7 @@ export default function Page() {
       </div>
 
       <div className="hidden lg:flex bg-blue-600 items-center justify-center">
-        <Image src="/logo.svg" alt="Logo" width={200} height={200} className="animate-pulse" />
+        <Image src="/logo.svg" alt="Logo" width={200} height={200} className="animate-pulse" priority />
       </div>
 
     </div>
