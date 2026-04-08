@@ -4,22 +4,23 @@ import { AuthError } from "next-auth"
 import { redirect } from "next/navigation"
 
 export async function loginUser(formData: FormData) {
+  const email = (formData.get("email") as string)?.trim().toLowerCase()
+  const password = formData.get("password") as string
+
+  if (!email || !password) return { error: "All fields are required" }
+
   try {
     await signIn("credentials", {
-      email: formData.get("email"),
-      password: formData.get("password"),
+      email,
+      password,
       redirect: false,
     })
   } catch (error) {
     if (error instanceof AuthError) {
-      switch (error.type) {
-        case "CredentialsSignin":
-          return { error: "Neteisingas el. paštas arba slaptažodis" }
-        default:
-          return { error: "Klaida prisijungiant" }
-      }
+      return { error: "Invalid email or password" }
     }
     throw error
   }
+
   redirect("/")
 }
