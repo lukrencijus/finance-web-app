@@ -1,34 +1,35 @@
-import Image from 'next/image'
-import { Loader2 } from 'lucide-react'
-import { SignUp, ClerkLoaded, ClerkLoading } from '@clerk/nextjs'
+"use client"
+import { registerUser } from "../actions"
+import { useState } from "react"
 
-export default function Page() {
+export default function SignUpPage() {
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(formData: FormData) {
+    const result = await registerUser(formData)
+    if (result?.error) setError(result.error)
+  }
+
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
-      
-      <div className="flex flex-col items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-8">
-          <div>
-            <h1 className="text-2xl font-bold">Create an Account</h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Join us to get started.
-            </p>
-          </div>
-          <div className="flex items-center justify-center">
-            <ClerkLoading>
-              <Loader2 className="animate-spin text-muted-foreground" />
-            </ClerkLoading>
-            <ClerkLoaded>
-              <SignUp />
-            </ClerkLoaded>
-          </div>
-        </div>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-full max-w-md space-y-6 p-8">
+        <h1 className="text-2xl font-bold">Create Account</h1>
+        <form action={handleSubmit} className="space-y-4">
+          <input name="name" type="text" placeholder="Name"
+            className="w-full border rounded-md px-3 py-2" />
+          <input name="email" type="email" placeholder="Email"
+            className="w-full border rounded-md px-3 py-2" required />
+          <input name="password" type="password" placeholder="Password"
+            className="w-full border rounded-md px-3 py-2" required />
+          {error && (
+            <p className="text-sm text-red-500">{error}</p>
+          )}
+          <button type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded-md">
+            Sign Up
+          </button>
+        </form>
       </div>
-
-      <div className="hidden lg:flex bg-blue-600 items-center justify-center">
-        <Image src="/logo.svg" alt="Logo" width={200} height={200} className="animate-pulse" priority />
-      </div>
-
     </div>
   )
 }

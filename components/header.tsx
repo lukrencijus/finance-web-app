@@ -1,8 +1,9 @@
-import { Loader2 } from "lucide-react";
+import { signOut } from "@/auth"
+import { auth } from "@/auth"
 import { HeaderLogo } from "./header-logo"
 import { Navigation } from "./navigation"
-import { UserButton, ClerkLoading, ClerkLoaded } from "@clerk/nextjs";
 import { WelcomeMsg } from "./welcome-msg";
+import { Loader2 } from "lucide-react";
 
 export const Header = () => {
     return (
@@ -13,12 +14,15 @@ export const Header = () => {
                         <HeaderLogo />
                         <Navigation />
                     </div>
-                    <ClerkLoaded>
-                        <UserButton />
-                    </ClerkLoaded>
-                    <ClerkLoading>
-                        <Loader2 className="size-8 animate-spin text-slate-400" />
-                    </ClerkLoading>
+                    <form action={async () => {
+                      "use server"
+                      await signOut({ redirectTo: "/sign-in" })
+                    }}>
+                      <button type="submit"
+                        className="text-sm border rounded-md px-3 py-1">
+                        Sign Out
+                      </button>
+                    </form>
                 </div>
                 <WelcomeMsg />
             </div>
