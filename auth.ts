@@ -16,24 +16,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id
+        token.name = user.name
+        token.picture = user.image
         token.role = (user as any).role
         token.status = (user as any).status
       }
 
-      if (trigger === "update" || (!token.role && token.id)) {
+      if (trigger === "update" && token.id) {
         const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string }
+          where: { id: token.id as string },
+          select: {
+            name: true,
+            image: true,
+            role: true,
+            status: true,
+          },
         })
+
         if (dbUser) {
+          token.name = dbUser.name
+          token.picture = dbUser.image
           token.role = dbUser.role
           token.status = dbUser.status
         }
       }
+
       return token
     },
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string
+        session.user.name = token.name as string
+        session.user.image = token.picture as string
         session.user.role = token.role as string
         session.user.status = token.status as string
       }

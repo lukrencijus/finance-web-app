@@ -3,6 +3,7 @@ import { registerUser } from "../actions"
 import { useState, useTransition } from "react"
 import Link from "next/link"
 import { loginWithGoogle } from "../../sign-in/actions"
+import Image from 'next/image'
 
 export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null)
@@ -17,8 +18,8 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+      <div className="h-full lg:flex flex-col items-center justify-center px-4">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-6">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Create Account</h1>
@@ -101,6 +102,9 @@ export default function SignUpPage() {
             </Link>
           </p>
         </div>
+      </div>
+      <div className="h-full bg-blue-600 hidden lg:flex items-center justify-center">
+          <Image src="/logo.svg" alt="Logo" width={100} height={100} className="animate-pulse priority" />
       </div>
     </div>
   )

@@ -102,7 +102,7 @@ export default async function AdminUsersPage() {
                                                     )}
                                                     <form action={deleteUser.bind(null, user.id)}>
                                                         <button type="submit"
-                                                            className="rounded-md border border-destructive px-3 py-1 text-xs text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                                                            className="rounded-md border border-destructive px-3 py-1 text-xs text-destructive hover:bg-muted">
                                                             Delete
                                                         </button>
                                                     </form>

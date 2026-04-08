@@ -28,12 +28,20 @@ export const Header = async () => {
                                 Admin
                             </Link>
                         )}
+
+                        <Link
+                            href="/settings"
+                            className="text-sm border border-white/30 rounded-md px-3 py-1 hover:bg-white/10 transition-colors flex items-center gap-x-2"
+                        >
+                            {session?.user?.name}
+                        </Link>
+
                         <form action={async () => {
                             "use server"
                             await signOut({ redirectTo: "/sign-in" })
                         }}>
                             <button type="submit"
-                                className="text-sm border rounded-md px-3 py-1">
+                                className="text-sm border border-white/30 rounded-md px-3 py-1 hover:bg-white/10 transition-colors flex items-center gap-x-2">
                                 Sign Out
                             </button>
                         </form>
