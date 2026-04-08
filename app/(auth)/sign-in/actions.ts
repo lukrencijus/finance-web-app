@@ -24,3 +24,8 @@ export async function loginUser(formData: FormData) {
 
   redirect("/")
 }
+
+export async function loginWithGoogle() {
+  "use server"
+  await signIn("google", { redirectTo: "/" })
+}

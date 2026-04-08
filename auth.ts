@@ -1,8 +1,9 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
+import Google from "next-auth/providers/google"
 import { PrismaAdapter } from "@auth/prisma-adapter"
-import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
+import bcrypt from "bcryptjs"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // @ts-ignore
@@ -12,11 +13,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/sign-in",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id
         token.role = (user as any).role
         token.status = (user as any).status
+      }
+
+      if (trigger === "update" || (!token.role && token.id)) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string }
+        })
+        if (dbUser) {
+          token.role = dbUser.role
+          token.status = dbUser.status
+        }
       }
       return token
     },
@@ -28,8 +39,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return session
     },
+    async signIn({ user, account }) {
+      if (account?.provider === "credentials") return true
+
+      if (account?.provider === "google") {
+        const email = user.email!
+        const existing = await prisma.user.findUnique({ where: { email } })
+
+        if (!existing) {
+          const count = await prisma.user.count()
+          await prisma.user.create({
+            data: {
+              email,
+              name: user.name ?? null,
+              image: user.image ?? null,
+              role: count === 0 ? "ADMIN" : "USER",
+              status: count === 0 ? "ACTIVE" : "PENDING",
+            },
+          })
+        }
+        return true
+      }
+      return false
+    },
   },
   providers: [
+    Google({
+      allowDangerousEmailAccountLinking: true,
+    }),
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -37,20 +74,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
-
+        
         const email = (credentials.email as string).trim().toLowerCase()
-
-        const user = await prisma.user.findUnique({
-          where: { email },
-        })
+        const user = await prisma.user.findUnique({ where: { email } })
+        
         if (!user || !user.password) return null
-
-        const valid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        )
+        
+        const valid = await bcrypt.compare(credentials.password as string, user.password)
         if (!valid) return null
-
+        
         return user
       },
     }),

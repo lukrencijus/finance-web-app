@@ -2,13 +2,13 @@
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { redirect } from "next/navigation"
+import { signIn } from "@/auth"
 
 export async function registerUser(formData: FormData) {
   const email = (formData.get("email") as string)?.trim().toLowerCase()
   const password = formData.get("password") as string
   const name = (formData.get("name") as string)?.trim()
 
-  // Validacija
   if (!email || !password) return { error: "All fields are required" }
   if (password.length < 8) return { error: "Password must be at least 8 characters" }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Invalid email format" }
@@ -30,4 +30,9 @@ export async function registerUser(formData: FormData) {
   })
 
   redirect("/sign-in?registered=true")
+}
+
+export async function loginWithGoogle() {
+  "use server"
+  await signIn("google", { redirectTo: "/" })
 }
