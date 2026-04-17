@@ -6,9 +6,10 @@ type Props = {
     initialName: string
     email: string
     hasPassword: boolean
+    isAdmin: boolean
 }
 
-export default function SettingsClient({ initialName, email, hasPassword }: Props) {
+export default function SettingsClient({ initialName, email, hasPassword, isAdmin }: Props) {
     const [name, setName] = useState(initialName)
     const [profileMsg, setProfileMsg] = useState<string | null>(null)
     const [passwordMsg, setPasswordMsg] = useState<string | null>(null)
@@ -126,7 +127,11 @@ export default function SettingsClient({ initialName, email, hasPassword }: Prop
                     <h2 className="text-lg font-medium text-destructive">Danger Zone</h2>
                     <p className="text-sm text-muted-foreground">Permanently delete your account and all your data.</p>
                 </div>
-                {!deleteConfirm ? (
+                {isAdmin ? (
+                    <p className="text-sm text-muted-foreground">
+                        Admin accounts cannot be deleted.
+                    </p>
+                ) : !deleteConfirm ? (
                     <button
                         onClick={() => setDeleteConfirm(true)}
                         className="rounded-md border border-destructive text-destructive px-4 py-2 text-sm hover:bg-destructive/10"

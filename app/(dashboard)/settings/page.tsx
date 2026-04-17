@@ -8,6 +8,7 @@ export default async function SettingsPage() {
             initialName={user.name ?? ""}
             email={user.email}
             hasPassword={!!user.password}
+            isAdmin={user.role === "ADMIN"}
         />
     )
 }

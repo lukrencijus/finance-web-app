@@ -47,6 +47,9 @@ export async function changePassword(formData: FormData) {
 
 export async function deleteAccount() {
     const user = await getCurrentDbUser()
+    if (user.role === "ADMIN") {
+        throw new Error("Admin account cannot be deleted.")
+    }
     await prisma.user.delete({ where: { id: user.id } })
     await signOut({ redirectTo: "/sign-in" })
 }
