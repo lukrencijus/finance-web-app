@@ -20,12 +20,12 @@ const routes = [
         label: "Home"
     },
     {
-        href: "/transactions",
-        label: "Transactions"
+        href: "/monthly-sheet",
+        label: "Monthly Sheet"
     },
     {
-        href: "/accounts",
-        label: "Accounts"
+        href: "/recurring-transactions",
+        label: "Recurring Transactions"
     },
     {
         href: "/categories",

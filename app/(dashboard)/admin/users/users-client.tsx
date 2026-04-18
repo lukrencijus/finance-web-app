@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, Fragment } from "react"
 
 type User = {
     id: string
@@ -59,8 +59,8 @@ export function AdminUsersClient({ users, currentUserId, actions }: Props) {
                         const isExpanded = expandedId === user.id
 
                         return (
-                            <>
-                                <tr key={user.id} className="border-b">
+                            <Fragment key={user.id}>
+                                <tr className="border-b">
                                     <td className="px-4 py-3">
                                         {user.name ?? "-"}
                                         {isSelf && <span className="ml-2 text-xs text-muted-foreground">(you)</span>}
@@ -135,7 +135,7 @@ export function AdminUsersClient({ users, currentUserId, actions }: Props) {
 
                                 {/* Expanded edit row */}
                                 {isExpanded && (
-                                    <tr key={`${user.id}-edit`} className="border-b bg-muted/20">
+                                    <tr className="border-b bg-muted/20">
                                         <td colSpan={5} className="px-6 py-4">
                                             <div className="flex flex-wrap gap-8">
 
@@ -193,7 +193,7 @@ export function AdminUsersClient({ users, currentUserId, actions }: Props) {
                                         </td>
                                     </tr>
                                 )}
-                            </>
+                            </Fragment>
                         )
                     })}
                 </tbody>

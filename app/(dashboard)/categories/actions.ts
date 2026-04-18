@@ -3,26 +3,40 @@ import { prisma } from "@/lib/prisma"
 import { getCurrentDbUser } from "@/lib/current-user"
 import { revalidatePath } from "next/cache"
 
-export async function createCategory(formData: FormData) {
+export async function createCategory(prevState: any, formData: FormData) {
     const user = await getCurrentDbUser()
     const name = String(formData.get("name") ?? "").trim()
     const type = String(formData.get("type") ?? "").trim()
     const icon = String(formData.get("icon") ?? "").trim()
 
-    if (!name || !type) return
-    if (type !== "INCOME" && type !== "EXPENSE") return
-
+    if (!name || !type) return { error: "Name and Type are required" }
+    
+    // Check if it already exists
     const existing = await prisma.category.findUnique({
-        where: { userId_type_name: { userId: user.id, type, name } },
+        where: { 
+            userId_type_name: { 
+                userId: user.id, 
+                type: type as any, 
+                name 
+            } 
+        },
     })
-    if (existing) return
 
-    await prisma.category.create({
-        data: { name, type, icon: icon || null, userId: user.id },
-    })
+    if (existing) {
+        return { error: `A ${type.toLowerCase()} category named "${name}" already exists.` }
+    }
 
-    revalidatePath("/categories")
+    try {
+        await prisma.category.create({
+            data: { name, type, icon: icon || null, userId: user.id },
+        })
+        revalidatePath("/categories")
+        return { success: true }
+    } catch (e) {
+        return { error: "Something went wrong. Please try again." }
+    }
 }
+
 
 export async function deleteCategory(categoryId: string) {
     const user = await getCurrentDbUser()
