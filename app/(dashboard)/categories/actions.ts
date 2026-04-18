@@ -37,6 +37,22 @@ export async function createCategory(prevState: any, formData: FormData) {
     }
 }
 
+export async function getCategoryTransactions(categoryId: string) {
+    const user = await getCurrentDbUser()
+
+    const category = await prisma.category.findUnique({
+        where: { id: categoryId },
+        include: {
+            transactions: {
+                include: { monthlySheet: true },
+                orderBy: { date: "desc" },
+            },
+        },
+    })
+
+    if (!category || category.userId !== user.id) return []
+    return category.transactions
+}
 
 export async function deleteCategory(categoryId: string) {
     const user = await getCurrentDbUser()

@@ -12,6 +12,7 @@ import {
     Sheet,
     SheetContent,
     SheetTrigger,
+    SheetTitle,
 } from "@/components/ui/sheet"
 
 const routes = [
@@ -48,7 +49,7 @@ export const Navigation = () => {
     if (isMobile) {
         return (
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                <SheetTrigger>
+                <SheetTrigger asChild>
                     <Button 
                         variant="outline"
                         size="sm"
@@ -58,6 +59,7 @@ export const Navigation = () => {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="px-2">
+                    <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                     <nav className="flex flex-col gap-y-2 pt-6">
                         {routes.map((route) => (
                             <Button 

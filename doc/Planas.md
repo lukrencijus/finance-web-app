@@ -92,6 +92,6 @@ Ryšiai tarp klasių nurodo griežtą priklausomybę, pavyzdžiui, operacijos ir
 <div class="page-break" style="page-break-before: always;"></div>
 
 # Literatūros ir šaltinių sąrašas
-[1] [Fintrack app — AI-Powered Personal Finance app](https://www.figma.com/community/file/1437411417620577539)
+[1] [Fintrack app - AI-Powered Personal Finance app](https://www.figma.com/community/file/1437411417620577539)
 [2] [Financial Tracker Dashboard Redesign](https://dribbble.com/shots/22643245-Financial-Tracker-Dashboard-Redesign)
 

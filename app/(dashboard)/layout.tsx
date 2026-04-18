@@ -1,7 +1,7 @@
 import { Header } from "@/components/header";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/current-user";
-import { ensureCurrentMonthSheet } from "@/lib/sheets"
+import { getCurrentMonthSheet } from "@/lib/sheets"
 
 type Props = {
     children: React.ReactNode;
@@ -14,7 +14,7 @@ const DashboardLayout = async ({ children }: Props) => {
         redirect("/pending");
     }
 
-    await ensureCurrentMonthSheet(user.id)
+    await getCurrentMonthSheet(user.id)
 
     return (
         <>

@@ -95,7 +95,7 @@ model Transaction {
   type           String       // INCOME or EXPENSE
   
   categoryId     String
-  category       Category     @relation(fields: [categoryId], references: [id])
+  category       Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   
   monthlySheetId String
   monthlySheet   MonthlySheet @relation(fields: [monthlySheetId], references: [id], onDelete: Cascade)
