@@ -30,7 +30,7 @@ export function CategoryTable({ categories }: { categories: Category[] }) {
                             <Fragment key={cat.id}>
                                 {/* Display Row */}
                                 <tr className={`border-b last:border-b-0 transition-colors ${isExpanded ? "bg-muted/30" : "hover:bg-muted/10"}`}>
-                                    <td className="px-4 py-3 text-lg text-center">{cat.icon ?? "—"}</td>
+                                    <td className="px-4 py-3 text-lg text-center">{cat.icon ?? "-"}</td>
                                     <td className="px-4 py-3 font-medium">{cat.name}</td>
                                     <td className="px-4 py-3">
                                         <div className="flex justify-end gap-2">

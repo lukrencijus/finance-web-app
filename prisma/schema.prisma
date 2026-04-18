@@ -11,8 +11,8 @@ model User {
   id            String         @id @default(cuid())
   email         String         @unique
   name          String?
-  password      String?        // naujas — bcrypt hash
-  emailVerified DateTime?      // reikia Auth.js
+  password      String?
+  emailVerified DateTime?      // needed for Auth.js
   image         String?
   role          String         @default("USER")
   status        String         @default("PENDING")
@@ -84,7 +84,7 @@ model MonthlySheet {
 
   createdAt     DateTime      @default(now())
   
-  @@unique([month, year, userId]) // Neleidžia tam pačiam vartotojui turėti dublikatų tam pačiam mėnesiui
+  @@unique([month, year, userId]) // Does not allow multiple sheets for the same month and year for a user
 }
 
 model Transaction {
@@ -92,7 +92,7 @@ model Transaction {
   amount         Float
   description    String?
   date           DateTime     @default(now())
-  type           String       // INCOME arba EXPENSE
+  type           String       // INCOME or EXPENSE
   
   categoryId     String
   category       Category     @relation(fields: [categoryId], references: [id])
@@ -105,9 +105,9 @@ model Transaction {
 
 model Capital {
   id             String       @id @default(cuid())
-  name           String       // Pvz. "Savings", "Cash", "Crypto"
+  name           String       // e.g., "Savings", "Cash", "Crypto"
   amount         Float
-  percentage     Float?       // Galima skaičiuoti dinamiškai arba saugoti
+  percentage     Float?       // Can be calculated dynamically or stored
   
   monthlySheetId String
   monthlySheet   MonthlySheet @relation(fields: [monthlySheetId], references: [id], onDelete: Cascade)
@@ -116,11 +116,11 @@ model Capital {
 model SharedAccess {
   id             String   @id @default(cuid())
   
-  // Kas dalinasi
+  // Who shares
   ownerId        String
   owner          User     @relation("SharedFromUser", fields: [ownerId], references: [id])
   
-  // Kam dalinasi
+  // Who is shared to
   sharedWithId   String
   sharedWith     User     @relation("SharedToUser", fields: [sharedWithId], references: [id])
   

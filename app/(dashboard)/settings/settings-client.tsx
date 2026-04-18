@@ -87,7 +87,7 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                 <div>
                     <h2 className="text-lg font-medium">Security</h2>
                     <p className="text-sm text-muted-foreground">
-                        {hasPassword ? "Change your password." : "Your account uses Google sign-in — password change is not available."}
+                        {hasPassword ? "Change your password." : "Your account uses Google sign-in, password change is not available."}
                     </p>
                 </div>
                 {hasPassword && (

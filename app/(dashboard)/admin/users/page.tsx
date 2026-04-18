@@ -1,7 +1,5 @@
 import { prisma } from "@/lib/prisma"
 import { getCurrentAdminUser } from "@/lib/current-user"
-import { approveUser, revokeUser, makeAdmin, revokeAdmin, deleteUser, adminUpdateName, adminResetPassword } from "./actions"
-import Link from "next/link"
 import { AdminUsersClient } from "./users-client"
 
 export default async function AdminUsersPage() {
@@ -23,7 +21,6 @@ export default async function AdminUsersPage() {
                 <AdminUsersClient
                     users={users}
                     currentUserId={currentUser.id}
-                    actions={{ approveUser, revokeUser, makeAdmin, revokeAdmin, deleteUser, adminUpdateName, adminResetPassword }}
                 />
             </div>
         </main>
