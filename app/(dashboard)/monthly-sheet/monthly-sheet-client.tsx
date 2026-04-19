@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect, useActionState } from "react"
+import { useRouter } from "next/navigation"
 import { createTransaction, deleteTransaction } from "./actions"
-import { Trash2 } from "lucide-react"
+import { Trash2, ChevronDown } from "lucide-react"
 
 type Category = {
     id: string
@@ -27,9 +28,15 @@ type Sheet = {
     transactions: Transaction[]
 }
 
+type SheetSummary = { month: number; year: number }
+
 type Props = {
-    sheet: Sheet
+    sheet: Sheet | null
     categories: Category[]
+    allSheets: SheetSummary[]
+    month: number
+    year: number
+    isCurrentMonth: boolean
 }
 
 const MONTH_NAMES = [
@@ -40,14 +47,27 @@ const MONTH_NAMES = [
 const TABS = ["Income", "Expenses", "Overview"] as const
 type Tab = typeof TABS[number]
 
-export function MonthlySheetClient({ sheet, categories }: Props) {
+export function MonthlySheetClient({ sheet, categories, allSheets, month, year, isCurrentMonth }: Props) {
     const [activeTab, setActiveTab] = useState<Tab>("Income")
+    const router = useRouter()
 
-    const income = sheet.transactions.filter(t => t.type === "INCOME")
-    const expenses = sheet.transactions.filter(t => t.type === "EXPENSE")
+    const navigateMonth = (direction: "prev" | "next") => {
+        let newMonth = direction === "prev" ? month - 1 : month + 1
+        let newYear = year
+
+        if (newMonth < 1) { newMonth = 12; newYear-- }
+        if (newMonth > 12) { newMonth = 1; newYear++ }
+
+        router.push(`/monthly-sheet?month=${newMonth}&year=${newYear}`)
+    }
+
+    const now = new Date()
+    const isActualCurrentMonth = month === now.getMonth() + 1 && year === now.getFullYear()
+
+    const income = sheet?.transactions.filter(t => t.type === "INCOME") ?? []
+    const expenses = sheet?.transactions.filter(t => t.type === "EXPENSE") ?? []
     const incomeCategories = categories.filter(c => c.type === "INCOME")
     const expenseCategories = categories.filter(c => c.type === "EXPENSE")
-
     const totalIncome = income.reduce((sum, t) => sum + t.amount, 0)
     const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0)
     const balance = totalIncome - totalExpenses
@@ -55,10 +75,22 @@ export function MonthlySheetClient({ sheet, categories }: Props) {
     return (
         <div className="-mt-24 pb-10">
             <div className="max-w-screen-2xl mx-auto">
-                <h2 className="text-2xl font-semibold text-white mb-6">
-                    {MONTH_NAMES[sheet.month - 1]} {sheet.year}
-                </h2>
 
+                {/* month picker */}
+                <div className="flex items-center gap-x-3 mb-6">
+                    <MonthPicker
+                        allSheets={allSheets}
+                        currentMonth={month}
+                        currentYear={year}
+                    />
+                    {isActualCurrentMonth && (
+                        <span className="text-xs font-normal bg-white/20 text-white px-2 py-0.5 rounded-full">
+                            Current
+                        </span>
+                    )}
+                </div>
+
+                {/* tabs */}
                 <div className="flex gap-x-2 mb-6">
                     {TABS.map(tab => (
                         <button
@@ -75,41 +107,54 @@ export function MonthlySheetClient({ sheet, categories }: Props) {
                     ))}
                 </div>
 
-                <div className="bg-white rounded-xl p-6 shadow-sm">
-                    {activeTab === "Income" && (
-                        <div className="space-y-6">
-                            <AddTransactionForm
-                                type="INCOME"
-                                sheetId={sheet.id}
-                                categories={incomeCategories}
+                {/* no sheet for this past month */}
+                {!sheet ? (
+                    <div className="bg-white rounded-xl p-10 shadow-sm text-center text-gray-400">
+                        <p className="text-lg font-medium text-gray-500 mb-1">No data for this month</p>
+                        <p className="text-sm">You didn't have an active sheet in {MONTH_NAMES[month - 1]} {year}.</p>
+                    </div>
+                ) : (
+                    <div className="bg-white rounded-xl p-6 shadow-sm">
+                        {activeTab === "Income" && (
+                            <div className="space-y-6">
+                                {/* only show add form for current month */}
+                                {isCurrentMonth && (
+                                    <AddTransactionForm
+                                        type="INCOME"
+                                        sheetId={sheet.id}
+                                        categories={incomeCategories}
+                                    />
+                                )}
+                                <TransactionList
+                                    transactions={income}
+                                    emptyMessage="No income recorded this month."
+                                />
+                            </div>
+                        )}
+                        {activeTab === "Expenses" && (
+                            <div className="space-y-6">
+                                {isCurrentMonth && (
+                                    <AddTransactionForm
+                                        type="EXPENSE"
+                                        sheetId={sheet.id}
+                                        categories={expenseCategories}
+                                    />
+                                )}
+                                <TransactionList
+                                    transactions={expenses}
+                                    emptyMessage="No expenses recorded this month."
+                                />
+                            </div>
+                        )}
+                        {activeTab === "Overview" && (
+                            <Overview
+                                totalIncome={totalIncome}
+                                totalExpenses={totalExpenses}
+                                balance={balance}
                             />
-                            <TransactionList
-                                transactions={income}
-                                emptyMessage="No income recorded this month."
-                            />
-                        </div>
-                    )}
-                    {activeTab === "Expenses" && (
-                        <div className="space-y-6">
-                            <AddTransactionForm
-                                type="EXPENSE"
-                                sheetId={sheet.id}
-                                categories={expenseCategories}
-                            />
-                            <TransactionList
-                                transactions={expenses}
-                                emptyMessage="No expenses recorded this month."
-                            />
-                        </div>
-                    )}
-                    {activeTab === "Overview" && (
-                        <Overview
-                            totalIncome={totalIncome}
-                            totalExpenses={totalExpenses}
-                            balance={balance}
-                        />
-                    )}
-                </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     )
@@ -124,7 +169,7 @@ function AddTransactionForm({ type, sheetId, categories }: {
     const [state, formAction, isPending] = useActionState(createTransaction, null)
     const [isOpen, setIsOpen] = useState(false)
 
-    // Close form on success
+    // close form on success
     useEffect(() => {
         if (state?.success) setIsOpen(false)
     }, [state])
@@ -142,7 +187,7 @@ function AddTransactionForm({ type, sheetId, categories }: {
 
     return (
         <form action={formAction} className="bg-gray-50 rounded-lg p-4 space-y-3">
-            {/* Hidden fields, pass context to the server */}
+            {/* hidden fields, pass context to the server */}
             <input type="hidden" name="type" value={type} />
             <input type="hidden" name="monthlySheetId" value={sheetId} />
 
@@ -308,6 +353,67 @@ function SummaryCard({ label, amount, color }: {
         <div className="bg-gray-50 rounded-lg p-4 text-center">
             <p className="text-sm text-gray-500 mb-1">{label}</p>
             <p className={`text-2xl font-bold ${color}`}>{label === "Balance" && amount < 0 ? "-" : ""}€{Math.abs(amount).toFixed(2)}</p>
+        </div>
+    )
+}
+
+function MonthPicker({ allSheets, currentMonth, currentYear }: {
+    allSheets: SheetSummary[]
+    currentMonth: number
+    currentYear: number
+}) {
+    const [isOpen, setIsOpen] = useState(false)
+    const router = useRouter()
+
+    const handleSelect = (month: number, year: number) => {
+        router.push(`/monthly-sheet?month=${month}&year=${year}`)
+        setIsOpen(false)
+    }
+
+    return (
+        <div className="relative">
+            <button
+                onClick={() => setIsOpen(prev => !prev)}
+                className="flex items-center gap-x-2 text-2xl font-semibold text-white hover:text-white/80 transition-colors"
+            >
+                {MONTH_NAMES[currentMonth - 1]} {currentYear}
+                <ChevronDown className="size-5 mt-0.5" />
+            </button>
+
+            {isOpen && (
+                <>
+                    {/* close on outside click */}
+                    <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setIsOpen(false)}
+                    />
+                    <div className="absolute left-0 top-full mt-2 z-20 bg-white rounded-xl shadow-lg border overflow-hidden min-w-48">
+                        {allSheets.length === 0 ? (
+                            <p className="px-4 py-3 text-sm text-gray-400">No sheets yet</p>
+                        ) : (
+                            <ul>
+                                {allSheets.map(s => {
+                                    const isActive = s.month === currentMonth && s.year === currentYear
+                                    return (
+                                        <li key={`${s.year}-${s.month}`}>
+                                            <button
+                                                onClick={() => handleSelect(s.month, s.year)}
+                                                className={`w-full text-left px-4 py-2.5 text-sm transition-colors
+                                                    ${isActive
+                                                        ? "bg-gray-100 font-medium text-gray-900"
+                                                        : "text-gray-600 hover:bg-gray-50"
+                                                    }`}
+                                            >
+                                                {MONTH_NAMES[s.month - 1]} {s.year}
+                                            </button>
+                                        </li>
+                                    )
+                                })}
+                            </ul>
+                        )}
+                    </div>
+                </>
+            )}
         </div>
     )
 }

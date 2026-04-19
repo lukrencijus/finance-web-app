@@ -13,13 +13,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/sign-in",
   },
   callbacks: {
-    async jwt({ token, user, trigger }) {
-        // On initial sign in
+    async jwt({ token, user }) {
         if (user) {
             token.id = user.id
         }
 
-        // Always re-fetch from DB to keep token fresh
         if (token.id) {
             const dbUser = await prisma.user.findUnique({
                 where: { id: token.id as string },
@@ -30,12 +28,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     status: true,
                 },
             })
-            if (dbUser) {
-                token.name = dbUser.name
-                token.picture = dbUser.image
-                token.role = dbUser.role
-                token.status = dbUser.status
-            }
+          if (!dbUser) {
+              return null;
+          }
+
+          token.name = dbUser.name
+          token.picture = dbUser.image
+          token.role = dbUser.role
+          token.status = dbUser.status
         }
 
         return token

@@ -75,7 +75,7 @@ CREATE TABLE "Transaction" (
     "categoryId" TEXT NOT NULL,
     "monthlySheetId" TEXT NOT NULL,
     "isRecurring" BOOLEAN NOT NULL DEFAULT false,
-    CONSTRAINT "Transaction_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "Transaction_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "Transaction_monthlySheetId_fkey" FOREIGN KEY ("monthlySheetId") REFERENCES "MonthlySheet" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
