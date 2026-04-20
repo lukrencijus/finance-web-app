@@ -14,7 +14,8 @@ const DashboardLayout = async ({ children }: Props) => {
         redirect("/pending");
     }
 
-    await getCurrentMonthSheet(user.id)
+    const now = new Date()
+    await getCurrentMonthSheet(user.id, now.getMonth() + 1, now.getFullYear())
 
     return (
         <>

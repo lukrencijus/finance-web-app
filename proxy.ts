@@ -13,7 +13,7 @@ export default auth((req) => {
   const isApi = pathname.startsWith("/api")
 
   const isPublicFile =
-    pathname.startsWith("/logo.svg") ||
+    pathname.startsWith("/logo.png") ||
     pathname.startsWith("/icons/") ||
     pathname.startsWith("/images/") ||
     pathname.match(/\.(.*)$/) !== null

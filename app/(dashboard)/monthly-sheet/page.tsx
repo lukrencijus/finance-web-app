@@ -18,26 +18,25 @@ export default async function MonthlySheetPage({ searchParams }: Props) {
     let month = monthParam ? parseInt(monthParam) : currentMonth
     let year = yearParam ? parseInt(yearParam) : currentYear
 
+    // invalid params, just go to current month
     if (isNaN(month) || isNaN(year) || month < 1 || month > 12) {
         month = currentMonth
         year = currentYear
     }
-    if (year > currentYear || (year === currentYear && month > currentMonth)) {
-        month = currentMonth
-        year = currentYear
-    }
 
+    const isFuture = year > currentYear || (year === currentYear && month > currentMonth)
     const isCurrentMonth = month === currentMonth && year === currentYear
 
     const [sheet, categories, allSheets] = await Promise.all([
-        isCurrentMonth
-            ? getCurrentMonthSheet(user.id)
-            : getMonthSheet(user.id, month, year),
+        isFuture
+            ? null
+            : isCurrentMonth
+                ? getCurrentMonthSheet(user.id, currentMonth, currentYear)
+                : getMonthSheet(user.id, month, year),
         prisma.category.findMany({
             where: { userId: user.id },
             orderBy: { name: "asc" },
         }),
-        // fetch all sheets this user has
         prisma.monthlySheet.findMany({
             where: { userId: user.id },
             orderBy: [{ year: "desc" }, { month: "desc" }],
@@ -53,6 +52,9 @@ export default async function MonthlySheetPage({ searchParams }: Props) {
             month={month}
             year={year}
             isCurrentMonth={isCurrentMonth}
+            isFuture={isFuture}
+            serverCurrentMonth={currentMonth}
+            serverCurrentYear={currentYear}
         />
     )
 }

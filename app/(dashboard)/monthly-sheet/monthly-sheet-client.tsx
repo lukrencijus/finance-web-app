@@ -4,6 +4,7 @@ import { useState, useEffect, useActionState } from "react"
 import { useRouter } from "next/navigation"
 import { createTransaction, deleteTransaction } from "./actions"
 import { Trash2, ChevronDown } from "lucide-react"
+import Link from "next/link"
 
 type Category = {
     id: string
@@ -37,6 +38,9 @@ type Props = {
     month: number
     year: number
     isCurrentMonth: boolean
+    isFuture: boolean
+    serverCurrentMonth: number
+    serverCurrentYear: number
 }
 
 const MONTH_NAMES = [
@@ -47,22 +51,11 @@ const MONTH_NAMES = [
 const TABS = ["Income", "Expenses", "Overview"] as const
 type Tab = typeof TABS[number]
 
-export function MonthlySheetClient({ sheet, categories, allSheets, month, year, isCurrentMonth }: Props) {
+export function MonthlySheetClient({ sheet, categories, allSheets, month, year, isCurrentMonth, isFuture, serverCurrentMonth, serverCurrentYear }: Props) {
     const [activeTab, setActiveTab] = useState<Tab>("Income")
     const router = useRouter()
 
-    const navigateMonth = (direction: "prev" | "next") => {
-        let newMonth = direction === "prev" ? month - 1 : month + 1
-        let newYear = year
-
-        if (newMonth < 1) { newMonth = 12; newYear-- }
-        if (newMonth > 12) { newMonth = 1; newYear++ }
-
-        router.push(`/monthly-sheet?month=${newMonth}&year=${newYear}`)
-    }
-
-    const now = new Date()
-    const isActualCurrentMonth = month === now.getMonth() + 1 && year === now.getFullYear()
+    const isActualCurrentMonth = month === serverCurrentMonth && year === serverCurrentYear
 
     const income = sheet?.transactions.filter(t => t.type === "INCOME") ?? []
     const expenses = sheet?.transactions.filter(t => t.type === "EXPENSE") ?? []
@@ -107,18 +100,37 @@ export function MonthlySheetClient({ sheet, categories, allSheets, month, year, 
                     ))}
                 </div>
 
-                {/* no sheet for this past month */}
-                {!sheet ? (
+                {isFuture ? (
+                    <div className="bg-white rounded-xl p-10 shadow-sm text-center">
+                        <p className="text-lg font-medium text-gray-500 mb-1">
+                            This month hasn't happened yet
+                        </p>
+                        <p className="text-sm text-gray-400">
+                            {MONTH_NAMES[month - 1]} {year} is in the future - no sheet exists yet.
+                        </p>
+                        <Link
+                            href="/monthly-sheet"
+                            className="inline-block mt-4 text-sm text-blue-500 hover:underline"
+                        >
+                            Go to current month
+                        </Link>
+                    </div>
+                ) : !sheet ? (
                     <div className="bg-white rounded-xl p-10 shadow-sm text-center text-gray-400">
                         <p className="text-lg font-medium text-gray-500 mb-1">No data for this month</p>
                         <p className="text-sm">You didn't have an active sheet in {MONTH_NAMES[month - 1]} {year}.</p>
+                        <Link
+                            href="/monthly-sheet"
+                            className="inline-block mt-4 text-sm text-blue-500 hover:underline"
+                        >
+                            Go to current month
+                        </Link>
                     </div>
                 ) : (
                     <div className="bg-white rounded-xl p-6 shadow-sm">
                         {activeTab === "Income" && (
                             <div className="space-y-6">
-                                {/* only show add form for current month */}
-                                {isCurrentMonth && (
+                                {sheet && (
                                     <AddTransactionForm
                                         type="INCOME"
                                         sheetId={sheet.id}
@@ -133,7 +145,7 @@ export function MonthlySheetClient({ sheet, categories, allSheets, month, year, 
                         )}
                         {activeTab === "Expenses" && (
                             <div className="space-y-6">
-                                {isCurrentMonth && (
+                                {sheet && (
                                     <AddTransactionForm
                                         type="EXPENSE"
                                         sheetId={sheet.id}
@@ -363,12 +375,6 @@ function MonthPicker({ allSheets, currentMonth, currentYear }: {
     currentYear: number
 }) {
     const [isOpen, setIsOpen] = useState(false)
-    const router = useRouter()
-
-    const handleSelect = (month: number, year: number) => {
-        router.push(`/monthly-sheet?month=${month}&year=${year}`)
-        setIsOpen(false)
-    }
 
     return (
         <div className="relative">
@@ -382,11 +388,7 @@ function MonthPicker({ allSheets, currentMonth, currentYear }: {
 
             {isOpen && (
                 <>
-                    {/* close on outside click */}
-                    <div
-                        className="fixed inset-0 z-10"
-                        onClick={() => setIsOpen(false)}
-                    />
+                    <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
                     <div className="absolute left-0 top-full mt-2 z-20 bg-white rounded-xl shadow-lg border overflow-hidden min-w-48">
                         {allSheets.length === 0 ? (
                             <p className="px-4 py-3 text-sm text-gray-400">No sheets yet</p>
@@ -396,16 +398,17 @@ function MonthPicker({ allSheets, currentMonth, currentYear }: {
                                     const isActive = s.month === currentMonth && s.year === currentYear
                                     return (
                                         <li key={`${s.year}-${s.month}`}>
-                                            <button
-                                                onClick={() => handleSelect(s.month, s.year)}
-                                                className={`w-full text-left px-4 py-2.5 text-sm transition-colors
+                                            <Link
+                                                href={`/monthly-sheet?month=${s.month}&year=${s.year}`}
+                                                onClick={() => setIsOpen(false)}
+                                                className={`block w-full px-4 py-2.5 text-sm transition-colors
                                                     ${isActive
                                                         ? "bg-gray-100 font-medium text-gray-900"
                                                         : "text-gray-600 hover:bg-gray-50"
                                                     }`}
                                             >
                                                 {MONTH_NAMES[s.month - 1]} {s.year}
-                                            </button>
+                                            </Link>
                                         </li>
                                     )
                                 })}

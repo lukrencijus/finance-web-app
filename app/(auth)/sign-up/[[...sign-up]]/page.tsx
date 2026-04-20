@@ -105,7 +105,7 @@ export default function SignUpPage() {
       </div>
       <div className="relative h-full bg-blue-600 hidden lg:flex items-center justify-center">
           <h1 className="absolute top-100 left-1/2 -translate-x-1/2 text-white text-2xl font-bold">Money Tracker</h1>
-          <Image src="/logo.svg" alt="Logo" width={100} height={100} className="animate-pulse" loading="eager"/>
+          <Image src="/logo.png" alt="Logo" width={100} height={100} className="animate-pulse" loading="eager"/>
       </div>
     </div>
   )
