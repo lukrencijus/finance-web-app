@@ -1,6 +1,21 @@
 "use client"
 import { useState } from "react"
 import { updateProfile, changePassword, deleteAccount } from "./actions"
+import { useTheme } from "next-themes"
+import { Sun, Moon } from "lucide-react"
+
+export function ThemeToggle() {
+  const { theme, setTheme } = useTheme()
+
+  return (
+    <button
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      className="p-2 rounded-md hover:bg-accent transition-colors"
+    >
+      {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+    </button>
+  )
+}
 
 type Props = {
     initialName: string
@@ -43,6 +58,12 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
     return (
         <div className="max-w-lg mx-auto py-8 space-y-10">
             <h1 className="text-3xl font-semibold">Settings</h1>
+
+            <section className="space-y-4">
+                <h2 className="text-lg font-medium">Change Theme</h2>
+                <p className="text-sm text-muted-foreground">Toggle between light and dark mode.</p>
+                <ThemeToggle />
+            </section>
 
             {/* Profile */}
             <section className="space-y-4">
