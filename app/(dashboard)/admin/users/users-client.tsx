@@ -38,18 +38,18 @@ export function AdminUsersClient({ users, currentUserId }: Props) {
     }
 
     return (
-        <div className="mt-6 overflow-hidden rounded-xl border bg-background">
-            <table className="w-full text-left text-sm">
-                <thead className="border-b bg-muted/50">
+        <div className="mt-6 overflow-hidden rounded-xl border border-border bg-background">
+            <table className="w-full text-left text-sm text-foreground">
+                <thead className="border-b border-border bg-muted/50 text-muted-foreground">
                     <tr>
-                        <th className="px-4 py-3">Name</th>
-                        <th className="px-4 py-3">Email</th>
-                        <th className="px-4 py-3">Role</th>
-                        <th className="px-4 py-3">Status</th>
-                        <th className="px-4 py-3">Actions</th>
+                        <th className="px-4 py-3 font-medium">Name</th>
+                        <th className="px-4 py-3 font-medium">Email</th>
+                        <th className="px-4 py-3 font-medium">Role</th>
+                        <th className="px-4 py-3 font-medium">Status</th>
+                        <th className="px-4 py-3 font-medium">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-border">
                     {users.map((user) => {
                         const isSelf = user.id === currentUserId
                         const isActive = user.status === "ACTIVE"
@@ -58,26 +58,26 @@ export function AdminUsersClient({ users, currentUserId }: Props) {
 
                         return (
                             <Fragment key={user.id}>
-                                <tr className="border-b">
+                                <tr className="hover:bg-muted/30 transition-colors">
                                     <td className="px-4 py-3">
-                                        {user.name ?? "-"}
+                                        <span className="font-medium text-foreground">{user.name ?? "-"}</span>
                                         {isSelf && <span className="ml-2 text-xs text-muted-foreground">(you)</span>}
                                     </td>
-                                    <td className="px-4 py-3">{user.email}</td>
+                                    <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
                                     <td className="px-4 py-3">
-                                        <span className={`text-xs px-2 py-0.5 rounded-full border ${
+                                        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border font-semibold ${
                                             isAdmin
-                                                ? "border-blue-300 text-blue-700 bg-blue-50"
-                                                : "border-gray-300 text-gray-600 bg-gray-50"
+                                                ? "border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-500/10"
+                                                : "border-border text-muted-foreground bg-muted"
                                         }`}>
                                             {isAdmin ? "Admin" : "User"}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className={`text-xs px-2 py-0.5 rounded-full border ${
+                                        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border font-semibold ${
                                             isActive
-                                                ? "border-green-300 text-green-700 bg-green-50"
-                                                : "border-yellow-300 text-yellow-700 bg-yellow-50"
+                                                ? "border-green-500/30 text-green-600 dark:text-green-400 bg-green-500/10"
+                                                : "border-yellow-500/30 text-yellow-600 dark:text-yellow-400 bg-yellow-500/10"
                                         }`}>
                                             {isActive ? "Active" : "Pending"}
                                         </span>
@@ -89,40 +89,40 @@ export function AdminUsersClient({ users, currentUserId }: Props) {
                                             <div className="flex flex-wrap gap-2">
                                                 {!isActive && (
                                                     <form action={approveUser.bind(null, user.id)}>
-                                                        <button type="submit" className="rounded-md border border-green-300 px-3 py-1 text-xs text-green-700 hover:bg-green-50">
+                                                        <button type="submit" className="rounded-md border border-green-500/30 px-3 py-1 text-xs font-medium text-green-600 dark:text-green-400 hover:bg-green-500/10 transition-colors">
                                                             Approve
                                                         </button>
                                                     </form>
                                                 )}
                                                 {isActive && !isAdmin && (
                                                     <form action={revokeUser.bind(null, user.id)}>
-                                                        <button type="submit" className="rounded-md border px-3 py-1 text-xs hover:bg-muted">
+                                                        <button type="submit" className="rounded-md border border-yellow-500/30 px-3 py-1 text-xs font-medium text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/10 transition-colors">
                                                             Revoke
                                                         </button>
                                                     </form>
                                                 )}
-                                                {!isAdmin && (
+                                                {!isAdmin && isActive && (
                                                     <form action={makeAdmin.bind(null, user.id)}>
-                                                        <button type="submit" className="rounded-md border border-blue-300 px-3 py-1 text-xs text-blue-700 hover:bg-blue-50">
-                                                            Admin
+                                                        <button type="submit" className="rounded-md border border-blue-500/30 px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors">
+                                                            Make Admin
                                                         </button>
                                                     </form>
                                                 )}
                                                 {isAdmin && (
                                                     <form action={revokeAdmin.bind(null, user.id)}>
-                                                        <button type="submit" className="rounded-md border px-3 py-1 text-xs hover:bg-muted">
+                                                        <button type="submit" className="rounded-md border border-red-500/30 px-3 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors ">
                                                             Revoke Admin
                                                         </button>
                                                     </form>
                                                 )}
                                                 <button
                                                     onClick={() => setExpandedId(isExpanded ? null : user.id)}
-                                                    className={`rounded-md border px-3 py-1 text-xs hover:bg-muted ${isExpanded ? "bg-muted" : ""}`}
+                                                    className={`rounded-md border border-border px-3 py-1 text-xs font-medium hover:bg-muted transition-colors ${isExpanded ? "bg-muted" : ""}`}
                                                 >
                                                     {isExpanded ? "Close" : "Edit"}
                                                 </button>
                                                 <form action={deleteUser.bind(null, user.id)}>
-                                                    <button type="submit" className="rounded-md border border-destructive px-3 py-1 text-xs text-destructive hover:bg-muted">
+                                                    <button type="submit" className="rounded-md border border-destructive/30 px-3 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors">
                                                         Delete
                                                     </button>
                                                 </form>
@@ -133,30 +133,28 @@ export function AdminUsersClient({ users, currentUserId }: Props) {
 
                                 {/* Expanded edit row */}
                                 {isExpanded && (
-                                    <tr className="border-b bg-muted/20">
-                                        <td colSpan={5} className="px-6 py-4">
+                                    <tr className="bg-muted/20">
+                                        <td colSpan={5} className="px-6 py-4 border-b border-border">
                                             <div className="flex flex-wrap gap-8">
-
-                                                {/* Name */}
+                                                {/* Name Edit */}
                                                 <form
                                                     action={(formData) => adminUpdateName(user.id, formData)}
                                                     className="flex items-end gap-2"
                                                 >
                                                     <div className="space-y-1">
-                                                        <label className="text-xs font-medium text-muted-foreground">Name</label>
+                                                        <label className="text-[10px] uppercase font-bold text-muted-foreground">Display Name</label>
                                                         <input
                                                             name="name"
                                                             defaultValue={user.name ?? ""}
-                                                            placeholder="Display name"
-                                                            className="border rounded-md px-3 py-1.5 text-sm bg-background w-48"
+                                                            className="border border-input rounded-md px-3 py-1.5 text-sm bg-background text-foreground w-48 focus:ring-1 focus:ring-ring focus:outline-none"
                                                         />
                                                     </div>
-                                                    <button type="submit" className="rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-xs hover:opacity-90">
+                                                    <button type="submit" className="rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-xs font-medium hover:opacity-90">
                                                         Save
                                                     </button>
                                                 </form>
 
-                                                {/* Password reset */}
+                                                {/* Password Reset */}
                                                 {user.password ? (
                                                     <form
                                                         onSubmit={(e) => {
@@ -166,24 +164,25 @@ export function AdminUsersClient({ users, currentUserId }: Props) {
                                                         className="flex items-end gap-2"
                                                     >
                                                         <div className="space-y-1">
-                                                            <label className="text-xs font-medium text-muted-foreground">New password</label>
+                                                            <label className="text-[10px] uppercase font-bold text-muted-foreground">New Password</label>
                                                             <input
                                                                 name="password"
                                                                 type="password"
-                                                                placeholder="Min. 8 characters"
-                                                                className="border rounded-md px-3 py-1.5 text-sm bg-background w-48"
+                                                                className="border border-input rounded-md px-3 py-1.5 text-sm bg-background text-foreground w-48 focus:ring-1 focus:ring-ring focus:outline-none"
                                                             />
                                                         </div>
-                                                        <button type="submit" className="rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-xs hover:opacity-90">
+                                                        <button type="submit" className="rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-xs font-medium hover:opacity-90">
                                                             Reset
                                                         </button>
                                                     </form>
                                                 ) : (
-                                                    <p className="text-xs text-muted-foreground self-center">Google user, no password</p>
+                                                    <div className="self-center py-1 px-3 rounded bg-muted text-xs text-muted-foreground italic">
+                                                        Google Auth User
+                                                    </div>
                                                 )}
 
                                                 {resetMsg[user.id] && (
-                                                    <p className={`text-xs self-center ${resetMsg[user.id].includes("updated") ? "text-green-600" : "text-destructive"}`}>
+                                                    <p className={`text-xs self-center font-medium ${resetMsg[user.id].includes("updated") ? "text-green-500" : "text-destructive"}`}>
                                                         {resetMsg[user.id]}
                                                     </p>
                                                 )}

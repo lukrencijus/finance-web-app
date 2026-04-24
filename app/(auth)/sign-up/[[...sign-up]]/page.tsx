@@ -18,49 +18,49 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-background">
       <div className="h-full lg:flex flex-col items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-6">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-8 space-y-6 w-full max-w-md">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Create Account</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-2xl font-semibold text-card-foreground">Create Account</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               Fill out the form and wait for administrator approval
             </p>
           </div>
 
           {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+            <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
               {error}
             </div>
           )}
 
           <form action={handleSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Name</label>
+              <label className="text-sm font-medium text-card-foreground">Name</label>
               <input
                 name="name"
                 type="text"
                 placeholder="John Doe"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-muted-foreground"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Email</label>
+              <label className="text-sm font-medium text-card-foreground">Email</label>
               <input
                 name="email"
                 type="email"
                 placeholder="john@example.com"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-muted-foreground"
                 required
               />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">Password</label>
+              <label className="text-sm font-medium text-card-foreground">Password</label>
               <input
                 name="password"
                 type="password"
                 placeholder="At least 8 characters"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-muted-foreground"
                 required
               />
             </div>
@@ -75,16 +75,16 @@ export default function SignUpPage() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+              <div className="w-full border-t border-border" />
             </div>
-            <div className="relative flex justify-center text-xs text-gray-400">
-              <span className="bg-white px-2">or</span>
+            <div className="relative flex justify-center text-xs text-muted-foreground">
+              <span className="bg-card px-2">or</span>
             </div>
           </div>
 
           <form action={loginWithGoogle}>
             <button type="submit"
-              className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg py-2 text-sm hover:bg-gray-50 transition-colors">
+              className="w-full flex items-center justify-center gap-2 border border-border rounded-lg py-2 text-sm text-card-foreground hover:bg-accent transition-colors">
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -95,7 +95,7 @@ export default function SignUpPage() {
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link href="/sign-in" className="text-blue-600 hover:underline font-medium">
               Sign In

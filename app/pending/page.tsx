@@ -11,28 +11,34 @@ export default async function PendingPage() {
   if (user?.status === "ACTIVE") redirect("/")
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-4 text-center">
-          <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center mx-auto">
-            <svg className="w-6 h-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-full max-w-md px-4">
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-8 space-y-6 text-center">
+          
+          <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center mx-auto border border-yellow-500/20">
+            <svg className="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">Account Pending</h1>
-            <p className="mt-2 text-sm text-gray-500">
-              Your account has been registered. The administrator will review it and approve it soon.
+
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold text-card-foreground tracking-tight">Account Pending</h1>
+
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Your account has been registered. The administrator will review and approve it soon.
             </p>
           </div>
-          <form action={async () => {
-            "use server"
-            await signOut({ redirectTo: "/sign-in" })
-          }}>
-            <button type="submit" className="text-sm text-gray-500 hover:text-gray-700 underline">
-              Sign Out
-            </button>
-          </form>
+
+          <div className="pt-4 border-t border-border">
+            <form action={async () => {
+              "use server"
+              await signOut({ redirectTo: "/sign-in" })
+            }}>
+              <button type="submit" className="text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors">
+                Sign Out
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

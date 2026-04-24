@@ -78,7 +78,7 @@ export function MonthlySheetClient({
 
     return (
         <div className="-mt-24 pb-10">
-            <div className="max-w-screen-2xl mx-auto">
+            <div className="max-w-screen-2xl mx-auto px-4">
 
                 {/* Month picker */}
                 <div className="flex items-center gap-x-3 mb-6">
@@ -88,7 +88,7 @@ export function MonthlySheetClient({
                         currentYear={year}
                     />
                     {isActualCurrentMonth && (
-                        <span className="text-xs font-normal bg-white/20 text-white px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-normal bg-white/20 text-white px-2 py-0.5 rounded-full border border-white/10">
                             Current
                         </span>
                     )}
@@ -102,7 +102,7 @@ export function MonthlySheetClient({
                             onClick={() => setActiveTab(tab)}
                             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors
                                 ${activeTab === tab
-                                    ? "bg-white text-gray-900"
+                                    ? "bg-white text-gray-900 shadow-sm"
                                     : "bg-white/10 text-white hover:bg-white/20"
                                 }`}
                         >
@@ -112,27 +112,27 @@ export function MonthlySheetClient({
                 </div>
 
                 {isFuture ? (
-                    <div className="bg-white rounded-xl p-10 shadow-sm text-center">
-                        <p className="text-lg font-medium text-gray-500 mb-1">
+                    <div className="bg-card rounded-xl p-10 shadow-sm border border-border text-center">
+                        <p className="text-lg font-medium text-foreground mb-1">
                             This month hasn't happened yet
                         </p>
-                        <p className="text-sm text-gray-400">
+                        <p className="text-sm text-muted-foreground">
                             {MONTH_NAMES[month - 1]} {year} is in the future - no sheet exists yet.
                         </p>
-                        <Link href="/monthly-sheet" className="inline-block mt-4 text-sm text-blue-500 hover:underline">
+                        <Link href="/monthly-sheet" className="inline-block mt-4 text-sm text-blue-500 hover:text-blue-400 hover:underline transition-colors">
                             Go to current month
                         </Link>
                     </div>
                 ) : !sheet ? (
-                    <div className="bg-white rounded-xl p-10 shadow-sm text-center text-gray-400">
-                        <p className="text-lg font-medium text-gray-500 mb-1">No data for this month</p>
+                    <div className="bg-card rounded-xl p-10 shadow-sm border border-border text-center text-muted-foreground">
+                        <p className="text-lg font-medium text-foreground mb-1">No data for this month</p>
                         <p className="text-sm">You didn't have an active sheet in {MONTH_NAMES[month - 1]} {year}.</p>
-                        <Link href="/monthly-sheet" className="inline-block mt-4 text-sm text-blue-500 hover:underline">
+                        <Link href="/monthly-sheet" className="inline-block mt-4 text-sm text-blue-500 hover:text-blue-400 hover:underline transition-colors">
                             Go to current month
                         </Link>
                     </div>
                 ) : (
-                    <div className="bg-white rounded-xl p-6 shadow-sm">
+                    <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
                         {activeTab === "Income" && (
                             <div className="space-y-6">
                                 <AddTransactionForm
@@ -209,7 +209,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="w-full border-2 border-dashed border-gray-200 rounded-lg py-3 text-sm text-gray-400 hover:border-gray-300 hover:text-gray-500 transition-colors"
+                className="w-full border-2 border-dashed border-border rounded-lg py-3 text-sm text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors"
             >
                 + Add {type === "INCOME" ? "Income" : "Expense"}
             </button>
@@ -217,13 +217,13 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
     }
 
     return (
-        <form action={formAction} className="bg-gray-50 rounded-lg p-4 space-y-3">
+        <form action={formAction} className="bg-muted/50 border border-border rounded-lg p-4 space-y-3">
             <input type="hidden" name="type" value={type} />
             <input type="hidden" name="monthlySheetId" value={sheetId} />
 
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Amount (€)</label>
+                    <label className="text-xs text-muted-foreground mb-1 block font-medium">Amount (€)</label>
                     <input
                         name="amount"
                         type="number"
@@ -231,11 +231,11 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
                         min="0.01"
                         placeholder="0.00"
                         required
-                        className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                        className="w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Date</label>
+                    <label className="text-xs text-muted-foreground mb-1 block font-medium">Date</label>
                     <input
                         name="date"
                         type="date"
@@ -243,7 +243,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
                         max={maxDate}
                         defaultValue={new Date().toISOString().split("T")[0]}
                         required
-                        className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                        className="w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                 </div>
             </div>
@@ -251,7 +251,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
             {/* Category select + manage button */}
             <div>
                 <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs text-gray-500">Category</label>
+                    <label className="text-xs text-muted-foreground font-medium">Category</label>
                     <CategoryManager
                         type={type}
                         categories={categories}
@@ -260,11 +260,11 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
                 <select
                     name="categoryId"
                     required
-                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    className="w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                     <option value="">Select a category...</option>
                     {categories.map(c => (
-                        <option key={c.id} value={c.id}>
+                        <option key={c.id} value={c.id} className="bg-background">
                             {c.icon} {c.name}
                         </option>
                     ))}
@@ -272,31 +272,31 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
             </div>
 
             <div>
-                <label className="text-xs text-gray-500 mb-1 block">Description (optional)</label>
+                <label className="text-xs text-muted-foreground mb-1 block font-medium">Description (optional)</label>
                 <input
                     name="description"
                     type="text"
                     placeholder="e.g. Grocery run"
-                    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    className="w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
             </div>
 
             {state?.error && (
-                <p className="text-red-500 text-xs">{state.error}</p>
+                <p className="text-destructive text-xs font-medium">{state.error}</p>
             )}
 
             <div className="flex gap-2 pt-1">
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="bg-gray-800 text-white px-4 py-2 rounded-md text-sm hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                    className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
                 >
                     {isPending ? "Saving..." : "Save"}
                 </button>
                 <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="px-4 py-2 rounded-md text-sm text-gray-500 hover:bg-gray-100 transition-colors"
+                    className="px-4 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
                 >
                     Cancel
                 </button>
@@ -305,7 +305,6 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
     )
 }
 
-// Transaction List
 function TransactionList({ transactions, categories, emptyMessage, month, year, sheetId }: {
     transactions: Transaction[]
     categories: Category[]
@@ -317,11 +316,11 @@ function TransactionList({ transactions, categories, emptyMessage, month, year, 
     const [editingId, setEditingId] = useState<string | null>(null)
 
     if (transactions.length === 0) {
-        return <p className="text-gray-400 text-sm">{emptyMessage}</p>
+        return <p className="text-muted-foreground text-sm py-4">{emptyMessage}</p>
     }
 
     return (
-        <ul className="divide-y divide-gray-100">
+        <ul className="divide-y divide-border">
             {transactions.map(t => (
                 <li key={t.id}>
                     {editingId === t.id ? (
@@ -353,24 +352,23 @@ function TransactionRow({ transaction: t, onEdit }: {
     return (
         <div className="py-3 flex justify-between items-center group">
             <div>
-                <p className="font-medium text-gray-800">
+                <p className="font-medium text-foreground">
                     {t.category.icon} {t.category.name}
                 </p>
                 {t.description && (
-                    <p className="text-sm text-gray-400">{t.description}</p>
+                    <p className="text-sm text-muted-foreground">{t.description}</p>
                 )}
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground/60">
                     {new Date(t.date).toISOString().split("T")[0]}
                 </p>
             </div>
             <div className="flex items-center gap-2">
-                <span className={`font-semibold ${t.type === "INCOME" ? "text-green-600" : "text-red-500"}`}>
+                <span className={`font-semibold ${t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
                     {t.type === "INCOME" ? "+" : "-"}€{t.amount.toFixed(2)}
                 </span>
-                {/* Edit button visible on hover */}
                 <button
                     onClick={onEdit}
-                    className=" text-gray-300 hover:text-blue-400 transition-all"
+                    className="text-muted-foreground/40 hover:text-blue-500 transition-colors"
                     title="Edit"
                 >
                     <Pencil className="size-4" />
@@ -410,11 +408,11 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
                 if (result?.success) onDone()
                 else if (result?.error) setError(result.error)
             }}
-            className="py-3 space-y-2 bg-gray-50 rounded-lg px-3 my-1"
+            className="py-3 px-3 my-1 space-y-2 bg-muted/50 border border-border rounded-lg"
         >
             <div className="grid grid-cols-2 gap-2">
                 <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Amount (€)</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">Amount (€)</label>
                     <input
                         name="amount"
                         type="number"
@@ -422,11 +420,11 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
                         min="0.01"
                         defaultValue={t.amount}
                         required
-                        className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                        className="w-full border border-input bg-background text-foreground rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-gray-500 mb-1 block">Date</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">Date</label>
                     <input
                         name="date"
                         type="date"
@@ -434,21 +432,21 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
                         max={maxDate}
                         defaultValue={new Date(t.date).toISOString().split("T")[0]}
                         required
-                        className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                        className="w-full border border-input bg-background text-foreground rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                 </div>
             </div>
 
             <div>
-                <label className="text-xs text-gray-500 mb-1 block">Category</label>
+                <label className="text-xs text-muted-foreground mb-1 block">Category</label>
                 <select
                     name="categoryId"
                     defaultValue={t.categoryId}
                     required
-                    className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    className="w-full border border-input bg-background text-foreground rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                     {categories.map(c => (
-                        <option key={c.id} value={c.id}>
+                        <option key={c.id} value={c.id} className="bg-background">
                             {c.icon} {c.name}
                         </option>
                     ))}
@@ -456,23 +454,23 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
             </div>
 
             <div>
-                <label className="text-xs text-gray-500 mb-1 block">Description (optional)</label>
+                <label className="text-xs text-muted-foreground mb-1 block">Description (optional)</label>
                 <input
                     name="description"
                     type="text"
                     defaultValue={t.description ?? ""}
                     placeholder="e.g. Grocery run"
-                    className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    className="w-full border border-input bg-background text-foreground rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
             </div>
 
-            {error && <p className="text-red-500 text-xs">{error}</p>}
+            {error && <p className="text-destructive text-xs">{error}</p>}
 
             <div className="flex gap-2">
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="flex items-center gap-1.5 bg-gray-800 text-white px-3 py-1.5 rounded-md text-xs hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
                 >
                     <Check className="size-3.5" />
                     {isPending ? "Saving..." : "Save"}
@@ -480,7 +478,7 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
                 <button
                     type="button"
                     onClick={onDone}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs text-gray-500 hover:bg-gray-100 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
                 >
                     <XCircle className="size-3.5" />
                     Cancel
@@ -505,7 +503,7 @@ function DeleteButton({ transactionId }: { transactionId: string }) {
         <button
             onClick={handleDelete}
             disabled={isPending}
-            className="text-gray-300 hover:text-red-400 disabled:opacity-30 transition-colors"
+            className="text-muted-foreground/40 hover:text-destructive disabled:opacity-30 transition-colors"
         >
             <Trash2 className="size-4" />
         </button>
@@ -519,13 +517,13 @@ function Overview({ totalIncome, totalExpenses, balance }: {
     balance: number
 }) {
     return (
-        <div className="grid grid-cols-3 gap-4">
-            <SummaryCard label="Income" amount={totalIncome} color="text-green-600" />
-            <SummaryCard label="Expenses" amount={totalExpenses} color="text-red-500" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <SummaryCard label="Income" amount={totalIncome} color="text-green-600 dark:text-green-400" />
+            <SummaryCard label="Expenses" amount={totalExpenses} color="text-destructive" />
             <SummaryCard
                 label="Balance"
                 amount={balance}
-                color={balance >= 0 ? "text-blue-600" : "text-red-500"}
+                color={balance >= 0 ? "text-blue-600 dark:text-blue-400" : "text-destructive"}
             />
         </div>
     )
@@ -537,8 +535,8 @@ function SummaryCard({ label, amount, color }: {
     color: string
 }) {
     return (
-        <div className="bg-gray-50 rounded-lg p-4 text-center">
-            <p className="text-sm text-gray-500 mb-1">{label}</p>
+        <div className="bg-muted/50 border border-border rounded-lg p-4 text-center">
+            <p className="text-sm text-muted-foreground mb-1 font-medium">{label}</p>
             <p className={`text-2xl font-bold ${color}`}>
                 {label === "Balance" && amount < 0 ? "-" : ""}€{Math.abs(amount).toFixed(2)}
             </p>
@@ -558,18 +556,18 @@ function MonthPicker({ allSheets, currentMonth, currentYear }: {
         <div className="relative">
             <button
                 onClick={() => setIsOpen(prev => !prev)}
-                className="flex items-center gap-x-2 text-2xl font-semibold text-white hover:text-white/80 transition-colors"
+                className="flex items-center gap-x-2 text-2xl font-semibold text-white hover:text-white/80 transition-colors focus:outline-none"
             >
                 {MONTH_NAMES[currentMonth - 1]} {currentYear}
-                <ChevronDown className="size-5 mt-0.5" />
+                <ChevronDown className={`size-5 mt-0.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
             </button>
 
             {isOpen && (
                 <>
                     <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-                    <div className="absolute left-0 top-full mt-2 z-20 bg-white rounded-xl shadow-lg border overflow-hidden min-w-48">
+                    <div className="absolute left-0 top-full mt-2 z-20 bg-card rounded-xl shadow-lg border border-border overflow-hidden min-w-48 animate-in fade-in zoom-in-95 duration-100">
                         {allSheets.length === 0 ? (
-                            <p className="px-4 py-3 text-sm text-gray-400">No sheets yet</p>
+                            <p className="px-4 py-3 text-sm text-muted-foreground">No sheets yet</p>
                         ) : (
                             <ul>
                                 {allSheets.map(s => {
@@ -581,8 +579,8 @@ function MonthPicker({ allSheets, currentMonth, currentYear }: {
                                                 onClick={() => setIsOpen(false)}
                                                 className={`block w-full px-4 py-2.5 text-sm transition-colors
                                                     ${isActive
-                                                        ? "bg-gray-100 font-medium text-gray-900"
-                                                        : "text-gray-600 hover:bg-gray-50"
+                                                        ? "bg-muted font-semibold text-foreground"
+                                                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                                                     }`}
                                             >
                                                 {MONTH_NAMES[s.month - 1]} {s.year}

@@ -52,9 +52,9 @@ function ConfirmDeleteDialog({ category, transactions, onConfirm, onCancel, isPe
     isPending: boolean
 }) {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-background border rounded-xl shadow-lg p-6 max-w-lg w-full mx-4">
-                <h3 className="font-semibold text-base mb-1">Delete "{category.name}"?</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-card text-card-foreground border border-border rounded-xl shadow-2xl p-6 max-w-lg w-full mx-4 animate-in zoom-in-95 duration-200">
+                <h3 className="font-semibold text-lg mb-1">Delete "{category.name}"?</h3>
                 {transactions.length === 0 ? (
                     <p className="text-sm text-muted-foreground mb-5">
                         This category has no transactions. It will be permanently deleted.
@@ -67,32 +67,34 @@ function ConfirmDeleteDialog({ category, transactions, onConfirm, onCancel, isPe
                                 {transactions.length} transaction{transactions.length !== 1 ? "s" : ""}
                             </span>:
                         </p>
-                        <div className="max-h-60 overflow-y-auto rounded-lg border mb-5">
+                        <div className="max-h-60 overflow-y-auto rounded-lg border border-border mb-5">
                             <table className="w-full text-xs">
-                                <thead className="bg-muted/50 sticky top-0">
+                                <thead className="bg-muted/50 sticky top-0 text-muted-foreground">
                                     <tr>
-                                        <th className="px-3 py-2 text-left">Date</th>
-                                        <th className="px-3 py-2 text-left">Type</th>
-                                        <th className="px-3 py-2 text-left">Description</th>
-                                        <th className="px-3 py-2 text-right">Amount</th>
+                                        <th className="px-3 py-2 text-left font-medium">Date</th>
+                                        <th className="px-3 py-2 text-left font-medium">Type</th>
+                                        <th className="px-3 py-2 text-left font-medium">Description</th>
+                                        <th className="px-3 py-2 text-right font-medium">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {transactions.map(t => (
-                                        <tr key={t.id} className="border-t">
+                                        <tr key={t.id} className="border-t border-border">
                                             <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
                                                 {new Date(t.date).toLocaleDateString()}
                                             </td>
                                             <td className="px-3 py-2">
-                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                                                    t.type === "INCOME" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                                    t.type === "INCOME" 
+                                                        ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20" 
+                                                        : "bg-destructive/10 text-destructive border border-destructive/20"
                                                 }`}>
                                                     {t.type === "INCOME" ? "Income" : "Expense"}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-2 text-muted-foreground">{t.description ?? "-"}</td>
-                                            <td className={`px-3 py-2 text-right font-medium ${
-                                                t.type === "INCOME" ? "text-green-600" : "text-red-500"
+                                            <td className="px-3 py-2 text-muted-foreground italic">{t.description ?? "-"}</td>
+                                            <td className={`px-3 py-2 text-right font-bold ${
+                                                t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-destructive"
                                             }`}>
                                                 {t.type === "INCOME" ? "+" : "-"}€{t.amount.toFixed(2)}
                                             </td>
@@ -103,13 +105,13 @@ function ConfirmDeleteDialog({ category, transactions, onConfirm, onCancel, isPe
                         </div>
                     </>
                 )}
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-2 pt-2">
                     <button onClick={onCancel} disabled={isPending}
-                        className="rounded border px-4 py-1.5 text-xs hover:bg-muted transition-colors">
+                        className="rounded-md border border-border px-4 py-1.5 text-xs font-medium hover:bg-muted transition-colors text-foreground">
                         Cancel
                     </button>
                     <button onClick={onConfirm} disabled={isPending}
-                        className="rounded bg-destructive text-destructive-foreground px-4 py-1.5 text-xs hover:opacity-90 disabled:opacity-50 transition-opacity">
+                        className="rounded-md bg-destructive text-destructive-foreground px-4 py-1.5 text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-opacity">
                         {isPending ? "Deleting..." : "Yes, delete"}
                     </button>
                 </div>
@@ -142,20 +144,20 @@ function EditCategoryRow({ category, onDone }: { category: Category; onDone: () 
     }
 
     return (
-        <div className="flex items-center gap-1.5 px-3 py-2">
+        <div className="flex items-center gap-1.5 px-3 py-2 bg-muted/30 rounded-md">
             <GripVertical className="size-4 text-transparent shrink-0" />
             <input ref={iconRef} defaultValue={category.icon ?? ""} placeholder="💰"
-                className="w-10 border rounded px-1.5 py-1 text-sm bg-background text-center" />
+                className="w-10 border border-input rounded px-1.5 py-1 text-sm bg-background text-foreground text-center focus:outline-none focus:ring-1 focus:ring-ring" />
             <input ref={nameRef} defaultValue={category.name} autoFocus
                 onKeyDown={e => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onDone() }}
-                className="flex-1 border rounded px-2 py-1 text-sm bg-background min-w-0" />
+                className="flex-1 border border-input rounded px-2 py-1 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />
             <button onClick={handleSave} disabled={isPending}
-                className="text-green-600 hover:text-green-700 p-0.5 disabled:opacity-50" title="Save">
-                <Check className="size-3.5" />
+                className="text-green-600 dark:text-green-400 hover:opacity-80 p-0.5 disabled:opacity-50" title="Save">
+                <Check className="size-4" />
             </button>
             <button onClick={onDone}
                 className="text-muted-foreground hover:text-foreground p-0.5" title="Cancel">
-                <XCircle className="size-3.5" />
+                <XCircle className="size-4" />
             </button>
             {error && <span className="text-xs text-destructive">{error}</span>}
         </div>
@@ -204,23 +206,23 @@ function SortableCategoryRow({ category }: { category: Category }) {
     return (
         <>
             <li ref={setNodeRef} style={style}
-                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted/50 transition-colors">
+                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted/50 transition-colors group">
                 {/* Drag handle */}
                 <button
-                    className="text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing p-0.5 shrink-0 touch-none"
+                    className="text-muted-foreground/30 hover:text-muted-foreground cursor-grab active:cursor-grabbing p-0.5 shrink-0 touch-none"
                     {...attributes}
                     {...listeners}
                 >
                     <GripVertical className="size-4" />
                 </button>
                 <span className="w-6 text-center text-sm shrink-0">{category.icon ?? "-"}</span>
-                <span className="flex-1 text-sm">{category.name}</span>
+                <span className="flex-1 text-sm text-foreground">{category.name}</span>
                 <button onClick={() => setEditing(true)}
-                    className="text-muted-foreground hover:text-foreground p-0.5 transition-colors shrink-0">
+                    className="text-muted-foreground/80 hover:text-foreground p-0.5 transition-colors shrink-0">
                     <Pencil className="size-3.5" />
                 </button>
                 <button onClick={handleDeleteClick}
-                    className="text-destructive/60 hover:text-destructive p-0.5 transition-colors shrink-0">
+                    className="text-destructive/80 hover:text-destructive p-0.5 transition-colors shrink-0">
                     <Trash2 className="size-3.5" />
                 </button>
             </li>
@@ -263,22 +265,22 @@ function AddCategoryRow({ type, onClose }: { type: "INCOME" | "EXPENSE"; onClose
     }
 
     return (
-        <div className="space-y-1.5">
+        <div className="space-y-2 p-2 bg-muted/20 rounded-lg border border-border/50">
             <div className="flex items-center gap-1.5">
                 <input ref={iconRef} placeholder="💰"
-                    className="w-10 border rounded px-1.5 py-1.5 text-sm bg-background text-center" />
+                    className="w-10 border border-input rounded px-1.5 py-1.5 text-sm bg-background text-foreground text-center focus:outline-none focus:ring-1 focus:ring-ring" />
                 <input ref={nameRef} placeholder="Category name" autoFocus
                     onKeyDown={e => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") onClose() }}
-                    className="flex-1 border rounded px-2 py-1.5 text-sm bg-background min-w-0" />
+                    className="flex-1 border border-input rounded px-2 py-1.5 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />
                 <button onClick={handleAdd} disabled={isPending}
-                    className="px-2.5 py-1.5 rounded bg-primary text-primary-foreground text-xs hover:opacity-90 disabled:opacity-50 shrink-0">
+                    className="px-3 py-1.5 rounded bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 disabled:opacity-50 shrink-0">
                     {isPending ? "..." : "Add"}
                 </button>
                 <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-0.5">
                     <X className="size-4" />
                 </button>
             </div>
-            {error && <p className="text-xs text-destructive">{error}</p>}
+            {error && <p className="text-xs text-destructive font-medium">{error}</p>}
         </div>
     )
 }
@@ -314,15 +316,15 @@ function CategorySection({ type, initialCategories }: {
 
     const label = type === "INCOME" ? "Income" : "Expense"
     const badge = type === "INCOME"
-        ? "border-green-300 text-green-700 bg-green-50"
-        : "border-red-300 text-red-700 bg-red-50"
+        ? "border-green-500/30 text-green-600 dark:text-green-400 bg-green-500/10"
+        : "border-destructive/30 text-destructive bg-destructive/10"
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-3">
             {/* Section header */}
             <div className="flex items-center gap-2 px-1">
-                <span className="text-sm font-medium">{label}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full border ${badge}`}>
+                <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{label}</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badge}`}>
                     {categories.length}
                 </span>
             </div>
@@ -332,7 +334,7 @@ function CategorySection({ type, initialCategories }: {
                 <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>
                     <ul className="space-y-0.5">
                         {categories.length === 0 && !addingNew && (
-                            <li className="px-3 py-2 text-sm text-muted-foreground">
+                            <li className="px-3 py-2 text-sm text-muted-foreground italic">
                                 No {label.toLowerCase()} categories yet.
                             </li>
                         )}
@@ -344,15 +346,15 @@ function CategorySection({ type, initialCategories }: {
             </DndContext>
 
             {/* Add row */}
-            <div className="px-1">
+            <div className="px-1 pt-1">
                 {addingNew ? (
                     <AddCategoryRow type={type} onClose={() => setAddingNew(false)} />
                 ) : (
                     <button
                         onClick={() => setAddingNew(true)}
-                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors group"
                     >
-                        <Plus className="size-3.5" />
+                        <Plus className="size-3.5 text-muted-foreground/60 group-hover:text-foreground" />
                         Add {label.toLowerCase()} category
                     </button>
                 )}
@@ -369,8 +371,9 @@ export function CategoryManagerContent({ categories }: { categories: Category[] 
     const version = categories.map(c => `${c.id}${c.name}${c.icon}${c.order}`).join('')
 
     return (
-        <div className="space-y-6" key={version}>
+        <div className="space-y-8" key={version}>
             <CategorySection type="INCOME" initialCategories={income} />
+            <div className="h-px bg-border/50 mx-1" />
             <CategorySection type="EXPENSE" initialCategories={expense} />
         </div>
     )

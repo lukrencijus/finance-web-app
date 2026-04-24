@@ -2,7 +2,7 @@
 
 import { useMedia } from "react-use"
 import { Menu } from "lucide-react"
-import { use, useState } from "react"
+import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -58,19 +58,26 @@ export const Navigation = () => {
                         <Menu className="size-4" />
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="px-2">
-                    <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                <SheetContent side="left" className="px-2 bg-card border-border">
+                    <SheetTitle className="sr-only text-foreground">Navigation Menu</SheetTitle>
                     <nav className="flex flex-col gap-y-2 pt-6">
-                        {routes.map((route) => (
-                            <Button 
-                                key={route.href}
-                                variant={route.href === pathname ? "secondary" : "ghost"}
-                                onClick={() => onClick(route.href)}
-                                className="w-full justify-start"
-                            >
-                                {route.label}
-                            </Button>
-                        ))}
+                        {routes.map((route) => {
+                            const isActive = route.href === pathname;
+                            return (
+                                <Button 
+                                    key={route.href}
+                                    variant={isActive ? "secondary" : "ghost"}
+                                    onClick={() => onClick(route.href)}
+                                    className={`w-full justify-start text-sm font-medium ${
+                                        isActive 
+                                            ? "bg-secondary text-secondary-foreground" 
+                                            : "text-muted-foreground hover:text-foreground"
+                                    }`}
+                                >
+                                    {route.label}
+                                </Button>
+                            )
+                        })}
                     </nav>
                 </SheetContent>
             </Sheet>

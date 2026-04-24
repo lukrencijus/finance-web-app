@@ -12,7 +12,7 @@ export const Header = async () => {
         : null
 
     return (
-        <header className="bg-gray-800 text-white px-4 py-8 lg:px-14 pb-36">
+        <header className="bg-blue-600 dark:bg-blue-900 text-white px-4 py-8 lg:px-14 pb-36 transition-colors duration-500">
             <div className="max-w-screen-2xl mx-auto">
                 <div className="w-full flex items-center justify-between mb-14">
                     <div className="flex items-center lg:gap-x-16">
@@ -23,7 +23,7 @@ export const Header = async () => {
                         {user?.role === "ADMIN" && (
                             <Link
                                 href="/admin/users"
-                                className="text-sm border border-white/30 rounded-md px-3 py-1 hover:bg-white/10 transition-colors"
+                                className="text-sm font-medium border border-white/20 rounded-md px-3 py-1.5 hover:bg-white/10 transition-all"
                             >
                                 Admin
                             </Link>
@@ -31,7 +31,7 @@ export const Header = async () => {
 
                         <Link
                             href="/settings"
-                            className="text-sm border border-white/30 rounded-md px-3 py-1 hover:bg-white/10 transition-colors flex items-center gap-x-2"
+                            className="text-sm font-medium border border-white/20 rounded-md px-3 py-1.5 hover:bg-white/10 transition-all flex items-center gap-x-2"
                         >
                             {session?.user?.name}
                         </Link>
@@ -41,7 +41,7 @@ export const Header = async () => {
                             await signOut({ redirectTo: "/sign-in" })
                         }}>
                             <button type="submit"
-                                className="text-sm border border-white/30 rounded-md px-3 py-1 hover:bg-white/10 transition-colors flex items-center gap-x-2">
+                                className="text-sm font-medium border border-white/20 rounded-md px-3 py-1.5 hover:bg-white/10 transition-all flex items-center gap-x-2">
                                 Sign Out
                             </button>
                         </form>
