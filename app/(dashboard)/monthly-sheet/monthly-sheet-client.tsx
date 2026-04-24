@@ -6,13 +6,7 @@ import { createTransaction, deleteTransaction, updateTransaction } from "./actio
 import { Trash2, ChevronDown, Pencil, Check, XCircle } from "lucide-react"
 import Link from "next/link"
 import { CategoryManager } from "@/components/category-manager"
-
-type Category = {
-    id: string
-    name: string
-    icon: string | null
-    type: string
-}
+import { type Category } from "@/components/category-manager-content" 
 
 type Transaction = {
     id: string

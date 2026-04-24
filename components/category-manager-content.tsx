@@ -218,11 +218,15 @@ function SortableCategoryRow({ category }: { category: Category }) {
                 <span className="w-6 text-center text-sm shrink-0">{category.icon ?? "-"}</span>
                 <span className="flex-1 text-sm text-foreground">{category.name}</span>
                 <button onClick={() => setEditing(true)}
-                    className="text-muted-foreground/80 hover:text-foreground p-0.5 transition-colors shrink-0">
+                    className="text-muted-foreground/40 hover:text-blue-500 p-1 transition-colors shrink-0"
+                    title="Edit"
+                    >
                     <Pencil className="size-3.5" />
                 </button>
                 <button onClick={handleDeleteClick}
-                    className="text-destructive/80 hover:text-destructive p-0.5 transition-colors shrink-0">
+                    className="text-muted-foreground/40 hover:text-destructive p-1 transition-colors shrink-0"
+                    title="Delete"
+                    >
                     <Trash2 className="size-3.5" />
                 </button>
             </li>

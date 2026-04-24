@@ -121,8 +121,18 @@ export function AdminUsersClient({ users, currentUserId }: Props) {
                                                 >
                                                     {isExpanded ? "Close" : "Edit"}
                                                 </button>
-                                                <form action={deleteUser.bind(null, user.id)}>
-                                                    <button type="submit" className="rounded-md border border-destructive/30 px-3 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors">
+                                                <form 
+                                                    action={deleteUser.bind(null, user.id)}
+                                                    onSubmit={(e) => {
+                                                        if (!window.confirm(`Are you sure you want to delete ${user.name || user.email}? This action cannot be undone.`)) {
+                                                            e.preventDefault();
+                                                        }
+                                                    }}
+                                                >
+                                                    <button 
+                                                        type="submit" 
+                                                        className="rounded-md border border-destructive/30 px-3 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                                                    >
                                                         Delete
                                                     </button>
                                                 </form>
