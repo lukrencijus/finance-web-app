@@ -103,3 +103,28 @@ export async function updateCategory(categoryId: string, formData: FormData) {
     revalidatePath("/categories")
     return { success: true }
 }
+
+export async function reorderCategories(orderedIds: string[]) {
+    const user = await getCurrentDbUser()
+
+    // Verify all categories belong to this user before updating
+    const categories = await prisma.category.findMany({
+        where: { id: { in: orderedIds }, userId: user.id },
+    })
+    if (categories.length !== orderedIds.length) {
+        return { error: "Unauthorized" }
+    }
+
+    await Promise.all(
+        orderedIds.map((id, index) =>
+            prisma.category.update({
+                where: { id },
+                data: { order: index },
+            })
+        )
+    )
+
+    revalidatePath("/categories")
+    revalidatePath("/monthly-sheet")
+    return { success: true }
+}

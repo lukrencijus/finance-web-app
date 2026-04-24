@@ -35,7 +35,7 @@ export default async function MonthlySheetPage({ searchParams }: Props) {
                 : getMonthSheet(user.id, month, year),
         prisma.category.findMany({
             where: { userId: user.id },
-            orderBy: { name: "asc" },
+            orderBy: { order: "asc" },
         }),
         prisma.monthlySheet.findMany({
             where: { userId: user.id },
