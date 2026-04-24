@@ -148,6 +148,7 @@ function DeleteButton({ category }: { category: Category }) {
 // Main Table
 export function CategoryTable({ categories }: { categories: Category[] }) {
     const [expandedId, setExpandedId] = useState<string | null>(null)
+    const [editError, setEditError] = useState<string | null>(null)
 
     return (
         <div className="rounded-xl border overflow-hidden bg-background">
@@ -170,7 +171,10 @@ export function CategoryTable({ categories }: { categories: Category[] }) {
                                     <td className="px-4 py-3">
                                         <div className="flex justify-end gap-2">
                                             <button
-                                                onClick={() => setExpandedId(isExpanded ? null : cat.id)}
+                                                onClick={() => {
+                                                    setEditError(null)
+                                                    setExpandedId(isExpanded ? null : cat.id)
+                                                }}
                                                 className="rounded border px-3 py-1 text-xs hover:bg-background"
                                             >
                                                 {isExpanded ? "Close" : "Edit"}
@@ -185,8 +189,13 @@ export function CategoryTable({ categories }: { categories: Category[] }) {
                                         <td colSpan={3} className="px-8 py-4">
                                             <form
                                                 action={async (formData) => {
-                                                    await updateCategory(cat.id, formData)
-                                                    setExpandedId(null)
+                                                    setEditError(null)
+                                                    const result = await updateCategory(cat.id, formData)
+                                                    if (result?.success) {
+                                                        setExpandedId(null)
+                                                    } else if (result?.error) {
+                                                        setEditError(result.error)
+                                                    }
                                                 }}
                                                 className="flex flex-wrap items-end gap-4"
                                             >
@@ -195,7 +204,7 @@ export function CategoryTable({ categories }: { categories: Category[] }) {
                                                     <input
                                                         name="icon"
                                                         defaultValue={cat.icon ?? ""}
-                                                        placeholder="e.g. 🥑"
+                                                        placeholder="e.g. 🛒"
                                                         className="border rounded-md px-3 py-1.5 text-sm bg-background w-20"
                                                     />
                                                 </div>
@@ -213,6 +222,10 @@ export function CategoryTable({ categories }: { categories: Category[] }) {
                                                 >
                                                     Save Changes
                                                 </button>
+
+                                                {editError && expandedId === cat.id && (
+                                                    <p className="w-full text-xs text-destructive">{editError}</p>
+                                                )}
                                             </form>
                                         </td>
                                     </tr>

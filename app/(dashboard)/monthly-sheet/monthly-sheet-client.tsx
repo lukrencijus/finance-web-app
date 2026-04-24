@@ -135,6 +135,8 @@ export function MonthlySheetClient({ sheet, categories, allSheets, month, year, 
                                         type="INCOME"
                                         sheetId={sheet.id}
                                         categories={incomeCategories}
+                                        month={month}
+                                        year={year}
                                     />
                                 )}
                                 <TransactionList
@@ -150,6 +152,8 @@ export function MonthlySheetClient({ sheet, categories, allSheets, month, year, 
                                         type="EXPENSE"
                                         sheetId={sheet.id}
                                         categories={expenseCategories}
+                                        month={month}
+                                        year={year}
                                     />
                                 )}
                                 <TransactionList
@@ -173,13 +177,19 @@ export function MonthlySheetClient({ sheet, categories, allSheets, month, year, 
 }
 
 // Transaction Form
-function AddTransactionForm({ type, sheetId, categories }: {
+function AddTransactionForm({ type, sheetId, categories, month, year }: {
     type: "INCOME" | "EXPENSE"
     sheetId: string
     categories: Category[]
+    month: number
+    year: number
 }) {
     const [state, formAction, isPending] = useActionState(createTransaction, null)
     const [isOpen, setIsOpen] = useState(false)
+
+    const minDate = `${year}-${String(month).padStart(2, "0")}-01`
+    const lastDay = new Date(year, month, 0).getDate()
+    const maxDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
 
     // close form on success
     useEffect(() => {
@@ -221,6 +231,8 @@ function AddTransactionForm({ type, sheetId, categories }: {
                     <input
                         name="date"
                         type="date"
+                        min={minDate}
+                        max={maxDate}
                         defaultValue={new Date().toISOString().split("T")[0]}
                         required
                         className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"

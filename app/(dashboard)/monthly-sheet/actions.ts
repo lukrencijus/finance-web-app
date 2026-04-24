@@ -3,20 +3,26 @@
 import { prisma } from "@/lib/prisma"
 import { getCurrentDbUser } from "@/lib/current-user"
 import { revalidatePath } from "next/cache"
+import { transactionSchema } from "@/lib/validations"
 
 export async function createTransaction(prevState: any, formData: FormData) {
     const user = await getCurrentDbUser()
 
-    const amount = parseFloat(String(formData.get("amount") ?? ""))
-    const description = String(formData.get("description") ?? "").trim()
-    const date = String(formData.get("date") ?? "").trim()
-    const type = String(formData.get("type") ?? "").trim()
-    const categoryId = String(formData.get("categoryId") ?? "").trim()
-    const monthlySheetId = String(formData.get("monthlySheetId") ?? "").trim()
+    const parsed = transactionSchema.safeParse({
+        amount: parseFloat(String(formData.get("amount") ?? "")),
+        description: String(formData.get("description") ?? "").trim() || undefined,
+        date: String(formData.get("date") ?? "").trim(),
+        type: String(formData.get("type") ?? "").trim(),
+        categoryId: String(formData.get("categoryId") ?? "").trim(),
+        monthlySheetId: String(formData.get("monthlySheetId") ?? "").trim(),
+    })
 
     // basic validation
-    if (!amount || isNaN(amount) || amount <= 0) return { error: "Enter a valid amount" }
-    if (!type || !categoryId || !monthlySheetId) return { error: "Missing required fields" }
+    if (!parsed.success) {
+        return { error: parsed.error.issues[0].message }
+    }
+
+    const { amount, description, date, type, categoryId, monthlySheetId } = parsed.data
 
     // make sure the sheet belongs to this user
     const sheet = await prisma.monthlySheet.findUnique({
@@ -24,6 +30,14 @@ export async function createTransaction(prevState: any, formData: FormData) {
     })
     if (!sheet || sheet.userId !== user.id) {
         return { error: "Unauthorized" }
+    }
+
+    const inputDate = new Date(date)
+    if (
+        inputDate.getMonth() + 1 !== sheet.month ||
+        inputDate.getFullYear() !== sheet.year
+    ) {
+        return { error: "Date must be within this month" }
     }
 
     // let's make sure the category also belongs to this user

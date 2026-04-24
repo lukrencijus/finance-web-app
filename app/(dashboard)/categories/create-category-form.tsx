@@ -41,7 +41,7 @@ export function CreateCategoryForm() {
                     <label className="text-xs font-medium text-muted-foreground">Icon</label>
                     <input
                         name="icon"
-                        placeholder="🥑"
+                        placeholder="e.g. 🛒"
                         className="border rounded-md px-3 py-1.5 text-sm bg-background w-20"
                     />
                 </div>

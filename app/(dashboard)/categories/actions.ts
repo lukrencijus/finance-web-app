@@ -2,15 +2,23 @@
 import { prisma } from "@/lib/prisma"
 import { getCurrentDbUser } from "@/lib/current-user"
 import { revalidatePath } from "next/cache"
+import { categorySchema } from "@/lib/validations"
 
 export async function createCategory(prevState: any, formData: FormData) {
     const user = await getCurrentDbUser()
-    const name = String(formData.get("name") ?? "").trim()
-    const type = String(formData.get("type") ?? "").trim()
-    const icon = String(formData.get("icon") ?? "").trim()
 
-    if (!name || !type) return { error: "Name and Type are required" }
-    
+    const parsed = categorySchema.safeParse({
+        name: String(formData.get("name") ?? "").trim(),
+        type: String(formData.get("type") ?? "").trim(),
+        icon: String(formData.get("icon") ?? "").trim() || undefined,
+    })
+
+    if (!parsed.success) {
+        return { error: parsed.error.issues[0].message }
+    }
+
+    const { name, type, icon } = parsed.data
+        
     // Check if it already exists
     const existing = await prisma.category.findUnique({
         where: { 
@@ -70,16 +78,21 @@ export async function deleteCategory(categoryId: string) {
 
 export async function updateCategory(categoryId: string, formData: FormData) {
     const user = await getCurrentDbUser()
-    const name = String(formData.get("name") ?? "").trim()
-    const icon = String(formData.get("icon") ?? "").trim()
 
-    if (!name) return
-
-    const category = await prisma.category.findUnique({
-        where: { id: categoryId },
+    const parsed = categorySchema.pick({ name: true, icon: true }).safeParse({
+        name: String(formData.get("name") ?? "").trim(),
+        icon: String(formData.get("icon") ?? "").trim() || undefined,
     })
+
+    if (!parsed.success) {
+        return { error: parsed.error.issues[0].message }
+    }
+
+    const { name, icon } = parsed.data
+
+    const category = await prisma.category.findUnique({ where: { id: categoryId } })
     if (!category || category.userId !== user.id) {
-        throw new Error("Not found or unauthorized")
+        return { error: "Not found or unauthorized" }
     }
 
     await prisma.category.update({
@@ -88,4 +101,5 @@ export async function updateCategory(categoryId: string, formData: FormData) {
     })
 
     revalidatePath("/categories")
+    return { success: true }
 }
