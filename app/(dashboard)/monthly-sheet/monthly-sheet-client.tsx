@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useActionState } from "react"
 import { useRouter } from "next/navigation"
-import { createTransaction, deleteTransaction } from "./actions"
-import { Trash2, ChevronDown } from "lucide-react"
+import { createTransaction, deleteTransaction, updateTransaction } from "./actions"
+import { Trash2, ChevronDown, Pencil, Check, XCircle } from "lucide-react"
 import Link from "next/link"
+import { CategoryManager } from "@/components/category-manager"
 
 type Category = {
     id: string
@@ -20,6 +21,7 @@ type Transaction = {
     date: Date
     type: string
     category: { name: string; icon: string | null }
+    categoryId: string
 }
 
 type Sheet = {
@@ -51,9 +53,18 @@ const MONTH_NAMES = [
 const TABS = ["Income", "Expenses", "Overview"] as const
 type Tab = typeof TABS[number]
 
-export function MonthlySheetClient({ sheet, categories, allSheets, month, year, isCurrentMonth, isFuture, serverCurrentMonth, serverCurrentYear }: Props) {
+export function MonthlySheetClient({
+    sheet,
+    categories,
+    allSheets,
+    month,
+    year,
+    isCurrentMonth,
+    isFuture,
+    serverCurrentMonth,
+    serverCurrentYear,
+}: Props) {
     const [activeTab, setActiveTab] = useState<Tab>("Income")
-    const router = useRouter()
 
     const isActualCurrentMonth = month === serverCurrentMonth && year === serverCurrentYear
 
@@ -69,7 +80,7 @@ export function MonthlySheetClient({ sheet, categories, allSheets, month, year, 
         <div className="-mt-24 pb-10">
             <div className="max-w-screen-2xl mx-auto">
 
-                {/* month picker */}
+                {/* Month picker */}
                 <div className="flex items-center gap-x-3 mb-6">
                     <MonthPicker
                         allSheets={allSheets}
@@ -83,7 +94,7 @@ export function MonthlySheetClient({ sheet, categories, allSheets, month, year, 
                     )}
                 </div>
 
-                {/* tabs */}
+                {/* Tabs */}
                 <div className="flex gap-x-2 mb-6">
                     {TABS.map(tab => (
                         <button
@@ -108,10 +119,7 @@ export function MonthlySheetClient({ sheet, categories, allSheets, month, year, 
                         <p className="text-sm text-gray-400">
                             {MONTH_NAMES[month - 1]} {year} is in the future - no sheet exists yet.
                         </p>
-                        <Link
-                            href="/monthly-sheet"
-                            className="inline-block mt-4 text-sm text-blue-500 hover:underline"
-                        >
+                        <Link href="/monthly-sheet" className="inline-block mt-4 text-sm text-blue-500 hover:underline">
                             Go to current month
                         </Link>
                     </div>
@@ -119,10 +127,7 @@ export function MonthlySheetClient({ sheet, categories, allSheets, month, year, 
                     <div className="bg-white rounded-xl p-10 shadow-sm text-center text-gray-400">
                         <p className="text-lg font-medium text-gray-500 mb-1">No data for this month</p>
                         <p className="text-sm">You didn't have an active sheet in {MONTH_NAMES[month - 1]} {year}.</p>
-                        <Link
-                            href="/monthly-sheet"
-                            className="inline-block mt-4 text-sm text-blue-500 hover:underline"
-                        >
+                        <Link href="/monthly-sheet" className="inline-block mt-4 text-sm text-blue-500 hover:underline">
                             Go to current month
                         </Link>
                     </div>
@@ -130,35 +135,39 @@ export function MonthlySheetClient({ sheet, categories, allSheets, month, year, 
                     <div className="bg-white rounded-xl p-6 shadow-sm">
                         {activeTab === "Income" && (
                             <div className="space-y-6">
-                                {sheet && (
-                                    <AddTransactionForm
-                                        type="INCOME"
-                                        sheetId={sheet.id}
-                                        categories={incomeCategories}
-                                        month={month}
-                                        year={year}
-                                    />
-                                )}
+                                <AddTransactionForm
+                                    type="INCOME"
+                                    sheetId={sheet.id}
+                                    categories={incomeCategories}
+                                    month={month}
+                                    year={year}
+                                />
                                 <TransactionList
                                     transactions={income}
+                                    categories={incomeCategories}
                                     emptyMessage="No income recorded this month."
+                                    month={month}
+                                    year={year}
+                                    sheetId={sheet.id}
                                 />
                             </div>
                         )}
                         {activeTab === "Expenses" && (
                             <div className="space-y-6">
-                                {sheet && (
-                                    <AddTransactionForm
-                                        type="EXPENSE"
-                                        sheetId={sheet.id}
-                                        categories={expenseCategories}
-                                        month={month}
-                                        year={year}
-                                    />
-                                )}
+                                <AddTransactionForm
+                                    type="EXPENSE"
+                                    sheetId={sheet.id}
+                                    categories={expenseCategories}
+                                    month={month}
+                                    year={year}
+                                />
                                 <TransactionList
                                     transactions={expenses}
+                                    categories={expenseCategories}
                                     emptyMessage="No expenses recorded this month."
+                                    month={month}
+                                    year={year}
+                                    sheetId={sheet.id}
                                 />
                             </div>
                         )}
@@ -176,7 +185,7 @@ export function MonthlySheetClient({ sheet, categories, allSheets, month, year, 
     )
 }
 
-// Transaction Form
+// Add Transaction Form
 function AddTransactionForm({ type, sheetId, categories, month, year }: {
     type: "INCOME" | "EXPENSE"
     sheetId: string
@@ -187,14 +196,14 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
     const [state, formAction, isPending] = useActionState(createTransaction, null)
     const [isOpen, setIsOpen] = useState(false)
 
-    const minDate = `${year}-${String(month).padStart(2, "0")}-01`
-    const lastDay = new Date(year, month, 0).getDate()
-    const maxDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
-
-    // close form on success
     useEffect(() => {
         if (state?.success) setIsOpen(false)
     }, [state])
+
+    // Date limits locked to this sheet's month
+    const minDate = `${year}-${String(month).padStart(2, "0")}-01`
+    const lastDay = new Date(year, month, 0).getDate()
+    const maxDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
 
     if (!isOpen) {
         return (
@@ -209,7 +218,6 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
 
     return (
         <form action={formAction} className="bg-gray-50 rounded-lg p-4 space-y-3">
-            {/* hidden fields, pass context to the server */}
             <input type="hidden" name="type" value={type} />
             <input type="hidden" name="monthlySheetId" value={sheetId} />
 
@@ -240,8 +248,15 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
                 </div>
             </div>
 
+            {/* Category select + manage button */}
             <div>
-                <label className="text-xs text-gray-500 mb-1 block">Category</label>
+                <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs text-gray-500">Category</label>
+                    <CategoryManager
+                        type={type}
+                        categories={categories}
+                    />
+                </div>
                 <select
                     name="categoryId"
                     required
@@ -291,43 +306,191 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
 }
 
 // Transaction List
-function TransactionList({ transactions, emptyMessage }: {
+function TransactionList({ transactions, categories, emptyMessage, month, year, sheetId }: {
     transactions: Transaction[]
+    categories: Category[]
     emptyMessage: string
+    month: number
+    year: number
+    sheetId: string
 }) {
+    const [editingId, setEditingId] = useState<string | null>(null)
+
     if (transactions.length === 0) {
         return <p className="text-gray-400 text-sm">{emptyMessage}</p>
     }
+
     return (
         <ul className="divide-y divide-gray-100">
             {transactions.map(t => (
-                <li key={t.id} className="py-3 flex justify-between items-center">
-                    <div>
-                        <p className="font-medium text-gray-800">
-                            {t.category.icon} {t.category.name}
-                        </p>
-                        {t.description && (
-                            <p className="text-sm text-gray-400">{t.description}</p>
-                        )}
-                        <p className="text-xs text-gray-400">
-                            {new Date(t.date).toISOString().split("T")[0]}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <span className={`font-semibold ${
-                            t.type === "INCOME" ? "text-green-600" : "text-red-500"
-                        }`}>
-                            {t.type === "INCOME" ? "+" : "-"}€{t.amount.toFixed(2)}
-                        </span>
-                        <DeleteButton transactionId={t.id} />
-                    </div>
+                <li key={t.id}>
+                    {editingId === t.id ? (
+                        <EditTransactionRow
+                            transaction={t}
+                            categories={categories}
+                            month={month}
+                            year={year}
+                            sheetId={sheetId}
+                            onDone={() => setEditingId(null)}
+                        />
+                    ) : (
+                        <TransactionRow
+                            transaction={t}
+                            onEdit={() => setEditingId(t.id)}
+                        />
+                    )}
                 </li>
             ))}
         </ul>
     )
 }
 
-// Separate component so isPending only affects this one row
+// Read-only transaction row
+function TransactionRow({ transaction: t, onEdit }: {
+    transaction: Transaction
+    onEdit: () => void
+}) {
+    return (
+        <div className="py-3 flex justify-between items-center group">
+            <div>
+                <p className="font-medium text-gray-800">
+                    {t.category.icon} {t.category.name}
+                </p>
+                {t.description && (
+                    <p className="text-sm text-gray-400">{t.description}</p>
+                )}
+                <p className="text-xs text-gray-400">
+                    {new Date(t.date).toISOString().split("T")[0]}
+                </p>
+            </div>
+            <div className="flex items-center gap-2">
+                <span className={`font-semibold ${t.type === "INCOME" ? "text-green-600" : "text-red-500"}`}>
+                    {t.type === "INCOME" ? "+" : "-"}€{t.amount.toFixed(2)}
+                </span>
+                {/* Edit button visible on hover */}
+                <button
+                    onClick={onEdit}
+                    className=" text-gray-300 hover:text-blue-400 transition-all"
+                    title="Edit"
+                >
+                    <Pencil className="size-4" />
+                </button>
+                <DeleteButton transactionId={t.id} />
+            </div>
+        </div>
+    )
+}
+
+// Inline edit row
+function EditTransactionRow({ transaction: t, categories, month, year, sheetId, onDone }: {
+    transaction: Transaction
+    categories: Category[]
+    month: number
+    year: number
+    sheetId: string
+    onDone: () => void
+}) {
+    const [error, setError] = useState<string | null>(null)
+    const [isPending, setIsPending] = useState(false)
+
+    const minDate = `${year}-${String(month).padStart(2, "0")}-01`
+    const lastDay = new Date(year, month, 0).getDate()
+    const maxDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
+
+    return (
+        <form
+            action={async (fd) => {
+                setError(null)
+                setIsPending(true)
+                // updateTransaction needs the sheetId to validate the date
+                fd.append("monthlySheetId", sheetId)
+                fd.append("type", t.type)
+                const result = await updateTransaction(t.id, fd)
+                setIsPending(false)
+                if (result?.success) onDone()
+                else if (result?.error) setError(result.error)
+            }}
+            className="py-3 space-y-2 bg-gray-50 rounded-lg px-3 my-1"
+        >
+            <div className="grid grid-cols-2 gap-2">
+                <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Amount (€)</label>
+                    <input
+                        name="amount"
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        defaultValue={t.amount}
+                        required
+                        className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    />
+                </div>
+                <div>
+                    <label className="text-xs text-gray-500 mb-1 block">Date</label>
+                    <input
+                        name="date"
+                        type="date"
+                        min={minDate}
+                        max={maxDate}
+                        defaultValue={new Date(t.date).toISOString().split("T")[0]}
+                        required
+                        className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    />
+                </div>
+            </div>
+
+            <div>
+                <label className="text-xs text-gray-500 mb-1 block">Category</label>
+                <select
+                    name="categoryId"
+                    defaultValue={t.categoryId}
+                    required
+                    className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                >
+                    {categories.map(c => (
+                        <option key={c.id} value={c.id}>
+                            {c.icon} {c.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            <div>
+                <label className="text-xs text-gray-500 mb-1 block">Description (optional)</label>
+                <input
+                    name="description"
+                    type="text"
+                    defaultValue={t.description ?? ""}
+                    placeholder="e.g. Grocery run"
+                    className="w-full border border-gray-200 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+                />
+            </div>
+
+            {error && <p className="text-red-500 text-xs">{error}</p>}
+
+            <div className="flex gap-2">
+                <button
+                    type="submit"
+                    disabled={isPending}
+                    className="flex items-center gap-1.5 bg-gray-800 text-white px-3 py-1.5 rounded-md text-xs hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                >
+                    <Check className="size-3.5" />
+                    {isPending ? "Saving..." : "Save"}
+                </button>
+                <button
+                    type="button"
+                    onClick={onDone}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs text-gray-500 hover:bg-gray-100 transition-colors"
+                >
+                    <XCircle className="size-3.5" />
+                    Cancel
+                </button>
+            </div>
+        </form>
+    )
+}
+
+// Delete button
 function DeleteButton({ transactionId }: { transactionId: string }) {
     const [isPending, setIsPending] = useState(false)
 
@@ -376,11 +539,14 @@ function SummaryCard({ label, amount, color }: {
     return (
         <div className="bg-gray-50 rounded-lg p-4 text-center">
             <p className="text-sm text-gray-500 mb-1">{label}</p>
-            <p className={`text-2xl font-bold ${color}`}>{label === "Balance" && amount < 0 ? "-" : ""}€{Math.abs(amount).toFixed(2)}</p>
+            <p className={`text-2xl font-bold ${color}`}>
+                {label === "Balance" && amount < 0 ? "-" : ""}€{Math.abs(amount).toFixed(2)}
+            </p>
         </div>
     )
 }
 
+// Month Picker
 function MonthPicker({ allSheets, currentMonth, currentYear }: {
     allSheets: SheetSummary[]
     currentMonth: number

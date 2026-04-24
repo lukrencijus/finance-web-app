@@ -82,3 +82,53 @@ export async function deleteTransaction(transactionId: string) {
     await prisma.transaction.delete({ where: { id: transactionId } })
     revalidatePath("/monthly-sheet")
 }
+
+export async function updateTransaction(transactionId: string, formData: FormData) {
+    const user = await getCurrentDbUser()
+
+    const parsed = transactionSchema.safeParse({
+        amount: parseFloat(String(formData.get("amount") ?? "")),
+        description: String(formData.get("description") ?? "").trim() || undefined,
+        date: String(formData.get("date") ?? "").trim(),
+        type: String(formData.get("type") ?? "").trim(),
+        categoryId: String(formData.get("categoryId") ?? "").trim(),
+        monthlySheetId: String(formData.get("monthlySheetId") ?? ""),
+    })
+
+    if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+    const { amount, description, date, type, categoryId, monthlySheetId } = parsed.data
+
+    // Verify transaction exists and belongs to user
+    const transaction = await prisma.transaction.findUnique({
+        where: { id: transactionId },
+        include: { monthlySheet: true },
+    })
+
+    if (!transaction || transaction.monthlySheet.userId !== user.id) {
+        return { error: "Not found or unauthorized" }
+    }
+
+    // Validate date is within the sheet's month
+    const inputDate = new Date(date)
+    if (
+        inputDate.getMonth() + 1 !== transaction.monthlySheet.month ||
+        inputDate.getFullYear() !== transaction.monthlySheet.year
+    ) {
+        return { error: "Date must be within this month" }
+    }
+
+    // Verify category belongs to user
+    const category = await prisma.category.findUnique({ where: { id: categoryId } })
+    if (!category || category.userId !== user.id) {
+        return { error: "Invalid category" }
+    }
+
+    await prisma.transaction.update({
+        where: { id: transactionId },
+        data: { amount, description: description || null, date: new Date(date), categoryId },
+    })
+
+    revalidatePath("/monthly-sheet")
+    return { success: true }
+}
