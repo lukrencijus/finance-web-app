@@ -44,7 +44,7 @@ export function CategoryManager({ type, categories }: {
                         </div>
                         
                         <div className="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-                            <CategoryManagerContent categories={filtered} />
+                            <CategoryManagerContent categories={filtered} type={type} />
                         </div>
 
                         <div className="mt-6 pt-4 border-t border-border">

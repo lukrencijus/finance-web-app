@@ -224,10 +224,12 @@ function SortableCategoryRow({ category }: { category: Category }) {
                     >
                     <Pencil className="size-3.5" />
                 </button>
-                <button onClick={handleDeleteClick}
+                <button 
+                    type="button"
+                    onClick={handleDeleteClick}
                     className="text-muted-foreground/40 hover:text-destructive p-1 transition-colors shrink-0"
                     title="Delete"
-                    >
+                >
                     <Trash2 className="size-3.5" />
                 </button>
             </li>
@@ -368,17 +370,22 @@ function CategorySection({ type, initialCategories }: {
 }
 
 // Main export
-export function CategoryManagerContent({ categories }: { categories: Category[] }) {
+export function CategoryManagerContent({ categories, type }: { 
+    categories: Category[]
+    type?: "INCOME" | "EXPENSE"
+}) {
     const income = categories.filter(c => c.type === "INCOME")
     const expense = categories.filter(c => c.type === "EXPENSE")
-
     const version = categories.map(c => `${c.id}${c.name}${c.icon}${c.order}`).join('')
+
+    const showIncome = !type || type === "INCOME"
+    const showExpense = !type || type === "EXPENSE"
 
     return (
         <div className="space-y-8" key={version}>
-            <CategorySection type="INCOME" initialCategories={income} />
-            <div className="h-px bg-border/50 mx-1" />
-            <CategorySection type="EXPENSE" initialCategories={expense} />
+            {showIncome && <CategorySection type="INCOME" initialCategories={income} />}
+            {showIncome && showExpense && <div className="h-px bg-border/50 mx-1" />}
+            {showExpense && <CategorySection type="EXPENSE" initialCategories={expense} />}
         </div>
     )
 }
