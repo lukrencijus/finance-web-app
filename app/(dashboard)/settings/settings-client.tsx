@@ -1,19 +1,30 @@
 "use client"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { updateProfile, changePassword, deleteAccount } from "./actions"
 import { useTheme } from "next-themes"
 import { Sun, Moon, Check, XCircle } from "lucide-react"
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => setMounted(true), [])
+
+  if (!mounted) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="w-32 h-9 rounded-md border border-border bg-card" />
+      </div>
+    )
+  }
 
   return (
     <div className="flex items-center gap-2">
       <button
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
         className="flex items-center gap-2 px-4 py-2 rounded-md border border-border bg-card hover:bg-accent text-foreground transition-colors text-sm font-medium"
       >
-        {theme === "dark" ? (
+        {resolvedTheme === "dark" ? (
           <>
             <Sun className="size-4 text-yellow-500" />
             <span>Light Mode</span>
