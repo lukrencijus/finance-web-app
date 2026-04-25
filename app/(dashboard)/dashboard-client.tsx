@@ -53,6 +53,7 @@ export type DashboardData = {
     prevExpenses: number | null
     monthlyTotals: MonthlyTotal[]
     categoryBreakdown: CategoryBreakdown[]
+    incomeCategoryBreakdown?: CategoryBreakdown[]
     recentTransactions: RecentTransaction[]
     capitals: Capital[]
     totalCapital: number
@@ -91,6 +92,8 @@ function MetricCard({
             ? "text-green-700 dark:text-green-400"
             : "text-red-700 dark:text-red-400"
 
+    const barColor = bar !== undefined && bar < 0 ? "bg-red-600" : "bg-green-600"
+
     return (
         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
@@ -99,8 +102,8 @@ function MetricCard({
             {bar !== undefined && (
                 <div className="mt-2 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div
-                        className="h-full rounded-full bg-green-600"
-                        style={{ width: `${Math.min(bar * 100, 100)}%` }}
+                        className={`h-full rounded-full ${barColor}`}
+                        style={{ width: `${Math.min(Math.abs(bar) * 100, 100)}%` }}
                     />
                 </div>
             )}
@@ -126,7 +129,7 @@ function Legend({ color, label, dashed }: { color: string; label: string; dashed
     )
 }
 
-export function DashboardClient({ data, userName }: { data: DashboardData; userName: string }) {
+export function DashboardClient({ data }: { data: DashboardData }) {
     const chartRef = useRef<HTMLCanvasElement>(null)
     const chartInstance = useRef<Chart | null>(null)
 
@@ -137,7 +140,8 @@ export function DashboardClient({ data, userName }: { data: DashboardData; userN
         : null
     const netDelta      = calcDelta(data.netSaved, prevNet)
 
-    const maxCategory = data.categoryBreakdown[0]?.amount ?? 1
+    const maxExpenseCat = Math.max(...(data.categoryBreakdown?.map(c => c.amount) || []), 1)
+    const maxIncomeCat  = Math.max(...(data.incomeCategoryBreakdown?.map(c => c.amount) || []), 1)
 
     useEffect(() => {
         if (!chartRef.current) return
@@ -170,6 +174,7 @@ export function DashboardClient({ data, userName }: { data: DashboardData; userN
                         borderColor: "#A32D2D",
                         backgroundColor: "rgba(163,45,45,0.05)",
                         borderWidth: 2,
+                        borderDash: [5, 5],
                         pointRadius: 3,
                         pointBackgroundColor: "#A32D2D",
                         fill: false,
@@ -224,7 +229,11 @@ export function DashboardClient({ data, userName }: { data: DashboardData; userN
                 <MetricCard label="Total income"   value={fmt(data.currentIncome)}   d={incomeDelta}   positiveIsGood={true} />
                 <MetricCard label="Total expenses" value={fmt(data.currentExpenses)}  d={expensesDelta} positiveIsGood={false} />
                 <MetricCard label="Net saved"      value={fmt(data.netSaved)}         d={netDelta}      positiveIsGood={true} />
-                <MetricCard label="Savings rate"   value={`${(data.savingsRate * 100).toFixed(1)}%`} bar={data.savingsRate} />
+                <MetricCard 
+                    label={data.savingsRate >= 0 ? "Savings rate" : "Burn rate"} 
+                    value={`${(data.savingsRate * 100).toFixed(1)}%`} 
+                    bar={data.savingsRate} 
+                />
             </div>
 
             {/* Charts row */}
@@ -236,11 +245,7 @@ export function DashboardClient({ data, userName }: { data: DashboardData; userN
                         Income vs expenses — last 6 months
                     </p>
                     <div className="relative h-44">
-                        <canvas
-                            ref={chartRef}
-                            role="img"
-                            aria-label="Line chart comparing monthly income and expenses"
-                        />
+                        <canvas ref={chartRef} role="img" aria-label="Line chart" />
                     </div>
                     <div className="flex gap-4 mt-3">
                         <Legend color="#3B6D11" label="Income" />
@@ -248,38 +253,56 @@ export function DashboardClient({ data, userName }: { data: DashboardData; userN
                     </div>
                 </div>
 
-                {/* Spending by category */}
-                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                    <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
-                        Spending by category
-                    </p>
-                    {data.categoryBreakdown.length === 0 ? (
-                        <p className="text-sm text-gray-400 mt-4">No expenses this month yet.</p>
-                    ) : (
-                        <div className="space-y-2">
-                            {data.categoryBreakdown.map((cat, i) => (
-                                <div key={cat.name} className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-500 w-20 shrink-0 truncate">
-                                        {cat.name}
-                                    </span>
-                                    <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full"
-                                            style={{
-                                                width: `${(cat.amount / maxCategory) * 100}%`,
-                                                backgroundColor: CAT_COLORS[i % CAT_COLORS.length],
-                                            }}
-                                        />
+                <div className="grid grid-cols-1 gap-4">
+                    {/* Spending by category */}
+                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+                        <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">Spending by category</p>
+                        {(!data.categoryBreakdown || data.categoryBreakdown.length === 0) ? (
+                            <p className="text-sm text-gray-400 mt-4">No expenses this month.</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {data.categoryBreakdown.map((cat, i) => (
+                                    <div key={cat.name} className="flex items-center gap-2">
+                                        <span className="text-xs text-gray-500 w-20 shrink-0 truncate">{cat.name}</span>
+                                        <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full rounded-full"
+                                                style={{
+                                                    width: `${(cat.amount / maxExpenseCat) * 100}%`,
+                                                    backgroundColor: CAT_COLORS[i % CAT_COLORS.length],
+                                                }}
+                                            />
+                                        </div>
+                                        <span className="text-xs text-gray-500 w-14 text-right shrink-0">{fmt(cat.amount)}</span>
                                     </div>
-                                    <span className="text-xs text-gray-500 w-14 text-right shrink-0">
-                                        {fmt(cat.amount)}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
+                    {/* Income by category */}
+                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+                        <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">Income by category</p>
+                        {(!data.incomeCategoryBreakdown || data.incomeCategoryBreakdown.length === 0) ? (
+                            <p className="text-sm text-gray-400 mt-4">No income entries this month.</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {data.incomeCategoryBreakdown.map((cat, i) => (
+                                    <div key={cat.name} className="flex items-center gap-2">
+                                        <span className="text-xs text-gray-500 w-20 shrink-0 truncate">{cat.name}</span>
+                                        <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full rounded-full bg-green-600"
+                                                style={{ width: `${(cat.amount / maxIncomeCat) * 100}%` }}
+                                            />
+                                        </div>
+                                        <span className="text-xs text-gray-500 w-14 text-right shrink-0">{fmt(cat.amount)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Bottom row */}
@@ -287,44 +310,26 @@ export function DashboardClient({ data, userName }: { data: DashboardData; userN
 
                 {/* Capital breakdown */}
                 <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                    <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
-                        Capital breakdown
-                    </p>
+                    <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">Capital breakdown</p>
                     {data.capitals.length === 0 ? (
-                        <p className="text-sm text-gray-400">No capital entries this month.</p>
+                        <p className="text-sm text-gray-400">No capital entries.</p>
                     ) : (
                         <>
                             {data.capitals.map((c, i) => (
-                                <div
-                                    key={c.id}
-                                    className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0"
-                                >
+                                <div key={c.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
                                     <div className="flex items-center gap-2">
-                                        <span
-                                            className="w-2 h-2 rounded-full shrink-0"
-                                            style={{ backgroundColor: CAT_COLORS[i % CAT_COLORS.length] }}
-                                        />
-                                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                                            {c.name}
-                                        </span>
+                                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CAT_COLORS[i % CAT_COLORS.length] }} />
+                                        <span className="text-sm text-gray-700 dark:text-gray-300">{c.name}</span>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <span className="text-xs text-gray-400">
-                                            {data.totalCapital > 0
-                                                ? ((c.amount / data.totalCapital) * 100).toFixed(1)
-                                                : "0"}%
-                                        </span>
-                                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                            {fmt(c.amount)}
-                                        </span>
+                                        <span className="text-xs text-gray-400">{data.totalCapital > 0 ? ((c.amount / data.totalCapital) * 100).toFixed(1) : "0"}%</span>
+                                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{fmt(c.amount)}</span>
                                     </div>
                                 </div>
                             ))}
                             <div className="flex justify-between pt-3 mt-1">
                                 <span className="text-xs text-gray-400">Total net worth</span>
-                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                    {fmt(data.totalCapital)}
-                                </span>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{fmt(data.totalCapital)}</span>
                             </div>
                         </>
                     )}
@@ -332,29 +337,22 @@ export function DashboardClient({ data, userName }: { data: DashboardData; userN
 
                 {/* Recent transactions */}
                 <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                    <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
-                        Recent transactions
-                    </p>
+                    <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">Recent transactions</p>
                     {data.recentTransactions.length === 0 ? (
-                        <p className="text-sm text-gray-400">No transactions this month yet.</p>
+                        <p className="text-sm text-gray-400">No recent transactions.</p>
                     ) : (
                         <div>
                             {data.recentTransactions.map((t) => {
                                 const isIncome = t.type === "INCOME"
                                 const txDate   = new Date(t.date)
+                                // Only show category on sub-line if description is different
+                                const hasUniqueDesc = t.description && t.description !== t.category.name
+
                                 return (
-                                    <div
-                                        key={t.id}
-                                        className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0"
-                                    >
+                                    <div key={t.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
                                         <div className="flex items-center gap-2 min-w-0">
-                                            <div
-                                                className="w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0"
-                                                style={{
-                                                    backgroundColor: isIncome ? "#EAF3DE" : "#FCEBEB",
-                                                    color: isIncome ? "#3B6D11" : "#A32D2D",
-                                                }}
-                                            >
+                                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0"
+                                                style={{ backgroundColor: isIncome ? "#EAF3DE" : "#FCEBEB", color: isIncome ? "#3B6D11" : "#A32D2D" }}>
                                                 {t.category.icon ?? (isIncome ? "↑" : "↓")}
                                             </div>
                                             <div className="min-w-0">
@@ -362,14 +360,12 @@ export function DashboardClient({ data, userName }: { data: DashboardData; userN
                                                     {t.description || t.category.name}
                                                 </p>
                                                 <p className="text-xs text-gray-400">
-                                                    {t.category.name} · {txDate.toLocaleDateString("en-IE", { day: "numeric", month: "short" })}
+                                                    {hasUniqueDesc ? `${t.category.name} · ` : ""}
+                                                    {txDate.toLocaleDateString("en-IE", { day: "numeric", month: "short" })}
                                                 </p>
                                             </div>
                                         </div>
-                                        <span
-                                            className="text-sm font-medium shrink-0 ml-2"
-                                            style={{ color: isIncome ? "#3B6D11" : "#A32D2D" }}
-                                        >
+                                        <span className="text-sm font-medium shrink-0 ml-2" style={{ color: isIncome ? "#3B6D11" : "#A32D2D" }}>
                                             {isIncome ? "+" : "-"}{fmt(t.amount)}
                                         </span>
                                     </div>
@@ -378,7 +374,6 @@ export function DashboardClient({ data, userName }: { data: DashboardData; userN
                         </div>
                     )}
                 </div>
-
             </div>
         </div>
     )

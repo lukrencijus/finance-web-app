@@ -68,7 +68,7 @@ export async function getDashboardData(userId: string) {
         (s) => s.month === currentMonth && s.year === currentYear
     ) ?? null
 
-    // Per-month totals for chart (oldest -> newest)
+    // Per-month totals for chart (oldest → newest)
     const monthlyTotals = monthsToFetch
         .slice()
         .reverse()
@@ -136,6 +136,27 @@ export async function getDashboardData(userId: string) {
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 7)
 
+    // Income by category (current month)
+    const incomeCategoryMap = new Map<string, { name: string; icon: string | null; amount: number }>()
+    if (currentSheet) {
+        for (const t of currentSheet.transactions) {
+            if (t.type !== "INCOME") continue
+            const existing = incomeCategoryMap.get(t.categoryId)
+            if (existing) {
+                existing.amount += t.amount
+            } else {
+                incomeCategoryMap.set(t.categoryId, {
+                    name: t.category.name,
+                    icon: t.category.icon ?? null,
+                    amount: t.amount,
+                })
+            }
+        }
+    }
+    const incomeCategoryBreakdown = Array.from(incomeCategoryMap.values())
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 7)
+
     // Recent transactions (current sheet, last 5)
     const recentTransactions = currentSheet
         ? currentSheet.transactions.slice(0, 5).map((t) => ({
@@ -164,11 +185,12 @@ export async function getDashboardData(userId: string) {
         currentIncome,
         currentExpenses,
         netSaved: currentIncome - currentExpenses,
-        savingsRate: currentIncome > 0 ? (currentIncome - currentExpenses) / currentIncome : 0,
+        savingsRate: currentIncome > 0 ? (currentIncome - currentExpenses) / currentIncome : (currentExpenses > 0 ? -1 : 0),
         prevIncome,
         prevExpenses,
         monthlyTotals,
         categoryBreakdown,
+        incomeCategoryBreakdown,
         recentTransactions,
         capitals,
         totalCapital,
