@@ -7,7 +7,17 @@ export default async function CategoriesPage() {
     const user = await getCurrentDbUser()
     const categories = await prisma.category.findMany({
         where: { userId: user.id },
-        orderBy: { order: "asc" },
+        orderBy: [
+            {
+                order: {
+                    sort: 'asc',
+                    nulls: 'last', 
+                },
+            },
+            {
+                createdAt: 'desc',
+            },
+        ],
     })
 
     return (
