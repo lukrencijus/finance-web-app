@@ -61,7 +61,8 @@ export type DashboardData = {
 
 const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 const MONTH_FULL  = ["January","February","March","April","May","June","July","August","September","October","November","December"]
-const CAT_COLORS  = ["#185FA5","#BA7517","#534AB7","#3B6D11","#D4537E","#1D9E75","#888780"]
+const CAT_COLORS = ["#9E1D1D", "#702D0A", "#500A0A", "#450B0B", "#D45353", "#9E451D", "#6E0F0F"];
+const INCOME_COLORS = ["#3B6D11","#1D9E75","#27500A","#085041","#639922","#0F6E56","#04342C"]
 
 function fmt(n: number) {
     return "€" + n.toLocaleString("en-IE", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -129,6 +130,36 @@ function Legend({ color, label, dashed }: { color: string; label: string; dashed
     )
 }
 
+function CategoryBars({
+    items,
+    max,
+    colors,
+}: {
+    items: CategoryBreakdown[]
+    max: number
+    colors: string[]
+}) {
+    return (
+        <div className="space-y-2">
+            {items.map((cat, i) => (
+                <div key={cat.name} className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 w-20 shrink-0 truncate">{cat.name}</span>
+                    <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                        <div
+                            className="h-full rounded-full"
+                            style={{
+                                width: `${(cat.amount / max) * 100}%`,
+                                backgroundColor: colors[i % colors.length],
+                            }}
+                        />
+                    </div>
+                    <span className="text-xs text-gray-500 w-14 text-right shrink-0">{fmt(cat.amount)}</span>
+                </div>
+            ))}
+        </div>
+    )
+}
+
 export function DashboardClient({ data }: { data: DashboardData }) {
     const chartRef = useRef<HTMLCanvasElement>(null)
     const chartInstance = useRef<Chart | null>(null)
@@ -136,12 +167,11 @@ export function DashboardClient({ data }: { data: DashboardData }) {
     const incomeDelta   = calcDelta(data.currentIncome, data.prevIncome)
     const expensesDelta = calcDelta(data.currentExpenses, data.prevExpenses)
     const prevNet       = data.prevIncome !== null && data.prevExpenses !== null
-        ? data.prevIncome - data.prevExpenses
-        : null
+        ? data.prevIncome - data.prevExpenses : null
     const netDelta      = calcDelta(data.netSaved, prevNet)
 
-    const maxExpenseCat = Math.max(...(data.categoryBreakdown?.map(c => c.amount) || []), 1)
-    const maxIncomeCat  = Math.max(...(data.incomeCategoryBreakdown?.map(c => c.amount) || []), 1)
+    const maxExpenseCat = Math.max(...(data.categoryBreakdown?.map(c => c.amount) ?? []), 1)
+    const maxIncomeCat  = Math.max(...(data.incomeCategoryBreakdown?.map(c => c.amount) ?? []), 1)
 
     useEffect(() => {
         if (!chartRef.current) return
@@ -229,23 +259,27 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                 <MetricCard label="Total income"   value={fmt(data.currentIncome)}   d={incomeDelta}   positiveIsGood={true} />
                 <MetricCard label="Total expenses" value={fmt(data.currentExpenses)}  d={expensesDelta} positiveIsGood={false} />
                 <MetricCard label="Net saved"      value={fmt(data.netSaved)}         d={netDelta}      positiveIsGood={true} />
-                <MetricCard 
-                    label={data.savingsRate >= 0 ? "Savings rate" : "Burn rate"} 
-                    value={`${(data.savingsRate * 100).toFixed(1)}%`} 
-                    bar={data.savingsRate} 
+                <MetricCard
+                    label={data.savingsRate >= 0 ? "Savings rate" : "Burn rate"}
+                    value={`${(data.savingsRate * 100).toFixed(1)}%`}
+                    bar={data.savingsRate}
                 />
             </div>
 
-            {/* Charts row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Charts row - items-stretch makes the chart card fill the height of the right column */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-stretch">
 
-                {/* Trend chart */}
-                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+                {/* Trend chart - flex-col so the canvas can grow to fill remaining height */}
+                <div className="flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
                     <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
                         Income vs expenses — last 6 months
                     </p>
-                    <div className="relative h-44">
-                        <canvas ref={chartRef} role="img" aria-label="Line chart" />
+                    <div className="relative flex-1 min-h-44">
+                        <canvas
+                            ref={chartRef}
+                            role="img"
+                            aria-label="Line chart comparing monthly income and expenses"
+                        />
                     </div>
                     <div className="flex gap-4 mt-3">
                         <Legend color="#3B6D11" label="Income" />
@@ -253,56 +287,33 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4">
-                    {/* Spending by category */}
+                {/* Right column - spending + income by category stacked */}
+                <div className="flex flex-col gap-4">
+
                     <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                        <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">Spending by category</p>
-                        {(!data.categoryBreakdown || data.categoryBreakdown.length === 0) ? (
-                            <p className="text-sm text-gray-400 mt-4">No expenses this month.</p>
+                        <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
+                            Spending by category
+                        </p>
+                        {data.categoryBreakdown.length === 0 ? (
+                            <p className="text-sm text-gray-400">No expenses this month.</p>
                         ) : (
-                            <div className="space-y-2">
-                                {data.categoryBreakdown.map((cat, i) => (
-                                    <div key={cat.name} className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-500 w-20 shrink-0 truncate">{cat.name}</span>
-                                        <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full rounded-full"
-                                                style={{
-                                                    width: `${(cat.amount / maxExpenseCat) * 100}%`,
-                                                    backgroundColor: CAT_COLORS[i % CAT_COLORS.length],
-                                                }}
-                                            />
-                                        </div>
-                                        <span className="text-xs text-gray-500 w-14 text-right shrink-0">{fmt(cat.amount)}</span>
-                                    </div>
-                                ))}
-                            </div>
+                            <CategoryBars items={data.categoryBreakdown} max={maxExpenseCat} colors={CAT_COLORS} />
                         )}
                     </div>
 
-                    {/* Income by category */}
                     <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                        <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">Income by category</p>
-                        {(!data.incomeCategoryBreakdown || data.incomeCategoryBreakdown.length === 0) ? (
-                            <p className="text-sm text-gray-400 mt-4">No income entries this month.</p>
+                        <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
+                            Income by category
+                        </p>
+                        {!data.incomeCategoryBreakdown || data.incomeCategoryBreakdown.length === 0 ? (
+                            <p className="text-sm text-gray-400">No income entries this month.</p>
                         ) : (
-                            <div className="space-y-2">
-                                {data.incomeCategoryBreakdown.map((cat, i) => (
-                                    <div key={cat.name} className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-500 w-20 shrink-0 truncate">{cat.name}</span>
-                                        <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full rounded-full bg-green-600"
-                                                style={{ width: `${(cat.amount / maxIncomeCat) * 100}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-xs text-gray-500 w-14 text-right shrink-0">{fmt(cat.amount)}</span>
-                                    </div>
-                                ))}
-                            </div>
+                            <CategoryBars items={data.incomeCategoryBreakdown} max={maxIncomeCat} colors={INCOME_COLORS} />
                         )}
                     </div>
+
                 </div>
+
             </div>
 
             {/* Bottom row */}
@@ -310,26 +321,42 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 
                 {/* Capital breakdown */}
                 <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                    <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">Capital breakdown</p>
+                    <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
+                        Capital breakdown
+                    </p>
                     {data.capitals.length === 0 ? (
                         <p className="text-sm text-gray-400">No capital entries.</p>
                     ) : (
                         <>
                             {data.capitals.map((c, i) => (
-                                <div key={c.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                                <div
+                                    key={c.id}
+                                    className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0"
+                                >
                                     <div className="flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CAT_COLORS[i % CAT_COLORS.length] }} />
+                                        <span
+                                            className="w-2 h-2 rounded-full shrink-0"
+                                            style={{ backgroundColor: CAT_COLORS[i % CAT_COLORS.length] }}
+                                        />
                                         <span className="text-sm text-gray-700 dark:text-gray-300">{c.name}</span>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <span className="text-xs text-gray-400">{data.totalCapital > 0 ? ((c.amount / data.totalCapital) * 100).toFixed(1) : "0"}%</span>
-                                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{fmt(c.amount)}</span>
+                                        <span className="text-xs text-gray-400">
+                                            {data.totalCapital > 0
+                                                ? ((c.amount / data.totalCapital) * 100).toFixed(1)
+                                                : "0"}%
+                                        </span>
+                                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            {fmt(c.amount)}
+                                        </span>
                                     </div>
                                 </div>
                             ))}
                             <div className="flex justify-between pt-3 mt-1">
                                 <span className="text-xs text-gray-400">Total net worth</span>
-                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{fmt(data.totalCapital)}</span>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                    {fmt(data.totalCapital)}
+                                </span>
                             </div>
                         </>
                     )}
@@ -337,7 +364,9 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 
                 {/* Recent transactions */}
                 <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                    <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">Recent transactions</p>
+                    <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
+                        Recent transactions
+                    </p>
                     {data.recentTransactions.length === 0 ? (
                         <p className="text-sm text-gray-400">No recent transactions.</p>
                     ) : (
@@ -345,14 +374,20 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                             {data.recentTransactions.map((t) => {
                                 const isIncome = t.type === "INCOME"
                                 const txDate   = new Date(t.date)
-                                // Only show category on sub-line if description is different
                                 const hasUniqueDesc = t.description && t.description !== t.category.name
-
                                 return (
-                                    <div key={t.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                                    <div
+                                        key={t.id}
+                                        className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0"
+                                    >
                                         <div className="flex items-center gap-2 min-w-0">
-                                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0"
-                                                style={{ backgroundColor: isIncome ? "#EAF3DE" : "#FCEBEB", color: isIncome ? "#3B6D11" : "#A32D2D" }}>
+                                            <div
+                                                className="w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0"
+                                                style={{
+                                                    backgroundColor: isIncome ? "#EAF3DE" : "#FCEBEB",
+                                                    color: isIncome ? "#3B6D11" : "#A32D2D",
+                                                }}
+                                            >
                                                 {t.category.icon ?? (isIncome ? "↑" : "↓")}
                                             </div>
                                             <div className="min-w-0">
@@ -365,7 +400,10 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                                                 </p>
                                             </div>
                                         </div>
-                                        <span className="text-sm font-medium shrink-0 ml-2" style={{ color: isIncome ? "#3B6D11" : "#A32D2D" }}>
+                                        <span
+                                            className="text-sm font-medium shrink-0 ml-2"
+                                            style={{ color: isIncome ? "#3B6D11" : "#A32D2D" }}
+                                        >
                                             {isIncome ? "+" : "-"}{fmt(t.amount)}
                                         </span>
                                     </div>
@@ -374,6 +412,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                         </div>
                     )}
                 </div>
+
             </div>
         </div>
     )
