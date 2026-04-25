@@ -283,15 +283,17 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
                 >
+                    <Check className="size-3.5" />
                     {isPending ? "Saving..." : "Save"}
                 </button>
                 <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="px-4 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
                 >
+                    <XCircle className="size-3.5" />
                     Cancel
                 </button>
             </div>
@@ -432,7 +434,13 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
             </div>
 
             <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Category</label>
+                <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs text-muted-foreground font-medium">Category</label>
+                    <CategoryManager
+                        type={t.type as "INCOME" | "EXPENSE"}
+                        categories={categories}
+                    />
+                </div>
                 <select
                     name="categoryId"
                     defaultValue={t.categoryId}

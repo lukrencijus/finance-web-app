@@ -2,7 +2,7 @@
 import { useState } from "react"
 import { updateProfile, changePassword, deleteAccount } from "./actions"
 import { useTheme } from "next-themes"
-import { Sun, Moon } from "lucide-react"
+import { Sun, Moon, Check, XCircle } from "lucide-react"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -108,8 +108,9 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                     {profileMsg && <p className="text-sm font-medium text-green-600 dark:text-green-400">{profileMsg}</p>}
                     <button
                         type="submit"
-                        className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
+                        className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
                     >
+                        <Check className="size-3.5" />
                         Save Changes
                     </button>
                 </form>
@@ -146,8 +147,9 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                         )}
                         <button
                             type="submit"
-                            className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
+                            className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
                         >
+                            <Check className="size-3.5" />
                             Update Password
                         </button>
                     </form>
@@ -169,8 +171,9 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                     ) : !deleteConfirm ? (
                         <button
                             onClick={() => setDeleteConfirm(true)}
-                            className="rounded-md border border-destructive text-destructive px-4 py-2 text-sm font-medium hover:bg-destructive hover:text-white transition-all"
+                            className="flex items-center gap-1.5 rounded-md border border-destructive text-destructive px-3 py-1.5 text-xs font-medium hover:bg-destructive hover:text-white transition-all"
                         >
+                            <XCircle className="size-3.5" />
                             Delete Account
                         </button>
                     ) : (

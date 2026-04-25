@@ -156,7 +156,7 @@ function EditCategoryRow({ category, onDone }: { category: Category; onDone: () 
                 <Check className="size-4" />
             </button>
             <button onClick={onDone}
-                className="text-muted-foreground hover:text-foreground p-0.5" title="Cancel">
+                className="text-red-600 dark:text-red-400 hover:opacity-80 p-0.5 disabled:opacity-50" title="Cancel">
                 <XCircle className="size-4" />
             </button>
             {error && <span className="text-xs text-destructive">{error}</span>}
@@ -209,6 +209,7 @@ function SortableCategoryRow({ category }: { category: Category }) {
                 className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted/50 transition-colors group">
                 {/* Drag handle */}
                 <button
+                    type="button"
                     className="text-muted-foreground/30 hover:text-muted-foreground cursor-grab active:cursor-grabbing p-0.5 shrink-0 touch-none"
                     {...attributes}
                     {...listeners}
@@ -311,10 +312,9 @@ function CategorySection({ type, initialCategories }: {
         const newIndex = categories.findIndex(c => c.id === over.id)
         const reordered = arrayMove(categories, oldIndex, newIndex)
 
-        setCategories(reordered) // optimistic update
+        setCategories(reordered)
         startTransition(async () => {
             await reorderCategories(reordered.map(c => c.id))
-            router.refresh()
         })
     }
 
