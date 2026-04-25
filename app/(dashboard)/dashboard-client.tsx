@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
     Chart,
     LineElement,
@@ -61,7 +61,7 @@ export type DashboardData = {
 
 const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 const MONTH_FULL  = ["January","February","March","April","May","June","July","August","September","October","November","December"]
-const CAT_COLORS = ["#9E1D1D", "#702D0A", "#500A0A", "#450B0B", "#D45353", "#9E451D", "#6E0F0F"];
+const CAT_COLORS = ["#9E1D1D", "#702D0A", "#500A0A", "#750B0B", "#D45353", "#9E451D", "#6E0F0F"];
 const INCOME_COLORS = ["#3B6D11","#1D9E75","#27500A","#085041","#639922","#0F6E56","#04342C"]
 
 function fmt(n: number) {
@@ -139,6 +139,12 @@ function CategoryBars({
     max: number
     colors: string[]
 }) {
+    const [mounted, setMounted] = useState(false)
+    useEffect(() => {
+        const id = requestAnimationFrame(() => setMounted(true))
+        return () => cancelAnimationFrame(id)
+    }, [])
+
     return (
         <div className="space-y-2">
             {items.map((cat, i) => (
@@ -148,8 +154,9 @@ function CategoryBars({
                         <div
                             className="h-full rounded-full"
                             style={{
-                                width: `${(cat.amount / max) * 100}%`,
+                                width: mounted ? `max(6px, ${(cat.amount / max) * 100}%)` : "0px",
                                 backgroundColor: colors[i % colors.length],
+                                transition: `width 0.45s ease ${i * 50}ms`,
                             }}
                         />
                     </div>
@@ -247,7 +254,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             {/* Header */}
             <div className="mb-6">
                 <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-1">
-                    {monthLabel} — overview
+                    {monthLabel} - overview
                 </p>
                 <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                     Financial Status
@@ -272,7 +279,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                 {/* Trend chart - flex-col so the canvas can grow to fill remaining height */}
                 <div className="flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
                     <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
-                        Income vs expenses — last 6 months
+                        Income vs expenses - last 6 months
                     </p>
                     <div className="relative flex-1 min-h-44">
                         <canvas
