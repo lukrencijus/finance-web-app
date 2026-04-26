@@ -166,17 +166,15 @@ export async function getDashboardData(userId: string) {
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 7)
 
-    // Recent transactions (current sheet, last 5)
-    const recentTransactions = currentSheet
-        ? currentSheet.transactions.slice(0, 5).map((t) => ({
-              id: t.id,
-              description: t.description,
-              amount: t.amount,
-              type: t.type,
-              date: t.date.toISOString(),
-              category: { name: t.category.name, icon: t.category.icon ?? null },
-          }))
-        : []
+    // Recent transactions (all sheets, last 5)
+    const recentTransactions = await prisma.transaction.findMany({
+        where: {
+            monthlySheet: { userId },
+        },
+        include: { category: true },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+    })
 
     // Capital breakdown (current sheet)
     const capitals = currentSheet
@@ -200,7 +198,14 @@ export async function getDashboardData(userId: string) {
         monthlyTotals,
         categoryBreakdown,
         incomeCategoryBreakdown,
-        recentTransactions,
+        recentTransactions: recentTransactions.map((t) => ({
+            id: t.id,
+            description: t.description,
+            amount: t.amount,
+            type: t.type,
+            date: t.date.toISOString(),
+            category: { name: t.category.name, icon: t.category.icon ?? null },
+        })),
         capitals,
         totalCapital,
     }
