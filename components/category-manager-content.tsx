@@ -31,7 +31,7 @@ export type Category = {
     name: string
     icon: string | null
     type: string
-    order: number
+    order: number | null
 }
 
 type Transaction = {

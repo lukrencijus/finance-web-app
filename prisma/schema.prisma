@@ -96,14 +96,15 @@ model Transaction {
   amount         Float
   description    String?
   date           DateTime     @default(now())
-  type           String       // INCOME or EXPENSE
-  
+  type           String
+  createdAt      DateTime     @default(now())
+
   categoryId     String
   category       Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  
+
   monthlySheetId String
   monthlySheet   MonthlySheet @relation(fields: [monthlySheetId], references: [id], onDelete: Cascade)
-  
+
   isRecurring    Boolean      @default(false)
 }
 

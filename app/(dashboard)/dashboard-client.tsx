@@ -61,16 +61,53 @@ export type DashboardData = {
 
 const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 const MONTH_FULL  = ["January","February","March","April","May","June","July","August","September","October","November","December"]
-const CAT_COLORS = ["#9E1D1D", "#702D0A", "#500A0A", "#750B0B", "#D45353", "#9E451D", "#6E0F0F"];
-const INCOME_COLORS = ["#3B6D11","#1D9E75","#27500A","#085041","#639922","#0F6E56","#04342C"]
+const CAT_COLORS = [
+    "#C94444",
+    "#B83A3A",
+    "#A83030",
+    "#962828",
+    "#842020",
+    "#721A1A",
+    "#601414",
+]
+
+const INCOME_COLORS = [
+    "#4A9E22",
+    "#3FA025",
+    "#32881B",
+    "#267012",
+    "#1A590A",
+    "#145006",
+    "#0F3D04",
+]
 
 function fmt(n: number) {
     return "€" + n.toLocaleString("en-IE", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
-function calcDelta(current: number, prev: number | null): { label: string; positive: boolean } | null {
-    if (prev === null || prev === 0) return null
-    const pct = ((current - prev) / prev) * 100
+function calcDelta(
+    current: number,
+    prev: number | null,
+    mode: "percent" | "absolute" = "percent"
+): { label: string; positive: boolean } | null {
+    if (prev === null) return null
+    const diff = current - prev
+
+    if (mode === "absolute") {
+        const direction = diff >= 0 ? "more" : "less"
+        return {
+            label: `${fmt(Math.abs(diff))} ${direction} than last month`,
+            positive: diff >= 0,
+        }
+    }
+
+    if (prev === 0 || Math.abs(prev) < 1) {
+        return { label: `${diff >= 0 ? "+" : ""}${fmt(diff)} vs prev`, positive: diff >= 0 }
+    }
+    const pct = ((current - prev) / Math.abs(prev)) * 100
+    if (Math.abs(pct) > 999) {
+        return { label: `${diff >= 0 ? "+" : ""}${fmt(diff)} vs prev`, positive: diff >= 0 }
+    }
     return { label: `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}% vs prev`, positive: pct >= 0 }
 }
 
@@ -175,7 +212,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
     const expensesDelta = calcDelta(data.currentExpenses, data.prevExpenses)
     const prevNet       = data.prevIncome !== null && data.prevExpenses !== null
         ? data.prevIncome - data.prevExpenses : null
-    const netDelta      = calcDelta(data.netSaved, prevNet)
+    const netDelta = calcDelta(data.netSaved, prevNet, "absolute")
 
     const maxExpenseCat = Math.max(...(data.categoryBreakdown?.map(c => c.amount) ?? []), 1)
     const maxIncomeCat  = Math.max(...(data.incomeCategoryBreakdown?.map(c => c.amount) ?? []), 1)

@@ -7,7 +7,10 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
         include: {
             transactions: {
                 include: { category: true },
-                orderBy: { date: "desc" },
+                orderBy: [
+                    { createdAt: "desc" },
+                    { date: "desc" },
+                ],
             },
         },
     })
@@ -17,7 +20,10 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
             include: {
                 transactions: {
                     include: { category: true },
-                    orderBy: { date: "desc" },
+                    orderBy: [
+                        { createdAt: "desc" },
+                        { date: "desc" },
+                    ],
                 },
             },
         })
@@ -31,7 +37,10 @@ export async function getMonthSheet(userId: string, month: number, year: number)
         include: {
             transactions: {
                 include: { category: true },
-                orderBy: { date: "desc" },
+                orderBy: [
+                    { createdAt: "desc" },
+                    { date: "desc" },
+                ],
             },
         },
     })

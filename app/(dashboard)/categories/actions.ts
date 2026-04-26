@@ -39,6 +39,7 @@ export async function createCategory(prevState: any, formData: FormData) {
             data: { name, type, icon: icon || null, userId: user.id },
         })
         revalidatePath("/categories")
+        revalidatePath("/monthly-sheet")
         return { success: true }
     } catch (e) {
         return { error: "Something went wrong. Please try again." }

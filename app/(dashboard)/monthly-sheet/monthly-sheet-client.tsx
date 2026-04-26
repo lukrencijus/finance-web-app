@@ -198,6 +198,8 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
     const minDate = `${year}-${String(month).padStart(2, "0")}-01`
     const lastDay = new Date(year, month, 0).getDate()
     const maxDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
+    const today = new Date().toISOString().split("T")[0]
+    const defaultDate = today >= minDate && today <= maxDate ? today : maxDate
 
     if (!isOpen) {
         return (
@@ -235,7 +237,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
                         type="date"
                         min={minDate}
                         max={maxDate}
-                        defaultValue={new Date().toISOString().split("T")[0]}
+                        defaultValue={defaultDate}
                         required
                         className="w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
@@ -495,10 +497,10 @@ function DeleteButton({ transactionId }: { transactionId: string }) {
     const [isPending, setIsPending] = useState(false)
 
     const handleDelete = async () => {
+        if (isPending) return  // guard double-click
         if (!confirm("Delete this transaction?")) return
         setIsPending(true)
         await deleteTransaction(transactionId)
-        setIsPending(false)
     }
 
     return (

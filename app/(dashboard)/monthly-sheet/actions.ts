@@ -76,7 +76,7 @@ export async function deleteTransaction(transactionId: string) {
     })
 
     if (!transaction || transaction.monthlySheet.userId !== user.id) {
-        throw new Error("Not found or unauthorized")
+        return { error: "Not found or unauthorized" }
     }
 
     await prisma.transaction.delete({ where: { id: transactionId } })
