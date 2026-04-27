@@ -1,7 +1,7 @@
 import { z } from "zod"
 
-// Matches 1 or 2 emojis (each emoji can be multi-codepoint)
-const emojiRegex = /^\p{Emoji_Presentation}(\u200d\p{Emoji_Presentation})*(\uFE0F)?(\p{Emoji_Presentation}(\u200d\p{Emoji_Presentation})*(\uFE0F)?)?$/u
+// Matches a single emoji (can be multi-codepoint)
+const singleEmojiRegex = /^\p{RGI_Emoji}$/v
 
 export const categorySchema = z.object({
   name: z.string()
@@ -10,8 +10,8 @@ export const categorySchema = z.object({
     .trim(),
   type: z.enum(["INCOME", "EXPENSE"]),
   icon: z.string()
-    .refine(val => val === "" || emojiRegex.test(val), {
-      message: "Icon must be 1 or 2 emojis"
+    .refine(val => val === "" || singleEmojiRegex.test(val), {
+      message: "Icon must be a single emoji"
     })
     .optional(),
 })

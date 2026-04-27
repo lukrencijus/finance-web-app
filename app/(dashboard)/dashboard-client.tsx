@@ -212,7 +212,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
     const expensesDelta = calcDelta(data.currentExpenses, data.prevExpenses)
     const prevNet       = data.prevIncome !== null && data.prevExpenses !== null
         ? data.prevIncome - data.prevExpenses : null
-    const netDelta = calcDelta(data.netSaved, prevNet, "absolute")
+    const netDelta = calcDelta(data.netSaved, prevNet)
 
     const maxExpenseCat = Math.max(...(data.categoryBreakdown?.map(c => c.amount) ?? []), 1)
     const maxIncomeCat  = Math.max(...(data.incomeCategoryBreakdown?.map(c => c.amount) ?? []), 1)
