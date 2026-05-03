@@ -28,14 +28,3 @@ export const transactionSchema = z.object({
   type: z.enum(["INCOME", "EXPENSE"]),
   date: z.string().min(1, "Date is required"),
 })
-
-export const capitalSchema = z.object({
-  name: z.string()
-    .min(1, "Name is required")
-    .max(40, "Name must be at most 40 characters")
-    .trim(),
-  amount: z.number()
-    .nonnegative("Amount must be 0 or greater")
-    .max(999_999_999, "Amount is too large"),
-  monthlySheetId: z.string().min(1),
-})

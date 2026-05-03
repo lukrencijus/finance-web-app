@@ -1,5 +1,5 @@
 import { getCurrentDbUser } from "@/lib/current-user"
-import { getMonthSheet } from "@/lib/sheets"
+import { getCurrentMonthSheet, getMonthSheet } from "@/lib/sheets"
 import { MonthlySheetClient } from "./monthly-sheet-client"
 import { prisma } from "@/lib/prisma"
 
@@ -27,27 +27,12 @@ export default async function MonthlySheetPage({ searchParams }: Props) {
     const isFuture = year > currentYear || (year === currentYear && month > currentMonth)
     const isCurrentMonth = month === currentMonth && year === currentYear
 
-    if (isCurrentMonth) {
-        await prisma.monthlySheet.upsert({
-            where: { month_year_userId: { month: currentMonth, year: currentYear, userId: user.id } },
-            create: { month: currentMonth, year: currentYear, userId: user.id },
-            update: {},
-        })
-    }
-
     const [sheet, categories, allSheets] = await Promise.all([
         isFuture
             ? null
-            : prisma.monthlySheet.findUnique({
-                where: { month_year_userId: { month, year, userId: user.id } },
-                include: {
-                    transactions: {
-                        include: { category: true },
-                        orderBy: [{ createdAt: "desc" }, { date: "desc" }],
-                    },
-                    capitals: { orderBy: { id: "asc" } },
-                },
-            }),
+            : isCurrentMonth
+                ? getCurrentMonthSheet(user.id, currentMonth, currentYear)
+                : getMonthSheet(user.id, month, year),
         prisma.category.findMany({
             where: { userId: user.id },
             orderBy: [

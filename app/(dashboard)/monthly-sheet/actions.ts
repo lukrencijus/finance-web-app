@@ -3,8 +3,7 @@
 import { prisma } from "@/lib/prisma"
 import { getCurrentDbUser } from "@/lib/current-user"
 import { revalidatePath } from "next/cache"
-import { transactionSchema, capitalSchema } from "@/lib/validations"
-import { getMonthlyInsights } from "@/lib/sheets"
+import { transactionSchema } from "@/lib/validations"
 
 export async function createTransaction(prevState: any, formData: FormData) {
     const user = await getCurrentDbUser()
@@ -132,92 +131,4 @@ export async function updateTransaction(transactionId: string, formData: FormDat
 
     revalidatePath("/monthly-sheet")
     return { success: true }
-}
-
-// Capital CRUD
-export async function createCapital(prevState: any, formData: FormData) {
-    const user = await getCurrentDbUser()
-
-    const parsed = capitalSchema.safeParse({
-        name: String(formData.get("name") ?? "").trim(),
-        amount: parseFloat(String(formData.get("amount") ?? "")),
-        monthlySheetId: String(formData.get("monthlySheetId") ?? "").trim(),
-    })
-
-    if (!parsed.success) {
-        return { error: parsed.error.issues[0].message }
-    }
-
-    const { name, amount, monthlySheetId } = parsed.data
-
-    const sheet = await prisma.monthlySheet.findUnique({ where: { id: monthlySheetId } })
-    if (!sheet || sheet.userId !== user.id) {
-        return { error: "Unauthorized" }
-    }
-
-    // Max 10 capital entries per sheet
-    const count = await prisma.capital.count({ where: { monthlySheetId } })
-    if (count >= 10) {
-        return { error: "Maximum 10 capital entries per month" }
-    }
-
-    await prisma.capital.create({
-        data: { name, amount, monthlySheetId },
-    })
-
-    revalidatePath("/monthly-sheet")
-    return { success: true }
-}
-
-export async function updateCapital(capitalId: string, formData: FormData) {
-    const user = await getCurrentDbUser()
-
-    const parsed = capitalSchema.safeParse({
-        name: String(formData.get("name") ?? "").trim(),
-        amount: parseFloat(String(formData.get("amount") ?? "")),
-        monthlySheetId: String(formData.get("monthlySheetId") ?? "").trim(),
-    })
-
-    if (!parsed.success) return { error: parsed.error.issues[0].message }
-
-    const { name, amount, monthlySheetId } = parsed.data
-
-    const capital = await prisma.capital.findUnique({
-        where: { id: capitalId },
-        include: { monthlySheet: true },
-    })
-
-    if (!capital || capital.monthlySheet.userId !== user.id) {
-        return { error: "Not found or unauthorized" }
-    }
-
-    await prisma.capital.update({
-        where: { id: capitalId },
-        data: { name, amount },
-    })
-
-    revalidatePath("/monthly-sheet")
-    return { success: true }
-}
-
-export async function deleteCapital(capitalId: string) {
-    const user = await getCurrentDbUser()
-
-    const capital = await prisma.capital.findUnique({
-        where: { id: capitalId },
-        include: { monthlySheet: true },
-    })
-
-    if (!capital || capital.monthlySheet.userId !== user.id) {
-        return { error: "Not found or unauthorized" }
-    }
-
-    await prisma.capital.delete({ where: { id: capitalId } })
-    revalidatePath("/monthly-sheet")
-}
-
-// Insights
-export async function fetchMonthlyInsights(month: number, year: number) {
-    const user = await getCurrentDbUser()
-    return getMonthlyInsights(user.id, month, year)
 }
