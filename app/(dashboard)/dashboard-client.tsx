@@ -331,12 +331,12 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                     </div>
                 </div>
 
-                {/* Right column - spending + income by category stacked */}
+                {/* Right column - expenses + income by category stacked */}
                 <div className="flex flex-col gap-4">
 
                     <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
                         <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
-                            Spending by category
+                            Expenses by category
                         </p>
                         {data.categoryBreakdown.length === 0 ? (
                             <p className="text-sm text-gray-400">No expenses this month.</p>
