@@ -90,25 +90,25 @@ function calcDelta(
     prev: number | null,
     mode: "percent" | "absolute" = "percent"
 ): { label: string; positive: boolean } | null {
+    // If no previous data exists, show nothing
     if (prev === null) return null
+    
     const diff = current - prev
-
-    if (mode === "absolute") {
-        const direction = diff >= 0 ? "more" : "less"
-        return {
-            label: `${fmt(Math.abs(diff))} ${direction} than last month`,
-            positive: diff >= 0,
-        }
-    }
+    
+    // Hide if there is absolutely no change
+    if (diff === 0) return null
+    if (current === 0) return null
 
     if (prev === 0 || Math.abs(prev) < 1) {
-        return { label: `${diff >= 0 ? "+" : ""}${fmt(diff)} vs prev`, positive: diff >= 0 }
+        return { label: `${diff >= 0 ? "+" : ""}${fmt(diff)} vs last month`, positive: diff >= 0 }
     }
+
     const pct = ((current - prev) / Math.abs(prev)) * 100
+
     if (Math.abs(pct) > 999) {
-        return { label: `${diff >= 0 ? "+" : ""}${fmt(diff)} vs prev`, positive: diff >= 0 }
+        return { label: `${diff >= 0 ? "+" : ""}${fmt(diff)} vs last month`, positive: diff >= 0 }
     }
-    return { label: `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}% vs prev`, positive: pct >= 0 }
+    return { label: `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}% vs last month`, positive: pct >= 0 }
 }
 
 function MetricCard({

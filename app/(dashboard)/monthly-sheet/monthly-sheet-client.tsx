@@ -601,7 +601,6 @@ function Overview({ totalIncome, totalExpenses, balance, capitals, capitalCatego
             <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                     <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Capital</p>
-                    <CapitalCategoryManager categories={capitalCategories} />
                 </div>
                 
                 <AddCapitalForm
@@ -617,6 +616,7 @@ function Overview({ totalIncome, totalExpenses, balance, capitals, capitalCatego
                                 .filter(cat => (capitals.find(c => c.capitalCategoryId === cat.id)?.amount ?? 0) > 0)
                                 .map(cat => {
                                     const amount = capitals.find(c => c.capitalCategoryId === cat.id)!.amount
+                                    const percentage = ((amount / totalCapital) * 100).toFixed(1);
                                     return (
                                         <div
                                             key={cat.id}
@@ -626,7 +626,7 @@ function Overview({ totalIncome, totalExpenses, balance, capitals, capitalCatego
                                                 backgroundColor: cat.color,
                                                 minWidth: "4px",
                                             }}
-                                            title={`${cat.name}: €${amount.toFixed(2)}`}
+                                            title={`${cat.icon ?? ""} ${cat.name}: ${percentage}% (€${amount.toLocaleString()})`}
                                         />
                                     )
                                 })}
@@ -847,14 +847,18 @@ function CapitalList({ capitals, capitalCategories, sheetId, totalCapital }: {
 
             {/* Total net worth */}
             {totalCapital > 0 && (
-                <div className="flex items-center justify-between pt-3 mt-1 border-t border-border">
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Wallet className="size-3.5" />
+                <div className="flex items-center justify-between pt-5 mt-2 border-t border-border">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                         Total net worth
                     </div>
-                    <span className="text-sm font-semibold text-foreground">
-                        €{totalCapital.toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
+                    <div className="flex items-center gap-2 pr-[30px]"> 
+                        <span className="text-lg font-bold text-foreground">
+                            €{totalCapital.toLocaleString("en-IE", { 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2 
+                            })}
+                        </span>
+                    </div>
                 </div>
             )}
         </div>
