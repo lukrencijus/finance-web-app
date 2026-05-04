@@ -30,7 +30,11 @@ const routes = [
     },
     {
         href: "/categories",
-        label: "Categories"
+        label: "Transaction Categories"
+    },
+    {
+        href: "/capital",
+        label: "Capital Categories"
     },
 ]
 

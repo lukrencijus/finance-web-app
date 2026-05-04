@@ -1,12 +1,24 @@
 "use client"
 
-import { useState, useEffect, useActionState } from "react"
-import { useRouter } from "next/navigation"
-import { createTransaction, deleteTransaction, updateTransaction } from "./actions"
-import { Trash2, ChevronDown, Pencil, Check, XCircle } from "lucide-react"
+import { useState, useEffect, useActionState, useTransition } from "react"
+import { createTransaction, deleteTransaction, updateTransaction, createCapital, updateCapital, deleteCapital, reorderCapitals } from "./actions"
+import { Trash2, ChevronDown, Pencil, Check, XCircle, Plus, GripVertical } from "lucide-react"
 import Link from "next/link"
 import { CategoryManager } from "@/components/category-manager"
 import { type Category } from "@/components/category-manager-content" 
+import { CapitalCategoryManager } from "@/components/capital-category-manager"
+import { type CapitalCategory } from "@/components/capital-category-manager-content"
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent, } from "@dnd-kit/core"
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy, } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
+
+type Capital = {
+    id: string
+    amount: number
+    order: number | null
+    capitalCategory: { id: string; name: string; icon: string | null }
+    capitalCategoryId: string
+}
 
 type Transaction = {
     id: string
@@ -23,6 +35,7 @@ type Sheet = {
     month: number
     year: number
     transactions: Transaction[]
+    capitals: Capital[]
 }
 
 type SheetSummary = { month: number; year: number }
@@ -30,6 +43,7 @@ type SheetSummary = { month: number; year: number }
 type Props = {
     sheet: Sheet | null
     categories: Category[]
+    capitalCategories: CapitalCategory[]
     allSheets: SheetSummary[]
     month: number
     year: number
@@ -50,6 +64,7 @@ type Tab = typeof TABS[number]
 export function MonthlySheetClient({
     sheet,
     categories,
+    capitalCategories,
     allSheets,
     month,
     year,
@@ -170,6 +185,9 @@ export function MonthlySheetClient({
                                 totalIncome={totalIncome}
                                 totalExpenses={totalExpenses}
                                 balance={balance}
+                                capitals={sheet.capitals}
+                                capitalCategories={capitalCategories}
+                                sheetId={sheet.id}
                             />
                         )}
                     </div>
@@ -515,20 +533,45 @@ function DeleteButton({ transactionId }: { transactionId: string }) {
 }
 
 // Overview
-function Overview({ totalIncome, totalExpenses, balance }: {
+function Overview({ totalIncome, totalExpenses, balance, capitals, capitalCategories, sheetId }: {
     totalIncome: number
     totalExpenses: number
     balance: number
+    capitals: Capital[]
+    capitalCategories: CapitalCategory[]
+    sheetId: string
 }) {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <SummaryCard label="Income" amount={totalIncome} color="text-green-600 dark:text-green-400" />
-            <SummaryCard label="Expenses" amount={totalExpenses} color="text-destructive" />
-            <SummaryCard
-                label="Balance"
-                amount={balance}
-                color={balance >= 0 ? "text-blue-600 dark:text-blue-400" : "text-destructive"}
-            />
+        <div className="space-y-6">
+            {/* Summary cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <SummaryCard label="Income"   amount={totalIncome}   color="text-green-600 dark:text-green-400" />
+                <SummaryCard label="Expenses" amount={totalExpenses} color="text-destructive" />
+                <SummaryCard
+                    label="Balance"
+                    amount={balance}
+                    color={balance >= 0 ? "text-blue-600 dark:text-blue-400" : "text-destructive"}
+                />
+            </div>
+
+            {/* Capital section */}
+            <div>
+                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
+                    Capital
+                </p>
+                <AddCapitalForm
+                    sheetId={sheetId}
+                    capitalCategories={capitalCategories}
+                    existingCategoryIds={capitals.map(c => c.capitalCategoryId)}
+                />
+                <div className="mt-4">
+                    <CapitalList
+                        capitals={capitals}
+                        capitalCategories={capitalCategories}
+                        sheetId={sheetId}
+                    />
+                </div>
+            </div>
         </div>
     )
 }
@@ -598,5 +641,255 @@ function MonthPicker({ allSheets, currentMonth, currentYear }: {
                 </>
             )}
         </div>
+    )
+}
+
+function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds }: {
+    sheetId: string
+    capitalCategories: CapitalCategory[]
+    existingCategoryIds: string[]
+}) {
+    const [state, formAction, isPending] = useActionState(createCapital, null)
+    const [isOpen, setIsOpen] = useState(false)
+
+    useEffect(() => {
+        if (state?.success) setIsOpen(false)
+    }, [state])
+
+    const available = capitalCategories.filter(c => !existingCategoryIds.includes(c.id))
+
+    if (!isOpen) {
+        return (
+            <button
+                onClick={() => setIsOpen(true)}
+                className="w-full border-2 border-dashed border-border rounded-lg py-3 text-sm text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors"
+            >
+                + Add Capital Entry
+            </button>
+        )
+    }
+
+    return (
+        <form action={formAction} className="bg-muted/50 border border-border rounded-lg p-4 space-y-3">
+            <input type="hidden" name="monthlySheetId" value={sheetId} />
+
+            <div>
+                <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs text-muted-foreground font-medium">Category</label>
+                    <CapitalCategoryManager categories={capitalCategories} />
+                </div>
+                <select
+                    name="capitalCategoryId"
+                    required
+                    className="w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                    <option value="">Select a category...</option>
+                    {available.map(c => (
+                        <option key={c.id} value={c.id} className="bg-background">
+                            {c.icon} {c.name}
+                        </option>
+                    ))}
+                </select>
+                {available.length === 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                        All categories already have an entry this month.
+                    </p>
+                )}
+            </div>
+
+            <div>
+                <label className="text-xs text-muted-foreground mb-1 block font-medium">Amount (€)</label>
+                <input
+                    name="amount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="0.00"
+                    required
+                    className="w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+            </div>
+
+            {state?.error && <p className="text-destructive text-xs font-medium">{state.error}</p>}
+
+            <div className="flex gap-2 pt-1">
+                <button type="submit" disabled={isPending}
+                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
+                    <Check className="size-3.5" />
+                    {isPending ? "Saving..." : "Save"}
+                </button>
+                <button type="button" onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
+                    <XCircle className="size-3.5" />
+                    Cancel
+                </button>
+            </div>
+        </form>
+    )
+}
+
+function CapitalList({ capitals, capitalCategories, sheetId }: {
+    capitals: Capital[]
+    capitalCategories: CapitalCategory[]
+    sheetId: string
+}) {
+    const [items, setItems] = useState(capitals)
+    const [editingId, setEditingId] = useState<string | null>(null)
+    const [, startTransition] = useTransition()
+
+    // Keep in sync when parent re-renders (after server revalidation)
+    useEffect(() => { setItems(capitals) }, [capitals])
+
+    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event
+        if (!over || active.id === over.id) return
+        const oldIndex = items.findIndex(c => c.id === active.id)
+        const newIndex = items.findIndex(c => c.id === over.id)
+        const reordered = arrayMove(items, oldIndex, newIndex)
+        setItems(reordered)
+        startTransition(async () => {
+            await reorderCapitals(reordered.map(c => c.id))
+        })
+    }
+
+    const total = items.reduce((sum, c) => sum + c.amount, 0)
+
+    if (items.length === 0) {
+        return <p className="text-muted-foreground text-sm py-4">No capital entries this month.</p>
+    }
+
+    return (
+        <div className="space-y-3">
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={items.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                    <ul className="divide-y divide-border">
+                        {items.map(c => (
+                            <SortableCapitalRow
+                                key={c.id}
+                                capital={c}
+                                isEditing={editingId === c.id}
+                                onEdit={() => setEditingId(c.id)}
+                                onDone={() => setEditingId(null)}
+                            />
+                        ))}
+                    </ul>
+                </SortableContext>
+            </DndContext>
+            <div className="flex justify-between pt-2 border-t border-border">
+                <span className="text-sm text-muted-foreground font-medium">Total</span>
+                <span className="text-sm font-bold text-foreground">€{total.toFixed(2)}</span>
+            </div>
+        </div>
+    )
+}
+
+function SortableCapitalRow({ capital, isEditing, onEdit, onDone }: {
+    capital: Capital
+    isEditing: boolean
+    onEdit: () => void
+    onDone: () => void
+}) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+        useSortable({ id: capital.id })
+
+    const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
+
+    return (
+        <li ref={setNodeRef} style={style}>
+            {isEditing ? (
+                <EditCapitalRow capital={capital} onDone={onDone} />
+            ) : (
+                <div className="py-3 flex items-center gap-2 group">
+                    <button
+                        type="button"
+                        className="text-muted-foreground/30 hover:text-muted-foreground cursor-grab active:cursor-grabbing p-0.5 shrink-0 touch-none"
+                        {...attributes} {...listeners}
+                    >
+                        <GripVertical className="size-4" />
+                    </button>
+                    <div className="flex-1">
+                        <p className="font-medium text-foreground">
+                            {capital.capitalCategory.icon} {capital.capitalCategory.name}
+                        </p>
+                    </div>
+                    <span className="font-semibold text-blue-600 dark:text-blue-400">
+                        €{capital.amount.toFixed(2)}
+                    </span>
+                    <button onClick={onEdit}
+                        className="text-muted-foreground/40 hover:text-blue-500 transition-colors">
+                        <Pencil className="size-4" />
+                    </button>
+                    <DeleteCapitalButton capitalId={capital.id} />
+                </div>
+            )}
+        </li>
+    )
+}
+
+function EditCapitalRow({ capital, onDone }: { capital: Capital; onDone: () => void }) {
+    const [error, setError] = useState<string | null>(null)
+    const [isPending, setIsPending] = useState(false)
+
+    return (
+        <form
+            action={async (fd) => {
+                setError(null)
+                setIsPending(true)
+                const result = await updateCapital(capital.id, fd)
+                setIsPending(false)
+                if (result?.success) onDone()
+                else if (result?.error) setError(result.error)
+            }}
+            className="py-3 px-3 my-1 space-y-2 bg-muted/50 border border-border rounded-lg"
+        >
+            <p className="text-sm font-medium text-foreground">
+                {capital.capitalCategory.icon} {capital.capitalCategory.name}
+            </p>
+            <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Amount (€)</label>
+                <input
+                    name="amount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    defaultValue={capital.amount}
+                    required
+                    className="w-full border border-input bg-background text-foreground rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+            </div>
+            {error && <p className="text-destructive text-xs">{error}</p>}
+            <div className="flex gap-2">
+                <button type="submit" disabled={isPending}
+                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
+                    <Check className="size-3.5" />
+                    {isPending ? "Saving..." : "Save"}
+                </button>
+                <button type="button" onClick={onDone}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
+                    <XCircle className="size-3.5" />
+                    Cancel
+                </button>
+            </div>
+        </form>
+    )
+}
+
+function DeleteCapitalButton({ capitalId }: { capitalId: string }) {
+    const [isPending, setIsPending] = useState(false)
+
+    const handleDelete = async () => {
+        if (isPending) return
+        if (!confirm("Delete this capital entry?")) return
+        setIsPending(true)
+        await deleteCapital(capitalId)
+    }
+
+    return (
+        <button onClick={handleDelete} disabled={isPending}
+            className="text-muted-foreground/40 hover:text-destructive disabled:opacity-30 transition-colors">
+            <Trash2 className="size-4" />
+        </button>
     )
 }

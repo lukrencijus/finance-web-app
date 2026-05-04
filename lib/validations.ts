@@ -28,3 +28,23 @@ export const transactionSchema = z.object({
   type: z.enum(["INCOME", "EXPENSE"]),
   date: z.string().min(1, "Date is required"),
 })
+
+export const capitalCategorySchema = z.object({
+  name: z.string()
+    .min(2, "Name must be at least 2 characters")
+    .max(30, "Name must be at most 30 characters")
+    .trim(),
+  icon: z.string()
+    .refine(val => val === "" || singleEmojiRegex.test(val), {
+      message: "Icon must be a single emoji"
+    })
+    .optional(),
+})
+
+export const capitalSchema = z.object({
+  amount: z.number()
+    .positive("Amount must be greater than 0")
+    .max(999_999_999, "Amount is too large"),
+  capitalCategoryId: z.string().min(1, "Please select a category"),
+  monthlySheetId: z.string().min(1),
+})

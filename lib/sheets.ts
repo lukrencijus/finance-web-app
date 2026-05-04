@@ -12,6 +12,10 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
                     { date: "desc" },
                 ],
             },
+            capitals: {
+                include: { capitalCategory: true },
+                orderBy: [{ order: { sort: "asc", nulls: "last" } }, { id: "asc" }],
+            },
         },
     })
     if (!sheet) {
@@ -24,6 +28,10 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
                         { createdAt: "desc" },
                         { date: "desc" },
                     ],
+                },
+                capitals: {
+                    include: { capitalCategory: true },
+                    orderBy: [{ order: { sort: "asc", nulls: "last" } }, { id: "asc" }],
                 },
             },
         })
@@ -41,6 +49,10 @@ export async function getMonthSheet(userId: string, month: number, year: number)
                     { createdAt: "desc" },
                     { date: "desc" },
                 ],
+            },
+            capitals: {
+                include: { capitalCategory: true },
+                orderBy: [{ order: { sort: "asc", nulls: "last" } }, { id: "asc" }],
             },
         },
     })
@@ -67,7 +79,7 @@ export async function getDashboardData(userId: string) {
         },
         include: {
             transactions: { include: { category: true } },
-            capitals: true,
+            capitals: { include: { capitalCategory: true } },
         },
         orderBy: [{ year: "desc" }, { month: "desc" }],
     })
@@ -179,10 +191,10 @@ export async function getDashboardData(userId: string) {
     // Capital breakdown (current sheet)
     const capitals = currentSheet
         ? currentSheet.capitals.map((c) => ({
-              id: c.id,
-              name: c.name,
-              amount: c.amount,
-          }))
+            id: c.id,
+            name: c.capitalCategory.name,
+            amount: c.amount,
+        }))
         : []
     const totalCapital = capitals.reduce((sum, c) => sum + c.amount, 0)
 

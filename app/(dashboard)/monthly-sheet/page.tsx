@@ -27,13 +27,20 @@ export default async function MonthlySheetPage({ searchParams }: Props) {
     const isFuture = year > currentYear || (year === currentYear && month > currentMonth)
     const isCurrentMonth = month === currentMonth && year === currentYear
 
-    const [sheet, categories, allSheets] = await Promise.all([
+    const [sheet, categories, capitalCategories, allSheets] = await Promise.all([
         isFuture
             ? null
             : isCurrentMonth
                 ? getCurrentMonthSheet(user.id, currentMonth, currentYear)
                 : getMonthSheet(user.id, month, year),
         prisma.category.findMany({
+            where: { userId: user.id },
+            orderBy: [
+                { order: { sort: "asc", nulls: "last" } },
+                { createdAt: "desc" },
+            ],
+        }),
+        prisma.capitalCategory.findMany({
             where: { userId: user.id },
             orderBy: [
                 { order: { sort: "asc", nulls: "last" } },
@@ -51,6 +58,7 @@ export default async function MonthlySheetPage({ searchParams }: Props) {
         <MonthlySheetClient
             sheet={sheet}
             categories={categories}
+            capitalCategories={capitalCategories}
             allSheets={allSheets}
             month={month}
             year={year}
