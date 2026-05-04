@@ -193,6 +193,7 @@ export async function getDashboardData(userId: string) {
         ? currentSheet.capitals.map((c) => ({
             id: c.id,
             name: c.capitalCategory.name,
+            color: c.capitalCategory.color,
             amount: c.amount,
         }))
         : []

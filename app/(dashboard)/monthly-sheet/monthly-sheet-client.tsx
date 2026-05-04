@@ -16,7 +16,7 @@ type Capital = {
     id: string
     amount: number
     order: number | null
-    capitalCategory: { id: string; name: string; icon: string | null }
+    capitalCategory: { id: string; name: string; icon: string | null; color: string }
     capitalCategoryId: string
 }
 
@@ -762,7 +762,7 @@ function CapitalList({ capitals, capitalCategories, sheetId }: {
 
     return (
         <div className="space-y-3">
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext id="capital-categories" sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={items.map(c => c.id)} strategy={verticalListSortingStrategy}>
                     <ul className="divide-y divide-border">
                         {items.map(c => (
@@ -809,7 +809,11 @@ function SortableCapitalRow({ capital, isEditing, onEdit, onDone }: {
                     >
                         <GripVertical className="size-4" />
                     </button>
-                    <div className="flex-1">
+                    <div className="flex-1 flex items-center gap-2">
+                        <span
+                            className="w-3 h-3 rounded-full shrink-0"
+                            style={{ backgroundColor: capital.capitalCategory.color }}
+                        />
                         <p className="font-medium text-foreground">
                             {capital.capitalCategory.icon} {capital.capitalCategory.name}
                         </p>

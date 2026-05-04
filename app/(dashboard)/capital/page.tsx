@@ -18,6 +18,9 @@ export default async function CapitalsPage() {
     return (
         <div className="max-w-lg mx-auto py-8 space-y-2">
             <h1 className="text-3xl font-semibold mb-8">Capital Categories</h1>
+            <p className="text-sm text-muted-foreground -mt-6 mb-8">
+                Define your asset categories once. Each month you update the amounts - the categories stay.
+            </p>
             <CapitalCategoryManagerContent categories={categories} />
         </div>
     )

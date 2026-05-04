@@ -39,11 +39,14 @@ export const capitalCategorySchema = z.object({
       message: "Icon must be a single emoji"
     })
     .optional(),
+  color: z.string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color")
+    .default("#3B82F6")
 })
 
 export const capitalSchema = z.object({
   amount: z.number()
-    .positive("Amount must be greater than 0")
+    .nonnegative("Amount must be 0 or greater")
     .max(999_999_999, "Amount is too large"),
   capitalCategoryId: z.string().min(1, "Please select a category"),
   monthlySheetId: z.string().min(1),

@@ -11,10 +11,11 @@ export async function createCapitalCategory(prevState: any, formData: FormData) 
     const parsed = capitalCategorySchema.safeParse({
         name: String(formData.get("name") ?? "").trim(),
         icon: String(formData.get("icon") ?? "").trim() || undefined,
+        color: String(formData.get("color") ?? "#3B82F6").trim(),
     })
     if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-    const { name, icon } = parsed.data
+    const { name, icon, color } = parsed.data
 
     const existing = await prisma.capitalCategory.findUnique({
         where: { userId_name: { userId: user.id, name } },
@@ -23,7 +24,7 @@ export async function createCapitalCategory(prevState: any, formData: FormData) 
 
     try {
         await prisma.capitalCategory.create({
-            data: { name, icon: icon || null, userId: user.id },
+            data: { name, icon: icon || null, color, userId: user.id },
         })
         revalidatePath("/capitals")
         revalidatePath("/monthly-sheet")
@@ -39,17 +40,18 @@ export async function updateCapitalCategory(categoryId: string, formData: FormDa
     const parsed = capitalCategorySchema.safeParse({
         name: String(formData.get("name") ?? "").trim(),
         icon: String(formData.get("icon") ?? "").trim() || undefined,
+        color: String(formData.get("color") ?? "#3B82F6").trim(),
     })
     if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-    const { name, icon } = parsed.data
+    const { name, icon, color } = parsed.data
 
     const category = await prisma.capitalCategory.findUnique({ where: { id: categoryId } })
     if (!category || category.userId !== user.id) return { error: "Not found or unauthorized" }
 
     await prisma.capitalCategory.update({
         where: { id: categoryId },
-        data: { name, icon: icon || null },
+        data: { name, icon: icon || null, color },
     })
     revalidatePath("/capitals")
     revalidatePath("/monthly-sheet")

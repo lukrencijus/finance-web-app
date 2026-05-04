@@ -30,6 +30,7 @@ export type CapitalCategory = {
     id: string
     name: string
     icon: string | null
+    color: string
     order: number | null
 }
 
@@ -37,6 +38,46 @@ type CapitalEntry = {
     id: string
     amount: number
     monthlySheet: { month: number; year: number }
+}
+
+const PRESET_COLORS = [
+    "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
+    "#06B6D4", "#F97316", "#EC4899", "#84CC16", "#6366F1",
+    "#14B8A6", "#F43F5E", "#A855F7", "#0EA5E9", "#22C55E",
+]
+
+function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
+    return (
+        <div className="flex flex-wrap gap-1.5 items-center">
+            {PRESET_COLORS.map(c => (
+                <button
+                    key={c}
+                    type="button"
+                    onClick={() => onChange(c)}
+                    className="w-5 h-5 rounded-full transition-transform hover:scale-110 focus:outline-none shrink-0"
+                    style={{
+                        backgroundColor: c,
+                        boxShadow: value === c ? `0 0 0 2px white, 0 0 0 3.5px ${c}` : undefined,
+                    }}
+                />
+            ))}
+            <label
+                className="w-5 h-5 rounded-full border-2 border-dashed border-border flex items-center justify-center cursor-pointer relative overflow-hidden hover:border-muted-foreground transition-colors shrink-0"
+                title="Custom color"
+                style={{ backgroundColor: PRESET_COLORS.includes(value) ? "transparent" : value }}
+            >
+                <input
+                    type="color"
+                    value={value}
+                    onChange={e => onChange(e.target.value)}
+                    className="absolute opacity-0 w-full h-full cursor-pointer"
+                />
+                {PRESET_COLORS.includes(value) && (
+                    <span className="text-[8px] text-muted-foreground pointer-events-none">+</span>
+                )}
+            </label>
+        </div>
+    )
 }
 
 function ConfirmDeleteDialog({ category, capitals, onConfirm, onCancel, isPending }: {
@@ -105,6 +146,7 @@ function ConfirmDeleteDialog({ category, capitals, onConfirm, onCancel, isPendin
 function EditCategoryRow({ category, onDone }: { category: CapitalCategory; onDone: () => void }) {
     const [error, setError] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
+    const [color, setColor] = useState(category.color)
     const iconRef = useRef<HTMLInputElement>(null)
     const nameRef = useRef<HTMLInputElement>(null)
     const router = useRouter()
@@ -114,6 +156,7 @@ function EditCategoryRow({ category, onDone }: { category: CapitalCategory; onDo
         const fd = new FormData()
         fd.append("icon", iconRef.current?.value ?? "")
         fd.append("name", nameRef.current?.value ?? "")
+        fd.append("color", color)
         startTransition(async () => {
             const result = await updateCapitalCategory(category.id, fd)
             if (result?.success) { router.refresh(); onDone() }
@@ -122,22 +165,29 @@ function EditCategoryRow({ category, onDone }: { category: CapitalCategory; onDo
     }
 
     return (
-        <div className="flex items-center gap-1.5 px-3 py-2 bg-muted/30 rounded-md">
-            <GripVertical className="size-4 text-transparent shrink-0" />
-            <input ref={iconRef} defaultValue={category.icon ?? ""} placeholder="💰"
-                className="w-10 border border-input rounded px-1.5 py-1 text-sm bg-background text-foreground text-center focus:outline-none focus:ring-1 focus:ring-ring" />
-            <input ref={nameRef} defaultValue={category.name} autoFocus
-                onKeyDown={e => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onDone() }}
-                className="flex-1 border border-input rounded px-2 py-1 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />
-            <button onClick={handleSave} disabled={isPending}
-                className="text-green-600 dark:text-green-400 hover:opacity-80 p-0.5 disabled:opacity-50">
-                <Check className="size-4" />
-            </button>
-            <button onClick={onDone}
-                className="text-red-600 dark:text-red-400 hover:opacity-80 p-0.5">
-                <XCircle className="size-4" />
-            </button>
-            {error && <span className="text-xs text-destructive">{error}</span>}
+        <div className="space-y-3 px-3 py-2 bg-muted/30 rounded-md">
+            <div className="flex items-center gap-1.5">
+                <GripVertical className="size-4 text-transparent shrink-0" />
+                <input ref={iconRef} defaultValue={category.icon ?? ""} placeholder="💰"
+                    className="w-10 border border-input rounded px-1.5 py-1 text-sm bg-background text-foreground text-center focus:outline-none focus:ring-1 focus:ring-ring" />
+                <input ref={nameRef} defaultValue={category.name} autoFocus
+                    onKeyDown={e => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onDone() }}
+                    className="flex-1 border border-input rounded px-2 py-1 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />
+                <button onClick={handleSave} disabled={isPending}
+                    className="text-green-600 dark:text-green-400 hover:opacity-80 p-0.5 disabled:opacity-50">
+                    <Check className="size-4" />
+                </button>
+                <button onClick={onDone}
+                    className="text-red-600 dark:text-red-400 hover:opacity-80 p-0.5">
+                    <XCircle className="size-4" />
+                </button>
+            </div>
+            {/* Color picker */}
+            <div className="pl-6">
+                <p className="text-xs text-muted-foreground mb-1.5">Color</p>
+                <ColorPicker value={color} onChange={setColor} />
+            </div>
+            {error && <p className="text-xs text-destructive pl-6">{error}</p>}
         </div>
     )
 }
@@ -186,6 +236,7 @@ function SortableCategoryRow({ category }: { category: CapitalCategory }) {
                     <GripVertical className="size-4" />
                 </button>
                 <span className="w-6 text-center text-sm shrink-0">{category.icon ?? "-"}</span>
+                <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
                 <span className="flex-1 text-sm text-foreground">{category.name}</span>
                 <button onClick={() => setEditing(true)}
                     className="text-muted-foreground/40 hover:text-blue-500 p-1 transition-colors shrink-0">
@@ -212,6 +263,7 @@ function SortableCategoryRow({ category }: { category: CapitalCategory }) {
 function AddCategoryRow({ onClose }: { onClose: () => void }) {
     const [error, setError] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
+    const [color, setColor] = useState("#3B82F6")
     const iconRef = useRef<HTMLInputElement>(null)
     const nameRef = useRef<HTMLInputElement>(null)
     const router = useRouter()
@@ -221,6 +273,7 @@ function AddCategoryRow({ onClose }: { onClose: () => void }) {
         const fd = new FormData()
         fd.append("icon", iconRef.current?.value ?? "")
         fd.append("name", nameRef.current?.value ?? "")
+        fd.append("color", color)
         startTransition(async () => {
             const result = await createCapitalCategory(null, fd)
             if (result?.success) { router.refresh(); onClose() }
@@ -229,11 +282,11 @@ function AddCategoryRow({ onClose }: { onClose: () => void }) {
     }
 
     return (
-        <div className="space-y-2 p-2 bg-muted/20 rounded-lg border border-border/50">
+        <div className="space-y-3 p-2 bg-muted/20 rounded-lg border border-border/50">
             <div className="flex items-center gap-1.5">
                 <input ref={iconRef} placeholder="💰"
                     className="w-10 border border-input rounded px-1.5 py-1.5 text-sm bg-background text-foreground text-center focus:outline-none focus:ring-1 focus:ring-ring" />
-                <input ref={nameRef} placeholder="Category name" autoFocus
+                <input ref={nameRef} placeholder="e.g. Savings" autoFocus
                     onKeyDown={e => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") onClose() }}
                     className="flex-1 border border-input rounded px-2 py-1.5 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />
                 <button onClick={handleAdd} disabled={isPending}
@@ -243,6 +296,11 @@ function AddCategoryRow({ onClose }: { onClose: () => void }) {
                 <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-0.5">
                     <X className="size-4" />
                 </button>
+            </div>
+            {/* Color picker */}
+            <div>
+                <p className="text-xs text-muted-foreground mb-1.5">Color</p>
+                <ColorPicker value={color} onChange={setColor} />
             </div>
             {error && <p className="text-xs text-destructive font-medium">{error}</p>}
         </div>
@@ -270,7 +328,7 @@ export function CapitalCategoryManagerContent({ categories }: { categories: Capi
 
     return (
         <div className="space-y-3">
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext id={"capital-categories" }sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={items.map(c => c.id)} strategy={verticalListSortingStrategy}>
                     <ul className="space-y-0.5">
                         {items.length === 0 && !addingNew && (
