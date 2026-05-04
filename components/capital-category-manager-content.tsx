@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useRef } from "react"
+import { useState, useTransition, useRef, useEffect } from "react"
 import { Trash2, Pencil, Check, XCircle, Plus, X, GripVertical } from "lucide-react"
 import { useRouter } from "next/navigation"
 import {
@@ -41,10 +41,17 @@ type CapitalEntry = {
 }
 
 const PRESET_COLORS = [
-    "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
-    "#06B6D4", "#F97316", "#EC4899", "#84CC16", "#6366F1",
-    "#14B8A6", "#F43F5E", "#A855F7", "#0EA5E9", "#22C55E",
-]
+    "#EF4444",
+    "#F97316",
+    "#F59E0B",
+    "#22C55E",
+    "#06B6D4",
+    "#3B82F6",
+    "#6366F1",
+    "#A855F7",
+    "#EC4899",
+    "#64748B",
+];
 
 function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
     return (
@@ -311,6 +318,10 @@ export function CapitalCategoryManagerContent({ categories }: { categories: Capi
     const [items, setItems] = useState(categories)
     const [addingNew, setAddingNew] = useState(false)
     const [, startTransition] = useTransition()
+
+    useEffect(() => {
+        setItems(categories)
+    }, [categories])
 
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 

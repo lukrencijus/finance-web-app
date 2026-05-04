@@ -141,9 +141,9 @@ export function MonthlySheetClient({
                         </Link>
                     </div>
                 ) : (
-                    <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
+                    <div className="space-y-6">
                         {activeTab === "Income" && (
-                            <div className="space-y-6">
+                            <div className="bg-card rounded-xl p-6 shadow-sm border border-border space-y-6">
                                 <AddTransactionForm
                                     type="INCOME"
                                     sheetId={sheet.id}
@@ -162,7 +162,7 @@ export function MonthlySheetClient({
                             </div>
                         )}
                         {activeTab === "Expenses" && (
-                            <div className="space-y-6">
+                            <div className="bg-card rounded-xl p-6 shadow-sm border border-border space-y-6">
                                 <AddTransactionForm
                                     type="EXPENSE"
                                     sheetId={sheet.id}
@@ -598,19 +598,21 @@ function Overview({ totalIncome, totalExpenses, balance, capitals, capitalCatego
             </div>
 
             {/* Capital */}
-            <div>
-                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
-                    Capital
-                </p>
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Capital</p>
+                    <CapitalCategoryManager categories={capitalCategories} />
+                </div>
+                
                 <AddCapitalForm
                     sheetId={sheetId}
                     capitalCategories={capitalCategories}
                     existingCategoryIds={capitals.map(c => c.capitalCategoryId)}
                 />
-                <div className="mt-4 space-y-3">
+                <div className="mt-6 space-y-4">
                     {/* Proportional bar */}
                     {totalCapital > 0 && (
-                        <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
+                        <div className="flex h-3 rounded-full overflow-hidden gap-0.5 bg-muted">
                             {capitalCategories
                                 .filter(cat => (capitals.find(c => c.capitalCategoryId === cat.id)?.amount ?? 0) > 0)
                                 .map(cat => {
