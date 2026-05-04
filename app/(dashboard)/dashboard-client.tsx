@@ -240,6 +240,12 @@ export function DashboardClient({ data }: { data: DashboardData }) {
         showRecent: true
     });
 
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const toggleWidget = (key: keyof typeof settings) => {
+        setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+    };
+
     useEffect(() => {
         if (!chartRef.current) return
 
@@ -311,21 +317,46 @@ export function DashboardClient({ data }: { data: DashboardData }) {
     return (
         <div className="p-6 max-w-5xl mx-auto space-y-6">
             
-            {/* Manage Widgets Button */}
-            <div className="flex justify-end">
-                <button className="text-xs border border-border rounded-lg px-3 py-1.5 hover:bg-muted transition-colors font-medium">
-                    Customize Dashboard
-                </button>
-            </div>
+            {/* Header Area with Settings Toggle */}
+            <div className="flex items-center justify-between mb-2">
+                <div>
+                    <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-1">
+                        {monthLabel} - overview
+                    </p>
+                    <h1 className="text-2xl font-semibold text-foreground">Financial Status</h1>
+                </div>
 
-            {/* Always Shown: Header */}
-            <div className="mb-6">
-                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-1">
-                    {monthLabel} - overview
-                </p>
-                <h1 className="text-2xl font-semibold text-foreground">
-                    Financial Status
-                </h1>
+                <div className="relative">
+                    <button 
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        className="flex items-center gap-2 text-xs border border-border rounded-lg px-3 py-2 hover:bg-muted transition-colors font-medium bg-card"
+                    >
+                        Customize Dashboard
+                    </button>
+
+                    {isMenuOpen && (
+                        <>
+                            <div className="fixed inset-0 z-10" onClick={() => setIsMenuOpen(false)} />
+                            <div className="absolute right-0 top-full mt-2 w-56 z-20 bg-card border border-border rounded-xl shadow-xl p-3 animate-in fade-in zoom-in-95 duration-100">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-2 mb-2">Toggle Widgets</p>
+                                <div className="space-y-1">
+                                    {Object.entries(settings).map(([key, value]) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => toggleWidget(key as keyof typeof settings)}
+                                            className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-muted rounded-md text-sm transition-colors"
+                                        >
+                                            <span className="capitalize">{key.replace('show', '')}</span>
+                                            <div className={`w-8 h-4 rounded-full transition-colors relative ${value ? 'bg-blue-600' : 'bg-muted-foreground/30'}`}>
+                                                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${value ? 'left-4.5' : 'left-0.5'}`} />
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Always Shown: Metric cards */}
