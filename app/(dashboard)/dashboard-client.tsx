@@ -82,7 +82,10 @@ const INCOME_COLORS = [
 ]
 
 function fmt(n: number) {
-    return "€" + n.toLocaleString("en-IE", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+    return "€" + n.toLocaleString("en-IE", { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+    })
 }
 
 function calcDelta(
@@ -99,7 +102,7 @@ function calcDelta(
     if (diff === 0) return null
     if (current === 0) return null
 
-    if (prev === 0 || Math.abs(prev) < 1) {
+    if (prev === 0 || Math.abs(prev) < 0.01) {
         return { label: `${diff >= 0 ? "+" : ""}${fmt(diff)} vs last month`, positive: diff >= 0 }
     }
 
@@ -127,21 +130,33 @@ function MetricCard({
     const deltaColor = d == null
         ? ""
         : d.positive === positiveIsGood
-            ? "text-green-700 dark:text-green-400"
-            : "text-red-700 dark:text-red-400"
+            ? "text-green-600 dark:text-green-400"
+            : "text-destructive"
 
-    const barColor = bar !== undefined && bar < 0 ? "bg-red-600" : "bg-green-600"
+    const barColor = bar !== undefined && bar < 0 ? "bg-destructive" : "bg-blue-600 dark:bg-blue-500"
 
     return (
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
-            <p className="text-xl font-medium text-gray-900 dark:text-gray-100 leading-tight">{value}</p>
-            {d && <p className={`text-xs mt-1 ${deltaColor}`}>{d.label}</p>}
+        <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
+                {label}
+            </p>
+            <p className="text-2xl font-bold text-foreground leading-tight">
+                {value}
+            </p>
+            
+            {/* Trend Label */}
+            {d && (
+                <p className={`text-xs mt-2 font-medium ${deltaColor}`}>
+                    {d.label}
+                </p>
+            )}
+
+            {/* Progress Bar (for Savings Rate) */}
             {bar !== undefined && (
-                <div className="mt-2 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div className="mt-3 h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
-                        className={`h-full rounded-full ${barColor}`}
-                        style={{ width: `${Math.min(Math.abs(bar) * 100, 100)}%` }}
+                        className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                        style={{ width: `${Math.min(Math.max(Math.abs(bar) * 100, 0), 100)}%` }}
                     />
                 </div>
             )}
@@ -217,6 +232,14 @@ export function DashboardClient({ data }: { data: DashboardData }) {
     const maxExpenseCat = Math.max(...(data.categoryBreakdown?.map(c => c.amount) ?? []), 1)
     const maxIncomeCat  = Math.max(...(data.incomeCategoryBreakdown?.map(c => c.amount) ?? []), 1)
 
+    const [settings, setSettings] = useState({
+        showTrend: true,
+        showExpenses: true,
+        showIncome: true,
+        showCapital: true,
+        showRecent: true
+    });
+
     useEffect(() => {
         if (!chartRef.current) return
 
@@ -286,20 +309,27 @@ export function DashboardClient({ data }: { data: DashboardData }) {
     const monthLabel = `${MONTH_FULL[data.currentMonth - 1]} ${data.currentYear}`
 
     return (
-        <div className="p-6 max-w-5xl mx-auto">
+        <div className="p-6 max-w-5xl mx-auto space-y-6">
+            
+            {/* Manage Widgets Button */}
+            <div className="flex justify-end">
+                <button className="text-xs border border-border rounded-lg px-3 py-1.5 hover:bg-muted transition-colors font-medium">
+                    Customize Dashboard
+                </button>
+            </div>
 
-            {/* Header */}
+            {/* Always Shown: Header */}
             <div className="mb-6">
-                <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-1">
+                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-1">
                     {monthLabel} - overview
                 </p>
-                <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                <h1 className="text-2xl font-semibold text-foreground">
                     Financial Status
                 </h1>
             </div>
 
-            {/* Metric cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            {/* Always Shown: Metric cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <MetricCard label="Total income"   value={fmt(data.currentIncome)}   d={incomeDelta}   positiveIsGood={true} />
                 <MetricCard label="Total expenses" value={fmt(data.currentExpenses)}  d={expensesDelta} positiveIsGood={false} />
                 <MetricCard label="Net saved"      value={fmt(data.netSaved)}         d={netDelta}      positiveIsGood={true} />
@@ -310,153 +340,147 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                 />
             </div>
 
+            {/* Customizable Widgets */}
             {/* Charts row - items-stretch makes the chart card fill the height of the right column */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-stretch">
-
-                {/* Trend chart - flex-col so the canvas can grow to fill remaining height */}
-                <div className="flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                    <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
-                        Income vs expenses - last 6 months
-                    </p>
-                    <div className="relative flex-1 min-h-44">
-                        <canvas
-                            ref={chartRef}
-                            role="img"
-                            aria-label="Line chart comparing monthly income and expenses"
-                        />
-                    </div>
-                    <div className="flex gap-4 mt-3">
-                        <Legend color="#3B6D11" label="Income" />
-                        <Legend color="#A32D2D" label="Expenses" dashed />
-                    </div>
-                </div>
-
-                {/* Right column - expenses + income by category stacked */}
-                <div className="flex flex-col gap-4">
-
-                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                        <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
-                            Expenses by category
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+                
+                {/* Trend Chart Widget */}
+                {settings.showTrend && (
+                    <div className="flex flex-col rounded-xl border border-border bg-card p-4">
+                        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
+                            Income vs expenses - last 6 months
                         </p>
-                        {data.categoryBreakdown.length === 0 ? (
-                            <p className="text-sm text-gray-400">No expenses this month.</p>
-                        ) : (
-                            <CategoryBars items={data.categoryBreakdown} max={maxExpenseCat} colors={CAT_COLORS} />
+                        <div className="relative flex-1 min-h-60">
+                            <canvas ref={chartRef} />
+                        </div>
+                        <div className="flex gap-4 mt-3">
+                            <Legend color="#3B6D11" label="Income" />
+                            <Legend color="#A32D2D" label="Expenses" dashed />
+                        </div>
+                    </div>
+                )}
+
+                {/* Category Breakdowns Widget */}
+                {(settings.showExpenses || settings.showIncome) && (
+                    <div className="flex flex-col gap-4">
+                        {settings.showExpenses && (
+                            <div className="rounded-xl border border-border bg-card p-4 flex-1">
+                                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
+                                    Expenses by category
+                                </p>
+                                {data.categoryBreakdown.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground">No expenses this month.</p>
+                                ) : (
+                                    <CategoryBars items={data.categoryBreakdown} max={maxExpenseCat} colors={CAT_COLORS} />
+                                )}
+                            </div>
+                        )}
+
+                        {settings.showIncome && (
+                            <div className="rounded-xl border border-border bg-card p-4 flex-1">
+                                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
+                                    Income by category
+                                </p>
+                                {!data.incomeCategoryBreakdown || data.incomeCategoryBreakdown.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground">No income entries this month.</p>
+                                ) : (
+                                    <CategoryBars items={data.incomeCategoryBreakdown} max={maxIncomeCat} colors={INCOME_COLORS} />
+                                )}
+                            </div>
                         )}
                     </div>
-
-                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                        <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
-                            Income by category
-                        </p>
-                        {!data.incomeCategoryBreakdown || data.incomeCategoryBreakdown.length === 0 ? (
-                            <p className="text-sm text-gray-400">No income entries this month.</p>
-                        ) : (
-                            <CategoryBars items={data.incomeCategoryBreakdown} max={maxIncomeCat} colors={INCOME_COLORS} />
-                        )}
-                    </div>
-
-                </div>
-
+                )}
             </div>
 
-            {/* Bottom row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                {/* Capital breakdown */}
-                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                    <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
-                        Capital breakdown
-                    </p>
-                    {data.capitals.length === 0 ? (
-                        <p className="text-sm text-gray-400">No capital entries.</p>
-                    ) : (
-                        <>
-                            {data.capitals.map((c, i) => (
-                                <div
-                                    key={c.id}
-                                    className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <span
-                                            className="w-2 h-2 rounded-full shrink-0"
-                                            style={{ backgroundColor: CAT_COLORS[i % CAT_COLORS.length] }}
-                                        />
-                                        <span className="text-sm text-gray-700 dark:text-gray-300">{c.name}</span>
+                
+                {/* Capital Breakdown Widget */}
+                {settings.showCapital && (
+                    <div className="rounded-xl border border-border bg-card p-4">
+                        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
+                            Capital breakdown
+                        </p>
+                        {data.capitals.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No capital entries.</p>
+                        ) : (
+                            <>
+                                {data.capitals.map((c, i) => (
+                                    <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CAT_COLORS[i % CAT_COLORS.length] }} />
+                                            <span className="text-sm text-foreground">{c.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs text-muted-foreground">
+                                                {data.totalCapital > 0 ? ((c.amount / data.totalCapital) * 100).toFixed(1) : "0"}%
+                                            </span>
+                                            <span className="text-sm font-medium text-foreground">{fmt(c.amount)}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xs text-gray-400">
-                                            {data.totalCapital > 0
-                                                ? ((c.amount / data.totalCapital) * 100).toFixed(1)
-                                                : "0"}%
-                                        </span>
-                                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                            {fmt(c.amount)}
-                                        </span>
-                                    </div>
+                                ))}
+                                <div className="flex justify-between pt-3 mt-1">
+                                    <span className="text-xs text-muted-foreground">Total net worth</span>
+                                    <span className="text-sm font-semibold text-foreground">{fmt(data.totalCapital)}</span>
                                 </div>
-                            ))}
-                            <div className="flex justify-between pt-3 mt-1">
-                                <span className="text-xs text-gray-400">Total net worth</span>
-                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                    {fmt(data.totalCapital)}
-                                </span>
-                            </div>
-                        </>
-                    )}
-                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+
 
                 {/* Recent transactions */}
-                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                    <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">
-                        Recent transactions
-                    </p>
-                    {data.recentTransactions.length === 0 ? (
-                        <p className="text-sm text-gray-400">No recent transactions.</p>
-                    ) : (
-                        <div>
-                            {data.recentTransactions.map((t) => {
-                                const isIncome = t.type === "INCOME"
-                                const txDate   = new Date(t.date)
-                                const hasUniqueDesc = t.description && t.description !== t.category.name
-                                return (
-                                    <div
-                                        key={t.id}
-                                        className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0"
-                                    >
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <div
-                                                className="w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0"
-                                                style={{
-                                                    backgroundColor: isIncome ? "#EAF3DE" : "#FCEBEB",
-                                                    color: isIncome ? "#3B6D11" : "#A32D2D",
-                                                }}
-                                            >
-                                                {t.category.icon ?? (isIncome ? "↑" : "↓")}
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-sm text-gray-800 dark:text-gray-200 truncate">
-                                                    {t.description || t.category.name}
-                                                </p>
-                                                <p className="text-xs text-gray-400">
-                                                    {hasUniqueDesc ? `${t.category.name} · ` : ""}
-                                                    {txDate.toLocaleDateString("en-IE", { day: "numeric", month: "short" })}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <span
-                                            className="text-sm font-medium shrink-0 ml-2"
-                                            style={{ color: isIncome ? "#3B6D11" : "#A32D2D" }}
+                {settings.showRecent && (
+                    <div className="rounded-xl border border-border bg-card p-4">
+                        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
+                            Recent transactions
+                        </p>
+                        {data.recentTransactions.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No recent transactions.</p>
+                        ) : (
+                            <div>
+                                {data.recentTransactions.map((t) => {
+                                    const isIncome = t.type === "INCOME"
+                                    const txDate   = new Date(t.date)
+                                    const hasUniqueDesc = t.description && t.description !== t.category.name
+                                    return (
+                                        <div
+                                            key={t.id}
+                                            className="flex items-center justify-between py-2 border-b border-border last:border-0"
                                         >
-                                            {isIncome ? "+" : "-"}{fmt(t.amount)}
-                                        </span>
-                                    </div>
-                                )
-                            })}
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <div
+                                                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0"
+                                                    style={{
+                                                        backgroundColor: isIncome ? "#EAF3DE" : "#FCEBEB",
+                                                        color: isIncome ? "#3B6D11" : "#A32D2D",
+                                                    }}
+                                                >
+                                                    {t.category.icon ?? (isIncome ? "↑" : "↓")}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm text-foreground truncate">
+                                                        {t.description || t.category.name}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {hasUniqueDesc ? `${t.category.name} · ` : ""}
+                                                        {txDate.toLocaleDateString("en-IE", { day: "numeric", month: "short" })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span
+                                                className="text-sm font-medium shrink-0 ml-2"
+                                                style={{ color: isIncome ? "#3B6D11" : "#A32D2D" }}
+                                            >
+                                                {isIncome ? "+" : "-"}{fmt(t.amount)}
+                                            </span>
+                                        </div>
+                                    )
+                                })}
                         </div>
-                    )}
-                </div>
-
+                            )}
+                    </div>
+                )}
             </div>
         </div>
     )

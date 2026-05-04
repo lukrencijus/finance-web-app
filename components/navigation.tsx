@@ -18,7 +18,7 @@ import {
 const routes = [
     {
         href: "/",
-        label: "Home"
+        label: "Dashboard"
     },
     {
         href: "/monthly-sheet",

@@ -58,7 +58,7 @@ const MONTH_NAMES = [
     "July","August","September","October","November","December"
 ]
 
-const TABS = ["Income", "Expenses", "Overview"] as const
+const TABS = ["Income", "Expenses", "Capital"] as const
 type Tab = typeof TABS[number]
 
 export function MonthlySheetClient({
@@ -180,7 +180,7 @@ export function MonthlySheetClient({
                                 />
                             </div>
                         )}
-                        {activeTab === "Overview" && (
+                        {activeTab === "Capital" && (
                             <Overview
                                 totalIncome={totalIncome}
                                 totalExpenses={totalExpenses}
@@ -568,41 +568,8 @@ function Overview({ totalIncome, totalExpenses, balance, capitals, capitalCatego
 
     return (
         <div className="space-y-6">
-            {/* Summary cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <SummaryCard label="Income"   amount={totalIncome}   color="text-green-600 dark:text-green-400" />
-                <SummaryCard label="Expenses" amount={totalExpenses} color="text-destructive" />
-                <SummaryCard
-                    label="Balance"
-                    amount={balance}
-                    color={balance >= 0 ? "text-blue-600 dark:text-blue-400" : "text-destructive"}
-                />
-            </div>
-
-            {/* Category breakdowns */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <CategoryBreakdownPanel
-                    title="Expenses by category"
-                    entries={topExpenses}
-                    max={maxExp}
-                    barColor="bg-red-500 dark:bg-red-600"
-                    empty="No expenses this month."
-                />
-                <CategoryBreakdownPanel
-                    title="Income by category"
-                    entries={topIncome}
-                    max={maxInc}
-                    barColor="bg-green-500 dark:bg-green-600"
-                    empty="No income this month."
-                />
-            </div>
-
             {/* Capital */}
-            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Capital</p>
-                </div>
-                
+            <div className="bg-card rounded-xl p-6 shadow-sm border border-border space-y-6">
                 <AddCapitalForm
                     sheetId={sheetId}
                     capitalCategories={capitalCategories}
@@ -641,21 +608,6 @@ function Overview({ totalIncome, totalExpenses, balance, capitals, capitalCatego
                     />
                 </div>
             </div>
-        </div>
-    )
-}
-
-function SummaryCard({ label, amount, color }: {
-    label: string
-    amount: number
-    color: string
-}) {
-    return (
-        <div className="bg-muted/50 border border-border rounded-lg p-4 text-center">
-            <p className="text-sm text-muted-foreground mb-1 font-medium">{label}</p>
-            <p className={`text-2xl font-bold ${color}`}>
-                {label === "Balance" && amount < 0 ? "-" : ""}€{Math.abs(amount).toFixed(2)}
-            </p>
         </div>
     )
 }
@@ -851,7 +803,7 @@ function CapitalList({ capitals, capitalCategories, sheetId, totalCapital }: {
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                         Total net worth
                     </div>
-                    <div className="flex items-center gap-2 pr-[30px]"> 
+                    <div className="flex items-center gap-2 pr-9"> 
                         <span className="text-lg font-bold text-foreground">
                             €{totalCapital.toLocaleString("en-IE", { 
                                 minimumFractionDigits: 2, 
