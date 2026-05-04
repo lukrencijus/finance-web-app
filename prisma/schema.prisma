@@ -21,6 +21,7 @@ model User {
   sessions      Session[]
   sheets        MonthlySheet[]
   categories    Category[]
+  capitalCategories  CapitalCategory[]
   sharedWithMe  SharedAccess[] @relation("SharedToUser")
   myShares      SharedAccess[] @relation("SharedFromUser")
   createdAt     DateTime       @default(now())
@@ -109,13 +110,27 @@ model Transaction {
 }
 
 model Capital {
-  id             String       @id @default(cuid())
-  name           String       // e.g., "Savings", "Cash", "Crypto"
-  amount         Float
-  percentage     Float?       // Can be calculated dynamically or stored
-  
-  monthlySheetId String
-  monthlySheet   MonthlySheet @relation(fields: [monthlySheetId], references: [id], onDelete: Cascade)
+  id                 String          @id @default(cuid())
+  amount             Float
+  order              Int?            @default(0)
+  monthlySheetId     String
+  monthlySheet       MonthlySheet    @relation(fields: [monthlySheetId], references: [id], onDelete: Cascade)
+  capitalCategoryId  String
+  capitalCategory    CapitalCategory @relation(fields: [capitalCategoryId], references: [id], onDelete: Cascade)
+}
+
+model CapitalCategory {
+  id        String    @id @default(cuid())
+  name      String
+  icon      String?
+  order     Int?      @default(0)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  capitals  Capital[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+
+  @@unique([userId, name])
 }
 
 model SharedAccess {
