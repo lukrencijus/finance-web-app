@@ -709,7 +709,7 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds }: {
                     ))}
                 </select>
                 {available.length === 0 && (
-                    <p className="text-xs text-muted-foreground mt-1 text-yellow-600 dark:text-yellow-400">
+                    <p className="text-xs mt-1 text-yellow-600 dark:text-yellow-400">
                         All categories already have an entry this month.
                     </p>
                 )}

@@ -39,6 +39,7 @@ type RecentTransaction = {
 type Capital = {
     id: string
     name: string
+    color: string
     amount: number
 }
 
@@ -436,10 +437,10 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                             <p className="text-sm text-muted-foreground">No capital entries.</p>
                         ) : (
                             <>
-                                {data.capitals.map((c, i) => (
+                                {data.capitals.map((c) => (
                                     <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                                         <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: CAT_COLORS[i % CAT_COLORS.length] }} />
+                                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
                                             <span className="text-sm text-foreground">{c.name}</span>
                                         </div>
                                         <div className="flex items-center gap-3">

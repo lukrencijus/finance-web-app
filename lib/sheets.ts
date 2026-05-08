@@ -88,7 +88,13 @@ export async function getDashboardData(userId: string) {
         },
         include: {
             transactions: { include: { category: true } },
-            capitals: { include: { capitalCategory: true } },
+            capitals: {
+                include: { capitalCategory: true },
+                orderBy: [
+                    { capitalCategory: { order: "asc" } },
+                    { id: "asc" },
+                ],
+            },
         },
         orderBy: [{ year: "desc" }, { month: "desc" }],
     })

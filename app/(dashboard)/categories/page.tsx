@@ -22,7 +22,7 @@ export default async function CategoriesPage() {
 
     return (
         <div className="max-w-lg mx-auto py-8 space-y-2">
-            <h1 className="text-3xl font-semibold mb-8">Categories</h1>
+            <h1 className="text-3xl font-semibold mb-8">Transaction Categories</h1>
             <CategoryManagerContent categories={categories} />
         </div>
     )
