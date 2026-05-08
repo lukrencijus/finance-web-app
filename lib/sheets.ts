@@ -120,7 +120,10 @@ export async function getDashboardData(userId: string) {
                       .filter((t) => t.type === "EXPENSE")
                       .reduce((sum, t) => sum + t.amount, 0)
                 : null
-            return { month, year, income, expenses }
+            const capitalTotal = sheet
+                ? sheet.capitals.reduce((sum, c) => sum + c.amount, 0)
+                : null
+            return { month, year, income, expenses, capitalTotal }
         })
 
     // Current month aggregates

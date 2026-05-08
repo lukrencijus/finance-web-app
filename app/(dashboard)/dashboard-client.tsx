@@ -19,6 +19,7 @@ type MonthlyTotal = {
     year: number
     income: number | null
     expenses: number | null
+    capitalTotal: number | null
 }
 
 type CategoryBreakdown = {
@@ -223,6 +224,8 @@ function CategoryBars({
 export function DashboardClient({ data }: { data: DashboardData }) {
     const chartRef = useRef<HTMLCanvasElement>(null)
     const chartInstance = useRef<Chart | null>(null)
+    const netWorthChartRef = useRef<HTMLCanvasElement>(null)
+    const netWorthChartInstance = useRef<Chart | null>(null)
 
     const incomeDelta   = calcDelta(data.currentIncome, data.prevIncome)
     const expensesDelta = calcDelta(data.currentExpenses, data.prevExpenses)
@@ -238,6 +241,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
         showExpenses: true,
         showIncome: true,
         showCapital: true,
+        showNetWorth: true,
         showRecent: true
     });
 
@@ -311,6 +315,59 @@ export function DashboardClient({ data }: { data: DashboardData }) {
         })
 
         return () => { chartInstance.current?.destroy() }
+    }, [data.monthlyTotals])
+
+    useEffect(() => {
+        if (!netWorthChartRef.current) return
+
+        const labels = data.monthlyTotals.map((m) => MONTH_SHORT[m.month - 1])
+        const netWorthData = data.monthlyTotals.map((m) => m.capitalTotal ?? 0)
+
+        if (netWorthChartInstance.current) netWorthChartInstance.current.destroy()
+
+        netWorthChartInstance.current = new Chart(netWorthChartRef.current, {
+            type: "line",
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: "Net worth",
+                        data: netWorthData,
+                        borderColor: "#6366F1",
+                        backgroundColor: "rgba(99,102,241,0.07)",
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointBackgroundColor: "#6366F1",
+                        fill: true,
+                        tension: 0.35,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11 }, color: "#888" },
+                    },
+                    y: {
+                        grid: { color: "rgba(120,120,120,0.1)" },
+                        ticks: {
+                            font: { size: 11 },
+                            color: "#888",
+                            callback: (v) =>
+                                Number(v) >= 1000
+                                    ? "€" + (Number(v) / 1000).toFixed(1) + "k"
+                                    : "€" + v,
+                        },
+                    },
+                },
+            },
+        })
+
+        return () => { netWorthChartInstance.current?.destroy() }
     }, [data.monthlyTotals])
 
     const monthLabel = `${MONTH_FULL[data.currentMonth - 1]} ${data.currentYear}`
@@ -393,6 +450,21 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                     </div>
                 )}
 
+                {/* Net Worth Chart Widget */}
+                {settings.showNetWorth && (
+                    <div className="flex flex-col rounded-xl border border-border bg-card p-4">
+                        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
+                            Net worth - last 6 months
+                        </p>
+                        <div className="relative flex-1 min-h-52">
+                            <canvas ref={netWorthChartRef} />
+                        </div>
+                        <div className="flex gap-4 mt-3">
+                            <Legend color="#6366F1" label="Net worth" />
+                        </div>
+                    </div>
+                )}
+
                 {/* Category Breakdowns Widget */}
                 {(settings.showExpenses || settings.showIncome) && (
                     <div className="flex flex-col gap-4">
@@ -426,7 +498,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
+
                 {/* Capital Breakdown Widget */}
                 {settings.showCapital && (
                     <div className="rounded-xl border border-border bg-card p-4">
