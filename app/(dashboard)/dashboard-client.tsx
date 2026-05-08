@@ -432,9 +432,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             </div>
 
             {/* Customizable Widgets */}
-            {/* Charts row - items-stretch makes the chart card fill the height of the right column */}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
                 {/* Trend Chart Widget */}
                 {settings.showTrend && (
@@ -467,39 +465,32 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                     </div>
                 )}
 
-                {/* Category Breakdowns Widget */}
-                {(settings.showExpenses || settings.showIncome) && (
-                    <div className="flex flex-col gap-4">
-                        {settings.showExpenses && (
-                            <div className="rounded-xl border border-border bg-card p-4 flex-1">
-                                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
-                                    Expenses by category
-                                </p>
-                                {data.categoryBreakdown.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground">No expenses this month.</p>
-                                ) : (
-                                    <CategoryBars items={data.categoryBreakdown} max={maxExpenseCat} colors={CAT_COLORS} />
-                                )}
-                            </div>
-                        )}
-
-                        {settings.showIncome && (
-                            <div className="rounded-xl border border-border bg-card p-4 flex-1">
-                                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
-                                    Income by category
-                                </p>
-                                {!data.incomeCategoryBreakdown || data.incomeCategoryBreakdown.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground">No income entries this month.</p>
-                                ) : (
-                                    <CategoryBars items={data.incomeCategoryBreakdown} max={maxIncomeCat} colors={INCOME_COLORS} />
-                                )}
-                            </div>
+                {/* Category Breakdowns Widgets */}
+                {settings.showExpenses && (
+                    <div className="rounded-xl border border-border bg-card p-4">
+                        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
+                            Expenses by category
+                        </p>
+                        {data.categoryBreakdown.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No expenses this month.</p>
+                        ) : (
+                            <CategoryBars items={data.categoryBreakdown} max={maxExpenseCat} colors={CAT_COLORS} />
                         )}
                     </div>
                 )}
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {settings.showIncome && (
+                    <div className="rounded-xl border border-border bg-card p-4">
+                        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
+                            Income by category
+                        </p>
+                        {!data.incomeCategoryBreakdown || data.incomeCategoryBreakdown.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No income entries this month.</p>
+                        ) : (
+                            <CategoryBars items={data.incomeCategoryBreakdown} max={maxIncomeCat} colors={INCOME_COLORS} />
+                        )}
+                    </div>
+                )}
 
                 {/* Capital Breakdown Widget */}
                 {settings.showCapital && (
