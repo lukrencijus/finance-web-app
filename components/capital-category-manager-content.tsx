@@ -154,14 +154,12 @@ function EditCategoryRow({ category, onDone }: { category: CapitalCategory; onDo
     const [error, setError] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
     const [color, setColor] = useState(category.color)
-    const iconRef = useRef<HTMLInputElement>(null)
     const nameRef = useRef<HTMLInputElement>(null)
     const router = useRouter()
 
     const handleSave = () => {
         setError(null)
         const fd = new FormData()
-        fd.append("icon", iconRef.current?.value ?? "")
         fd.append("name", nameRef.current?.value ?? "")
         fd.append("color", color)
         startTransition(async () => {
@@ -175,8 +173,6 @@ function EditCategoryRow({ category, onDone }: { category: CapitalCategory; onDo
         <div className="space-y-3 px-3 py-2 bg-muted/30 rounded-md">
             <div className="flex items-center gap-1.5">
                 <GripVertical className="size-4 text-transparent shrink-0" />
-                <input ref={iconRef} defaultValue={category.icon ?? ""} placeholder="💰"
-                    className="w-10 border border-input rounded px-1.5 py-1 text-sm bg-background text-foreground text-center focus:outline-none focus:ring-1 focus:ring-ring" />
                 <input ref={nameRef} defaultValue={category.name} autoFocus
                     onKeyDown={e => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onDone() }}
                     className="flex-1 border border-input rounded px-2 py-1 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />
@@ -242,7 +238,6 @@ function SortableCategoryRow({ category }: { category: CapitalCategory }) {
                     {...attributes} {...listeners}>
                     <GripVertical className="size-4" />
                 </button>
-                <span className="w-6 text-center text-sm shrink-0">{category.icon ?? "-"}</span>
                 <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
                 <span className="flex-1 text-sm text-foreground">{category.name}</span>
                 <button onClick={() => setEditing(true)}
@@ -270,15 +265,13 @@ function SortableCategoryRow({ category }: { category: CapitalCategory }) {
 function AddCategoryRow({ onClose }: { onClose: () => void }) {
     const [error, setError] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
-    const [color, setColor] = useState("#3B82F6")
-    const iconRef = useRef<HTMLInputElement>(null)
+    const [color, setColor] = useState("#64748B")
     const nameRef = useRef<HTMLInputElement>(null)
     const router = useRouter()
 
     const handleAdd = () => {
         setError(null)
         const fd = new FormData()
-        fd.append("icon", iconRef.current?.value ?? "")
         fd.append("name", nameRef.current?.value ?? "")
         fd.append("color", color)
         startTransition(async () => {
@@ -291,8 +284,6 @@ function AddCategoryRow({ onClose }: { onClose: () => void }) {
     return (
         <div className="space-y-3 p-2 bg-muted/20 rounded-lg border border-border/50">
             <div className="flex items-center gap-1.5">
-                <input ref={iconRef} placeholder="💰"
-                    className="w-10 border border-input rounded px-1.5 py-1.5 text-sm bg-background text-foreground text-center focus:outline-none focus:ring-1 focus:ring-ring" />
                 <input ref={nameRef} placeholder="e.g. Savings" autoFocus
                     onKeyDown={e => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") onClose() }}
                     className="flex-1 border border-input rounded px-2 py-1.5 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />

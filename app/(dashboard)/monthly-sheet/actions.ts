@@ -197,21 +197,3 @@ export async function deleteCapital(capitalId: string) {
     await prisma.capital.delete({ where: { id: capitalId } })
     revalidatePath("/monthly-sheet")
 }
-
-export async function reorderCapitals(orderedIds: string[]) {
-    const user = await getCurrentDbUser()
-
-    const capitals = await prisma.capital.findMany({
-        where: { id: { in: orderedIds } },
-        include: { monthlySheet: true },
-    })
-    if (capitals.some(c => c.monthlySheet.userId !== user.id)) return { error: "Unauthorized" }
-
-    await Promise.all(
-        orderedIds.map((id, index) =>
-            prisma.capital.update({ where: { id }, data: { order: index } })
-        )
-    )
-    revalidatePath("/monthly-sheet")
-    return { success: true }
-}

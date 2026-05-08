@@ -1,22 +1,19 @@
 "use client"
 
 import { useState, useEffect, useActionState, useTransition } from "react"
-import { createTransaction, deleteTransaction, updateTransaction, createCapital, updateCapital, deleteCapital, reorderCapitals } from "./actions"
+import { createTransaction, deleteTransaction, updateTransaction, createCapital, updateCapital, deleteCapital } from "./actions"
 import { Trash2, ChevronDown, Pencil, Check, XCircle, Plus, GripVertical, Wallet } from "lucide-react"
 import Link from "next/link"
 import { CategoryManager } from "@/components/category-manager"
 import { type Category } from "@/components/category-manager-content" 
 import { CapitalCategoryManager } from "@/components/capital-category-manager"
 import { type CapitalCategory } from "@/components/capital-category-manager-content"
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent, } from "@dnd-kit/core"
-import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy, } from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
 
 type Capital = {
     id: string
     amount: number
     order: number | null
-    capitalCategory: { id: string; name: string; icon: string | null; color: string }
+    capitalCategory: { id: string; name: string; color: string }
     capitalCategoryId: string
 }
 
@@ -593,7 +590,7 @@ function Overview({ totalIncome, totalExpenses, balance, capitals, capitalCatego
                                                 backgroundColor: cat.color,
                                                 minWidth: "4px",
                                             }}
-                                            title={`${cat.icon ?? ""} ${cat.name}: ${percentage}% (€${amount.toLocaleString()})`}
+                                            title={`${cat.name}: ${percentage}% (€${amount.toLocaleString()})`}
                                         />
                                     )
                                 })}
@@ -707,12 +704,12 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds }: {
                     <option value="">Select a category...</option>
                     {available.map(c => (
                         <option key={c.id} value={c.id} className="bg-background">
-                            {c.icon} {c.name}
+                            {c.name}
                         </option>
                     ))}
                 </select>
                 {available.length === 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-1 text-yellow-600 dark:text-yellow-400">
                         All categories already have an entry this month.
                     </p>
                 )}
@@ -755,55 +752,33 @@ function CapitalList({ capitals, capitalCategories, sheetId, totalCapital }: {
     sheetId: string
     totalCapital: number
 }) {
-    const [items, setItems] = useState(capitals)
     const [editingId, setEditingId] = useState<string | null>(null)
-    const [, startTransition] = useTransition()
 
-    // Keep in sync when parent re-renders (after server revalidation)
-    useEffect(() => { setItems(capitals) }, [capitals])
-
-    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event
-        if (!over || active.id === over.id) return
-        const oldIndex = items.findIndex(c => c.id === active.id)
-        const newIndex = items.findIndex(c => c.id === over.id)
-        const reordered = arrayMove(items, oldIndex, newIndex)
-        setItems(reordered)
-        startTransition(async () => { await reorderCapitals(reordered.map(c => c.id)) })
-    }
-
-    if (items.length === 0) {
+    if (capitals.length === 0) {
         return <p className="text-muted-foreground text-sm py-4">No capital entries this month.</p>
     }
 
     return (
         <div className="space-y-0">
-            <DndContext id="capital-list" sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={items.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                    <ul className="divide-y divide-border">
-                        {items.map(c => (
-                            <SortableCapitalRow
-                                key={c.id}
-                                capital={c}
-                                isEditing={editingId === c.id}
-                                onEdit={() => setEditingId(c.id)}
-                                onDone={() => setEditingId(null)}
-                                totalCapital={totalCapital}
-                            />
-                        ))}
-                    </ul>
-                </SortableContext>
-            </DndContext>
+            <ul className="divide-y divide-border">
+                {capitals.map(c => (
+                    <CapitalRow
+                        key={c.id}
+                        capital={c}
+                        isEditing={editingId === c.id}
+                        onEdit={() => setEditingId(c.id)}
+                        onDone={() => setEditingId(null)}
+                        totalCapital={totalCapital}
+                    />
+                ))}
+            </ul>
 
-            {/* Total net worth */}
             {totalCapital > 0 && (
                 <div className="flex items-center justify-between pt-5 mt-2 border-t border-border">
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                         Total net worth
                     </div>
-                    <div className="flex items-center gap-2 pr-9"> 
+                    <div className="flex items-center gap-2">
                         <span className="text-lg font-bold text-foreground">
                             €{totalCapital.toLocaleString("en-IE", { 
                                 minimumFractionDigits: 2, 
@@ -817,38 +792,26 @@ function CapitalList({ capitals, capitalCategories, sheetId, totalCapital }: {
     )
 }
 
-function SortableCapitalRow({ capital, isEditing, onEdit, onDone, totalCapital }: {
+function CapitalRow({ capital, isEditing, onEdit, onDone, totalCapital }: {
     capital: Capital
     isEditing: boolean
     onEdit: () => void
     onDone: () => void
     totalCapital: number
 }) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-        useSortable({ id: capital.id })
-
-    const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
-
     return (
-        <li ref={setNodeRef} style={style}>
+        <li>
             {isEditing ? (
                 <EditCapitalRow capital={capital} onDone={onDone} />
             ) : (
                 <div className="py-3 flex items-center gap-2 group">
-                    <button
-                        type="button"
-                        className="text-muted-foreground/30 hover:text-muted-foreground cursor-grab active:cursor-grabbing p-0.5 shrink-0 touch-none"
-                        {...attributes} {...listeners}
-                    >
-                        <GripVertical className="size-4" />
-                    </button>
                     <div className="flex-1 flex items-center gap-2">
                         <span
                             className="w-3 h-3 rounded-full shrink-0"
                             style={{ backgroundColor: capital.capitalCategory.color }}
                         />
                         <p className="font-medium text-foreground">
-                            {capital.capitalCategory.icon} {capital.capitalCategory.name}
+                            {capital.capitalCategory.name}
                         </p>
                     </div>
                     {totalCapital > 0 && (
@@ -887,7 +850,7 @@ function EditCapitalRow({ capital, onDone }: { capital: Capital; onDone: () => v
             className="py-3 px-3 my-1 space-y-2 bg-muted/50 border border-border rounded-lg"
         >
             <p className="text-sm font-medium text-foreground">
-                {capital.capitalCategory.icon} {capital.capitalCategory.name}
+                {capital.capitalCategory.name}
             </p>
             <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Amount (€)</label>

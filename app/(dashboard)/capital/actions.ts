@@ -11,7 +11,7 @@ export async function createCapitalCategory(prevState: any, formData: FormData) 
     const parsed = capitalCategorySchema.safeParse({
         name: String(formData.get("name") ?? "").trim(),
         icon: String(formData.get("icon") ?? "").trim() || undefined,
-        color: String(formData.get("color") ?? "#3B82F6").trim(),
+        color: String(formData.get("color") ?? "#64748B").trim(),
     })
     if (!parsed.success) return { error: parsed.error.issues[0].message }
 
@@ -40,7 +40,7 @@ export async function updateCapitalCategory(categoryId: string, formData: FormDa
     const parsed = capitalCategorySchema.safeParse({
         name: String(formData.get("name") ?? "").trim(),
         icon: String(formData.get("icon") ?? "").trim() || undefined,
-        color: String(formData.get("color") ?? "#3B82F6").trim(),
+        color: String(formData.get("color") ?? "#64748B").trim(),
     })
     if (!parsed.success) return { error: parsed.error.issues[0].message }
 

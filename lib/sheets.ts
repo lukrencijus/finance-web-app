@@ -14,8 +14,11 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
             },
             capitals: {
                 include: { capitalCategory: true },
-                orderBy: [{ order: { sort: "asc", nulls: "last" } }, { id: "asc" }],
-            },
+                orderBy: [
+                    { capitalCategory: { order: "asc" } },
+                    { id: "asc" },
+                ]
+            }
         },
     })
     if (!sheet) {
@@ -31,8 +34,11 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
                 },
                 capitals: {
                     include: { capitalCategory: true },
-                    orderBy: [{ order: { sort: "asc", nulls: "last" } }, { id: "asc" }],
-                },
+                    orderBy: [
+                        { capitalCategory: { order: "asc" } },
+                        { id: "asc" },
+                    ]
+                }
             },
         })
     }
@@ -52,7 +58,10 @@ export async function getMonthSheet(userId: string, month: number, year: number)
             },
             capitals: {
                 include: { capitalCategory: true },
-                orderBy: [{ order: { sort: "asc", nulls: "last" } }, { id: "asc" }],
+                orderBy: [
+                    { capitalCategory: { order: "asc" } },
+                    { id: "asc" },
+                ],
             },
         },
     })

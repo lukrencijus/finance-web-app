@@ -41,7 +41,7 @@ export const capitalCategorySchema = z.object({
     .optional(),
   color: z.string()
     .regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color")
-    .default("#3B82F6")
+    .default("#64748B")
 })
 
 export const capitalSchema = z.object({
