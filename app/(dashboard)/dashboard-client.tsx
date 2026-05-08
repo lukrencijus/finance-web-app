@@ -59,6 +59,7 @@ export type DashboardData = {
     recentTransactions: RecentTransaction[]
     capitals: Capital[]
     totalCapital: number
+    prevTotalCapital: number | null
 }
 
 const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
@@ -232,6 +233,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
     const prevNet       = data.prevIncome !== null && data.prevExpenses !== null
         ? data.prevIncome - data.prevExpenses : null
     const netDelta = calcDelta(data.netSaved, prevNet)
+    const capitalDelta = calcDelta(data.totalCapital, data.prevTotalCapital)
 
     const maxExpenseCat = Math.max(...(data.categoryBreakdown?.map(c => c.amount) ?? []), 1)
     const maxIncomeCat  = Math.max(...(data.incomeCategoryBreakdown?.map(c => c.amount) ?? []), 1)
@@ -523,10 +525,17 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                                         </div>
                                     </div>
                                 ))}
-                                <div className="flex justify-between pt-3 mt-1">
+                            <div className="flex justify-between items-end pt-3 mt-1">
+                                <div>
                                     <span className="text-xs text-muted-foreground">Total net worth</span>
-                                    <span className="text-sm font-semibold text-foreground">{fmt(data.totalCapital)}</span>
+                                    {capitalDelta && (
+                                        <p className={`text-xs font-medium mt-0.5 ${capitalDelta.positive ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
+                                            {capitalDelta.label}
+                                        </p>
+                                    )}
                                 </div>
+                                <span className="text-sm font-semibold text-foreground">{fmt(data.totalCapital)}</span>
+                            </div>
                             </>
                         )}
                     </div>

@@ -143,6 +143,9 @@ export async function getDashboardData(userId: string) {
     let prevYear = currentYear
     if (prevMonth <= 0) { prevMonth = 12; prevYear -= 1 }
     const prevSheet = sheets.find((s) => s.month === prevMonth && s.year === prevYear) ?? null
+    const prevTotalCapital = prevSheet
+        ? prevSheet.capitals.reduce((sum, c) => sum + c.amount, 0)
+        : null
     const prevIncome = prevSheet
         ? prevSheet.transactions
               .filter((t) => t.type === "INCOME")
@@ -239,5 +242,6 @@ export async function getDashboardData(userId: string) {
         })),
         capitals,
         totalCapital,
+        prevTotalCapital,
     }
 }
