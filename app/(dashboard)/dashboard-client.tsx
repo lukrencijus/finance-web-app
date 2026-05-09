@@ -524,7 +524,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 
                     {/* Capital Breakdown Widget */}
                     {settings.showCapital && (
-                        <div className="rounded-xl border border-border bg-card p-4">
+                        <div className="rounded-xl border border-border bg-card p-4 flex flex-col">
                             <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
                                 Capital breakdown
                             </p>
@@ -532,20 +532,22 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                                 <p className="text-sm text-muted-foreground">No capital entries.</p>
                             ) : (
                                 <>
-                                    {data.capitals.map((c) => (
-                                        <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
-                                                <span className="text-sm text-foreground">{c.name}</span>
+                                    <div className="overflow-y-auto max-h-75 flex-1">
+                                        {data.capitals.map((c) => (
+                                            <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                                                    <span className="text-sm text-foreground">{c.name}</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {data.totalCapital > 0 ? ((c.amount / data.totalCapital) * 100).toFixed(1) : "0"}%
+                                                    </span>
+                                                    <span className="text-sm font-medium text-foreground">{fmt(c.amount)}</span>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-xs text-muted-foreground">
-                                                    {data.totalCapital > 0 ? ((c.amount / data.totalCapital) * 100).toFixed(1) : "0"}%
-                                                </span>
-                                                <span className="text-sm font-medium text-foreground">{fmt(c.amount)}</span>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 <div className="flex justify-between items-end pt-3 mt-1">
                                     <div>
                                         <span className="text-xs text-muted-foreground">Total net worth</span>

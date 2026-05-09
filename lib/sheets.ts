@@ -206,7 +206,7 @@ export async function getDashboardData(userId: string) {
         },
         include: { category: true },
         orderBy: { createdAt: "desc" },
-        take: 5,
+        take: 7,
     })
 
     // Capital breakdown (current sheet)
