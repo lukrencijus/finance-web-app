@@ -16,7 +16,7 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
                 include: { capitalCategory: true },
                 orderBy: [
                     { capitalCategory: { order: "asc" } },
-                    { id: "asc" },
+                    { capitalCategory: { createdAt: "desc" } },
                 ]
             }
         },
@@ -36,7 +36,7 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
                     include: { capitalCategory: true },
                     orderBy: [
                         { capitalCategory: { order: "asc" } },
-                        { id: "asc" },
+                        { capitalCategory: { createdAt: "desc" } },
                     ]
                 }
             },
@@ -60,7 +60,7 @@ export async function getMonthSheet(userId: string, month: number, year: number)
                 include: { capitalCategory: true },
                 orderBy: [
                     { capitalCategory: { order: "asc" } },
-                    { id: "asc" },
+                    { capitalCategory: { createdAt: "desc" } },
                 ],
             },
         },
@@ -92,7 +92,7 @@ export async function getDashboardData(userId: string) {
                 include: { capitalCategory: true },
                 orderBy: [
                     { capitalCategory: { order: "asc" } },
-                    { id: "asc" },
+                    { capitalCategory: { createdAt: "desc" } },
                 ],
             },
         },
