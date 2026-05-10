@@ -53,3 +53,62 @@ export async function deleteAccount() {
     await prisma.user.delete({ where: { id: user.id } })
     await signOut({ redirectTo: "/sign-in" })
 }
+
+export async function shareProfile(email: string) {
+    const currentUser = await getCurrentDbUser()
+    
+    if (currentUser.email === email) {
+        return { error: "You cannot share your profile with yourself." }
+    }
+
+    const targetUser = await prisma.user.findUnique({
+        where: { email }
+    })
+
+    if (!targetUser) {
+        return { error: "User not found." }
+    }
+
+    try {
+        await prisma.sharedAccess.create({
+            data: {
+                ownerId: currentUser.id,
+                sharedWithId: targetUser.id
+            }
+        })
+        revalidatePath("/settings")
+        return { success: true }
+    } catch (error) {
+        return { error: "Profile already shared with this user." }
+    }
+}
+
+export async function revokeShare(sharedWithId: string) {
+    const user = await getCurrentDbUser()
+    await prisma.sharedAccess.delete({
+        where: {
+            ownerId_sharedWithId: {
+                ownerId: user.id,
+                sharedWithId
+            }
+        }
+    })
+    revalidatePath("/settings")
+    return { success: true }
+}
+
+export async function getSharingData() {
+    const user = await getCurrentDbUser()
+    
+    const sharedWithOthers = await prisma.sharedAccess.findMany({
+        where: { ownerId: user.id },
+        include: { sharedWith: { select: { id: true, email: true, name: true } } }
+    })
+
+    const sharedWithMe = await prisma.sharedAccess.findMany({
+        where: { sharedWithId: user.id },
+        include: { owner: { select: { id: true, email: true, name: true } } }
+    })
+
+    return { sharedWithOthers, sharedWithMe }
+}

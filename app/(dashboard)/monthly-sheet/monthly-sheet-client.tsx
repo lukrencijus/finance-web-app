@@ -21,7 +21,7 @@ type Transaction = {
     id: string
     amount: number
     description: string | null
-    date: Date
+    date: Date | string
     type: string
     category: { name: string; icon: string | null }
     categoryId: string
@@ -48,6 +48,8 @@ type Props = {
     isFuture: boolean
     serverCurrentMonth: number
     serverCurrentYear: number
+    readOnly?: boolean
+    userId?: string
 }
 
 const MONTH_NAMES = [
@@ -69,6 +71,8 @@ export function MonthlySheetClient({
     isFuture,
     serverCurrentMonth,
     serverCurrentYear,
+    readOnly = false,
+    userId,
 }: Props) {
     const [activeTab, setActiveTab] = useState<Tab>("Income")
 
@@ -80,7 +84,6 @@ export function MonthlySheetClient({
     const expenseCategories = categories.filter(c => c.type === "EXPENSE")
     const totalIncome = income.reduce((sum, t) => sum + t.amount, 0)
     const totalExpenses = expenses.reduce((sum, t) => sum + t.amount, 0)
-    const balance = totalIncome - totalExpenses
 
     return (
         <div className="-mt-24 pb-10">
@@ -92,6 +95,8 @@ export function MonthlySheetClient({
                         allSheets={allSheets}
                         currentMonth={month}
                         currentYear={year}
+                        readOnly={readOnly}
+                        userId={userId}
                     />
                     {isActualCurrentMonth && (
                         <span className="text-xs font-normal bg-white/20 text-white px-2 py-0.5 rounded-full border border-white/10">
@@ -125,15 +130,15 @@ export function MonthlySheetClient({
                         <p className="text-sm text-muted-foreground">
                             {MONTH_NAMES[month - 1]} {year} is in the future - no sheet exists yet.
                         </p>
-                        <Link href="/monthly-sheet" className="inline-block mt-4 text-sm text-blue-500 hover:text-blue-400 hover:underline transition-colors">
+                        <Link href={readOnly && userId ? `/shared/${userId}` : "/monthly-sheet" } className="inline-block mt-4 text-sm text-blue-500 hover:text-blue-400 hover:underline transition-colors">
                             Go to current month
                         </Link>
                     </div>
                 ) : !sheet ? (
                     <div className="bg-card rounded-xl p-10 shadow-sm border border-border text-center text-muted-foreground">
                         <p className="text-lg font-medium text-foreground mb-1">No data for this month</p>
-                        <p className="text-sm">You didn't have an active sheet in {MONTH_NAMES[month - 1]} {year}.</p>
-                        <Link href="/monthly-sheet" className="inline-block mt-4 text-sm text-blue-500 hover:text-blue-400 hover:underline transition-colors">
+                        <p className="text-sm"> {readOnly ? "This user didn't have" : "You didn't have"} an active sheet in {MONTH_NAMES[month - 1]} {year}.</p>
+                        <Link href={readOnly && userId ? `/shared/${userId}` : "/monthly-sheet" } className="inline-block mt-4 text-sm text-blue-500 hover:text-blue-400 hover:underline transition-colors">
                             Go to current month
                         </Link>
                     </div>
@@ -141,13 +146,16 @@ export function MonthlySheetClient({
                     <div className="space-y-6">
                         {activeTab === "Income" && (
                             <div className="bg-card rounded-xl p-6 shadow-sm border border-border space-y-6">
-                                <AddTransactionForm
-                                    type="INCOME"
-                                    sheetId={sheet.id}
-                                    categories={incomeCategories}
-                                    month={month}
-                                    year={year}
-                                />
+                                {!readOnly && (
+                                    <AddTransactionForm
+                                        type="INCOME"
+                                        sheetId={sheet.id}
+                                        categories={incomeCategories}
+                                        month={month}
+                                        year={year}
+                                        readOnly={readOnly}
+                                    />
+                                )}
                                 <TransactionList
                                     transactions={income}
                                     categories={incomeCategories}
@@ -155,18 +163,22 @@ export function MonthlySheetClient({
                                     month={month}
                                     year={year}
                                     sheetId={sheet.id}
+                                    readOnly={readOnly}
                                 />
                             </div>
                         )}
                         {activeTab === "Expenses" && (
                             <div className="bg-card rounded-xl p-6 shadow-sm border border-border space-y-6">
-                                <AddTransactionForm
-                                    type="EXPENSE"
-                                    sheetId={sheet.id}
-                                    categories={expenseCategories}
-                                    month={month}
-                                    year={year}
-                                />
+                                {!readOnly && (
+                                    <AddTransactionForm
+                                        type="EXPENSE"
+                                        sheetId={sheet.id}
+                                        categories={expenseCategories}
+                                        month={month}
+                                        year={year}
+                                        readOnly={readOnly}
+                                    />
+                                )}
                                 <TransactionList
                                     transactions={expenses}
                                     categories={expenseCategories}
@@ -174,6 +186,7 @@ export function MonthlySheetClient({
                                     month={month}
                                     year={year}
                                     sheetId={sheet.id}
+                                    readOnly={readOnly}
                                 />
                             </div>
                         )}
@@ -182,6 +195,7 @@ export function MonthlySheetClient({
                                 capitals={sheet.capitals}
                                 capitalCategories={capitalCategories}
                                 sheetId={sheet.id}
+                                readOnly={readOnly}
                             />
                         )}
                     </div>
@@ -192,12 +206,13 @@ export function MonthlySheetClient({
 }
 
 // Add Transaction Form
-function AddTransactionForm({ type, sheetId, categories, month, year }: {
+function AddTransactionForm({ type, sheetId, categories, month, year, readOnly }: {
     type: "INCOME" | "EXPENSE"
     sheetId: string
     categories: Category[]
     month: number
     year: number
+    readOnly: boolean
 }) {
     const [state, formAction, isPending] = useActionState(createTransaction, null)
     const [isOpen, setIsOpen] = useState(false)
@@ -315,13 +330,14 @@ function AddTransactionForm({ type, sheetId, categories, month, year }: {
     )
 }
 
-function TransactionList({ transactions, categories, emptyMessage, month, year, sheetId }: {
+function TransactionList({ transactions, categories, emptyMessage, month, year, sheetId, readOnly }: {
     transactions: Transaction[]
     categories: Category[]
     emptyMessage: string
     month: number
     year: number
     sheetId: string
+    readOnly?: boolean
 }) {
     const [editingId, setEditingId] = useState<string | null>(null)
 
@@ -346,6 +362,7 @@ function TransactionList({ transactions, categories, emptyMessage, month, year, 
                         <TransactionRow
                             transaction={t}
                             onEdit={() => setEditingId(t.id)}
+                            readOnly={readOnly}
                         />
                     )}
                 </li>
@@ -355,9 +372,10 @@ function TransactionList({ transactions, categories, emptyMessage, month, year, 
 }
 
 // Read-only transaction row
-function TransactionRow({ transaction: t, onEdit }: {
+function TransactionRow({ transaction: t, onEdit, readOnly }: {
     transaction: Transaction
     onEdit: () => void
+    readOnly?: boolean
 }) {
     return (
         <div className="py-3 flex justify-between items-center group">
@@ -376,14 +394,18 @@ function TransactionRow({ transaction: t, onEdit }: {
                 <span className={`font-semibold ${t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
                     {t.type === "INCOME" ? "+" : "-"}€{t.amount.toFixed(2)}
                 </span>
-                <button
-                    onClick={onEdit}
-                    className="text-muted-foreground/40 hover:text-blue-500 transition-colors"
-                    title="Edit"
-                >
-                    <Pencil className="size-4" />
-                </button>
-                <DeleteButton transactionId={t.id} />
+                {!readOnly && (
+                    <>
+                        <button
+                            onClick={onEdit}
+                            className="text-muted-foreground/40 hover:text-blue-500 transition-colors"
+                            title="Edit"
+                        >
+                            <Pencil className="size-4" />
+                        </button>
+                        <DeleteButton transactionId={t.id} />
+                    </>
+                )}
             </div>
         </div>
     )
@@ -527,39 +549,43 @@ function DeleteButton({ transactionId }: { transactionId: string }) {
 }
 
 // Overview
-function Overview({ capitals, capitalCategories, sheetId }: {
+function Overview({ capitals, capitalCategories, sheetId, readOnly = false}: {
     capitals: Capital[]
     capitalCategories: CapitalCategory[]
     sheetId: string
+    readOnly?: boolean
 }) {
 
     const totalCapital = capitals.reduce((sum, c) => sum + c.amount, 0)
 
     return (
         <div className="space-y-6">
-            {/* Capital */}
             <div className="bg-card rounded-xl p-6 shadow-sm border border-border space-y-6">
-                <AddCapitalForm
-                    sheetId={sheetId}
-                    capitalCategories={capitalCategories}
-                    existingCategoryIds={capitals.map(c => c.capitalCategoryId)}
-                />
+                {!readOnly && (
+                    <AddCapitalForm
+                        sheetId={sheetId}
+                        capitalCategories={capitalCategories}
+                        existingCategoryIds={capitals.map(c => c.capitalCategoryId)}
+                    />
+                )}
                 <CapitalList
                     capitals={capitals}
-                    capitalCategories={capitalCategories}
                     sheetId={sheetId}
                     totalCapital={totalCapital}
+                    readOnly={readOnly}
                 />
-                </div>
             </div>
+        </div>
     )
 }
 
 // Month Picker
-function MonthPicker({ allSheets, currentMonth, currentYear }: {
+function MonthPicker({ allSheets, currentMonth, currentYear, readOnly, userId }: {
     allSheets: SheetSummary[]
     currentMonth: number
     currentYear: number
+    readOnly?: boolean
+    userId?: string
 }) {
     const [isOpen, setIsOpen] = useState(false)
 
@@ -583,10 +609,15 @@ function MonthPicker({ allSheets, currentMonth, currentYear }: {
                             <ul>
                                 {allSheets.map(s => {
                                     const isActive = s.month === currentMonth && s.year === currentYear
+
+                                    const href = (readOnly && userId)
+                                        ? `/shared/${userId}?month=${s.month}&year=${s.year}`
+                                        : `/monthly-sheet?month=${s.month}&year=${s.year}`
+
                                     return (
                                         <li key={`${s.year}-${s.month}`}>
                                             <Link
-                                                href={`/monthly-sheet?month=${s.month}&year=${s.year}`}
+                                                href={href}
                                                 onClick={() => setIsOpen(false)}
                                                 className={`block w-full px-4 py-2.5 text-sm transition-colors
                                                     ${isActive
@@ -692,11 +723,11 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds }: {
     )
 }
 
-function CapitalList({ capitals, capitalCategories, sheetId, totalCapital }: {
+function CapitalList({ capitals, sheetId, totalCapital, readOnly = false }: {
     capitals: Capital[]
-    capitalCategories: CapitalCategory[]
     sheetId: string
     totalCapital: number
+    readOnly?: boolean
 }) {
     const [editingId, setEditingId] = useState<string | null>(null)
 
@@ -715,6 +746,7 @@ function CapitalList({ capitals, capitalCategories, sheetId, totalCapital }: {
                         onEdit={() => setEditingId(c.id)}
                         onDone={() => setEditingId(null)}
                         totalCapital={totalCapital}
+                        readOnly={readOnly}
                     />
                 ))}
             </ul>
@@ -738,12 +770,13 @@ function CapitalList({ capitals, capitalCategories, sheetId, totalCapital }: {
     )
 }
 
-function CapitalRow({ capital, isEditing, onEdit, onDone, totalCapital }: {
+function CapitalRow({ capital, isEditing, onEdit, onDone, totalCapital, readOnly = false }: {
     capital: Capital
     isEditing: boolean
     onEdit: () => void
     onDone: () => void
     totalCapital: number
+    readOnly?: boolean
 }) {
     return (
         <li>
@@ -768,11 +801,15 @@ function CapitalRow({ capital, isEditing, onEdit, onDone, totalCapital }: {
                     <span className="font-semibold text-blue-600 dark:text-blue-400 w-20 text-right shrink-0">
                         €{capital.amount.toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
-                    <button onClick={onEdit}
-                        className="text-muted-foreground/40 hover:text-blue-500 transition-colors">
-                        <Pencil className="size-4" />
-                    </button>
-                    <DeleteCapitalButton capitalId={capital.id} />
+                    {!readOnly && (
+                        <>
+                            <button onClick={onEdit}
+                                className="text-muted-foreground/40 hover:text-blue-500 transition-colors">
+                                <Pencil className="size-4" />
+                            </button>
+                            <DeleteCapitalButton capitalId={capital.id} />
+                        </>
+                     )}
                 </div>
             )}
         </li>

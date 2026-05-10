@@ -1,8 +1,9 @@
 "use client"
 import { useEffect, useState } from "react"
-import { updateProfile, changePassword, deleteAccount } from "./actions"
+import { updateProfile, changePassword, deleteAccount, shareProfile, revokeShare } from "./actions"
 import { useTheme } from "next-themes"
-import { Sun, Moon, Check, XCircle } from "lucide-react"
+import { Sun, Moon, Check, XCircle, Share2, UserMinus, ExternalLink } from "lucide-react"
+import Link from "next/link"
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
@@ -40,18 +41,51 @@ export function ThemeToggle() {
   )
 }
 
+type SharingData = {
+    sharedWithOthers: {
+        sharedWith: { id: string; email: string; name: string | null }
+    }[]
+    sharedWithMe: {
+        owner: { id: string; email: string; name: string | null }
+    }[]
+}
+
 type Props = {
     initialName: string
     email: string
     hasPassword: boolean
     isAdmin: boolean
+    sharing: SharingData
 }
 
-export default function SettingsClient({ initialName, email, hasPassword, isAdmin }: Props) {
+export default function SettingsClient({ initialName, email, hasPassword, isAdmin, sharing }: Props) {
     const [name, setName] = useState(initialName)
     const [profileMsg, setProfileMsg] = useState<string | null>(null)
     const [passwordMsg, setPasswordMsg] = useState<string | null>(null)
     const [deleteConfirm, setDeleteConfirm] = useState(false)
+
+    const [revokingId, setRevokingId] = useState<string | null>(null)
+    const [shareMsg, setShareMsg] = useState<{ error?: string; success?: boolean } | null>(null)
+    const [shareEmail, setShareEmail] = useState("")
+
+    async function handleShare(e: React.FormEvent) {
+        e.preventDefault()
+        setShareMsg(null)
+        const res = await shareProfile(shareEmail)
+        
+        if ("error" in res) {
+            setShareMsg({ error: res.error })
+        } else {
+            setShareMsg({ success: true })
+            setShareEmail("")
+        }
+    }
+
+    async function handleRevoke(id: string) {
+        setRevokingId(id)
+        await revokeShare(id)
+        setRevokingId(null)
+    }
 
     async function handleProfile(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
@@ -166,6 +200,84 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                     </form>
                 )}
             </section>
+
+            <hr className="border-border" />
+
+                <section className="space-y-6">
+                    <div>
+                        <h2 className="text-lg font-medium">Sharing</h2>
+                        <p className="text-sm text-muted-foreground">Manage who can view your financial monthly reports.</p>
+                    </div>
+
+                    {/* Form to share with someone */}
+                    <form onSubmit={handleShare} className="space-y-3">
+                        <label className="text-sm font-medium">Share your profile (Email)</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="email"
+                                value={shareEmail}
+                                onChange={(e) => setShareEmail(e.target.value)}
+                                placeholder="user@example.com"
+                                className="flex-1 border border-input rounded-md px-3 py-2 text-sm bg-background"
+                                required
+                            />
+                            <button type="submit" className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:opacity-90">
+                                Share
+                            </button>
+                        </div>
+                        {shareMsg?.error && <p className="text-xs text-destructive">{shareMsg.error}</p>}
+                        {shareMsg?.success && <p className="text-xs text-green-600">Shared successfully!</p>}
+                    </form>
+
+                    {/* People who can see my profile */}
+                    <div className="space-y-3">
+                        <h3 className="text-sm font-semibold">People you share with</h3>
+                        {sharing.sharedWithOthers.length === 0 ? (
+                            <p className="text-xs text-muted-foreground italic">You haven't shared your profile with anyone yet.</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {sharing.sharedWithOthers.map((s) => (
+                                    <div key={s.sharedWith.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
+                                        <div className="text-sm">
+                                            <p className="font-medium">{s.sharedWith.name || "User"}</p>
+                                            <p className="text-xs text-muted-foreground">{s.sharedWith.email}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleRevoke(s.sharedWith.id)}
+                                            disabled={revokingId === s.sharedWith.id}
+                                            className="text-destructive p-2 hover:bg-destructive/10 rounded-full transition-colors disabled:opacity-40"
+                                        >
+                                            <UserMinus className="size-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Profiles shared with me */}
+                    <div className="space-y-3">
+                        <h3 className="text-sm font-semibold">Profiles shared with you</h3>
+                        {sharing.sharedWithMe.length === 0 ? (
+                            <p className="text-xs text-muted-foreground italic">No one has shared their profile with you yet.</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {sharing.sharedWithMe.map((s) => (
+                                    <div key={s.owner.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
+                                        <div className="text-sm">
+                                            <p className="font-medium">{s.owner.name || "User"}'s Profile</p>
+                                            <p className="text-xs text-muted-foreground">{s.owner.email}</p>
+                                        </div>
+                                        <Link href={`/shared/${s.owner.id}`} className="flex items-center gap-1.5 text-xs font-medium text-blue-500 hover:underline">
+                                            <ExternalLink className="size-3.5" />
+                                            View
+                                        </Link>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </section>
 
             <hr className="border-border" />
 
