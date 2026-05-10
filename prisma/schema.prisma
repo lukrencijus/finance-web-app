@@ -145,6 +145,8 @@ model SharedAccess {
   sharedWithId   String
   sharedWith     User     @relation("SharedToUser", fields: [sharedWithId], references: [id])
   
+  permission  String  @default("VIEW") // VIEW or EDIT
+
   createdAt      DateTime @default(now())
 
   @@unique([ownerId, sharedWithId])

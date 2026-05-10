@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useActionState } from "react"
 import { createTransaction, deleteTransaction, updateTransaction, createCapital, updateCapital, deleteCapital } from "./actions"
-import { Trash2, ChevronDown, Pencil, Check, XCircle } from "lucide-react"
+import { Trash2, ChevronDown, Pencil, Check, XCircle, Eye } from "lucide-react"
 import Link from "next/link"
 import { CategoryManager } from "@/components/category-manager"
 import { type Category } from "@/components/category-manager-content" 
@@ -88,6 +88,13 @@ export function MonthlySheetClient({
     return (
         <div className="-mt-24 pb-10">
             <div className="max-w-screen-2xl mx-auto px-4">
+
+                {readOnly && (
+                    <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm">
+                        <Eye className="size-4 shrink-0" />
+                        <span>You are viewing a shared profile in read-only mode</span>
+                    </div>
+                )}
 
                 {/* Month picker */}
                 <div className="flex items-center gap-x-3 mb-6">
