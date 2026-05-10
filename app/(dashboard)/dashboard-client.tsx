@@ -223,20 +223,20 @@ function CategoryBars({
 }
 
 const defaultSettings = {
+    showCapital: true,
     showTrend: true,
     showNetWorth: true,
     showExpenses: true,
     showIncome: true,
-    showCapital: true,
     showRecent: true,
 }
 
 const WIDGET_LABELS: Record<keyof typeof defaultSettings, string> = {
+    showCapital: "Capital Breakdown",
     showTrend: "Income vs Expenses",
     showNetWorth: "Net Worth Trend",
     showExpenses: "Expenses by Category",
     showIncome: "Income by Category",
-    showCapital: "Capital Breakdown",
     showRecent: "Recent Transactions",
 }
 
@@ -463,6 +463,68 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             {/* Customizable Widgets */}
             {mounted && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    {/* Capital Breakdown */}
+                    {settings.showCapital && (
+                        <div className="rounded-xl border border-border bg-card p-4 flex flex-col md:col-span-2">
+                            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
+                                Capital breakdown
+                            </p>
+                            {data.capitals.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">No capital entries.</p>
+                            ) : (
+                                <>
+                                    {data.totalCapital > 0 && (
+                                        <div className="flex h-3 rounded-full overflow-hidden gap-0.5 bg-muted mb-4">
+                                            {data.capitals.map(c => (
+                                                <div
+                                                    key={c.id}
+                                                    className="h-full first:rounded-l-full last:rounded-r-full"
+                                                    style={{
+                                                        width: `${(c.amount / data.totalCapital) * 100}%`,
+                                                        backgroundColor: c.color,
+                                                        minWidth: "4px",
+                                                    }}
+                                                    title={`${c.name}: ${((c.amount / data.totalCapital) * 100).toFixed(1)}% (${fmt(c.amount)})`}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* List */}
+                                    <div className="flex-1 flex flex-col min-h-52">
+                                        <div className="overflow-y-auto flex-1 max-h-44">
+                                            {data.capitals.map((c) => (
+                                                <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                                                        <span className="text-sm text-foreground">{c.name}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-xs text-muted-foreground">
+                                                            {data.totalCapital > 0 ? ((c.amount / data.totalCapital) * 100).toFixed(1) : "0"}%
+                                                        </span>
+                                                        <span className="text-sm font-medium text-foreground">{fmt(c.amount)}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="flex justify-between items-end pt-3 mt-auto border-t border-border">
+                                            <div>
+                                                <span className="text-xs text-muted-foreground">Total net worth</span>
+                                                {capitalDelta && (
+                                                    <p className={`text-xs font-medium mt-0.5 ${capitalDelta.positive ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
+                                                        {capitalDelta.label}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <span className="text-sm font-semibold text-foreground">{fmt(data.totalCapital)}</span>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
                     
                     {/* Trend Chart Widget */}
                     {settings.showTrend && (
@@ -522,52 +584,9 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                         </div>
                     )}
 
-                    {/* Capital Breakdown Widget */}
-                    {settings.showCapital && (
-                        <div className="rounded-xl border border-border bg-card p-4 flex flex-col">
-                            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
-                                Capital breakdown
-                            </p>
-                            {data.capitals.length === 0 ? (
-                                <p className="text-sm text-muted-foreground">No capital entries.</p>
-                            ) : (
-                                <>
-                                    <div className="overflow-y-auto max-h-75 flex-1">
-                                        {data.capitals.map((c) => (
-                                            <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
-                                                    <span className="text-sm text-foreground">{c.name}</span>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {data.totalCapital > 0 ? ((c.amount / data.totalCapital) * 100).toFixed(1) : "0"}%
-                                                    </span>
-                                                    <span className="text-sm font-medium text-foreground">{fmt(c.amount)}</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                <div className="flex justify-between items-end pt-3 mt-1">
-                                    <div>
-                                        <span className="text-xs text-muted-foreground">Total net worth</span>
-                                        {capitalDelta && (
-                                            <p className={`text-xs font-medium mt-0.5 ${capitalDelta.positive ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
-                                                {capitalDelta.label}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <span className="text-sm font-semibold text-foreground">{fmt(data.totalCapital)}</span>
-                                </div>
-                                </>
-                            )}
-                        </div>
-                    )}
-
-
                     {/* Recent transactions */}
                     {settings.showRecent && (
-                        <div className="rounded-xl border border-border bg-card p-4">
+                        <div className="rounded-xl border border-border bg-card p-4 md:col-span-2">
                             <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
                                 Recent transactions
                             </p>

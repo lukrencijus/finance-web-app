@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, useActionState, useTransition } from "react"
+import { useState, useEffect, useActionState } from "react"
 import { createTransaction, deleteTransaction, updateTransaction, createCapital, updateCapital, deleteCapital } from "./actions"
-import { Trash2, ChevronDown, Pencil, Check, XCircle, Plus, GripVertical, Wallet } from "lucide-react"
+import { Trash2, ChevronDown, Pencil, Check, XCircle } from "lucide-react"
 import Link from "next/link"
 import { CategoryManager } from "@/components/category-manager"
 import { type Category } from "@/components/category-manager-content" 
@@ -179,14 +179,9 @@ export function MonthlySheetClient({
                         )}
                         {activeTab === "Capital" && (
                             <Overview
-                                totalIncome={totalIncome}
-                                totalExpenses={totalExpenses}
-                                balance={balance}
                                 capitals={sheet.capitals}
                                 capitalCategories={capitalCategories}
                                 sheetId={sheet.id}
-                                income={income}
-                                expenses={expenses}
                             />
                         )}
                     </div>
@@ -532,34 +527,11 @@ function DeleteButton({ transactionId }: { transactionId: string }) {
 }
 
 // Overview
-function Overview({ totalIncome, totalExpenses, balance, capitals, capitalCategories, sheetId, income, expenses }: {
-    totalIncome: number
-    totalExpenses: number
-    balance: number
+function Overview({ capitals, capitalCategories, sheetId }: {
     capitals: Capital[]
     capitalCategories: CapitalCategory[]
     sheetId: string
-    income: Transaction[]
-    expenses: Transaction[]
 }) {
-    // Category breakdowns
-    const expenseMap = new Map<string, { amount: number; icon: string | null }>()
-    for (const t of expenses) {
-        const existing = expenseMap.get(t.category.name)
-        if (existing) existing.amount += t.amount
-        else expenseMap.set(t.category.name, { amount: t.amount, icon: t.category.icon })
-    }
-    const incomeMap = new Map<string, { amount: number; icon: string | null }>()
-    for (const t of income) {
-        const existing = incomeMap.get(t.category.name)
-        if (existing) existing.amount += t.amount
-        else incomeMap.set(t.category.name, { amount: t.amount, icon: t.category.icon })
-    }
-
-    const topExpenses = [...expenseMap.entries()].sort((a, b) => b[1].amount - a[1].amount).slice(0, 6)
-    const topIncome = [...incomeMap.entries()].sort((a, b) => b[1].amount - a[1].amount).slice(0, 6)
-    const maxExp = Math.max(...topExpenses.map(([, v]) => v.amount), 1)
-    const maxInc = Math.max(...topIncome.map(([, v]) => v.amount), 1)
 
     const totalCapital = capitals.reduce((sum, c) => sum + c.amount, 0)
 
@@ -572,40 +544,14 @@ function Overview({ totalIncome, totalExpenses, balance, capitals, capitalCatego
                     capitalCategories={capitalCategories}
                     existingCategoryIds={capitals.map(c => c.capitalCategoryId)}
                 />
-                <div className="mt-6 space-y-4">
-                    {/* Proportional bar */}
-                    {totalCapital > 0 && (
-                        <div className="flex h-3 rounded-full overflow-hidden gap-0.5 bg-muted">
-                            {capitalCategories
-                                .filter(cat => (capitals.find(c => c.capitalCategoryId === cat.id)?.amount ?? 0) > 0)
-                                .map(cat => {
-                                    const amount = capitals.find(c => c.capitalCategoryId === cat.id)!.amount
-                                    const percentage = ((amount / totalCapital) * 100).toFixed(1);
-                                    return (
-                                        <div
-                                            key={cat.id}
-                                            className="h-full first:rounded-l-full last:rounded-r-full"
-                                            style={{
-                                                width: `${(amount / totalCapital) * 100}%`,
-                                                backgroundColor: cat.color,
-                                                minWidth: "4px",
-                                            }}
-                                            title={`${cat.name}: ${percentage}% (€${amount.toLocaleString()})`}
-                                        />
-                                    )
-                                })}
-                        </div>
-                    )}
-
-                    <CapitalList
-                        capitals={capitals}
-                        capitalCategories={capitalCategories}
-                        sheetId={sheetId}
-                        totalCapital={totalCapital}
-                    />
+                <CapitalList
+                    capitals={capitals}
+                    capitalCategories={capitalCategories}
+                    sheetId={sheetId}
+                    totalCapital={totalCapital}
+                />
                 </div>
             </div>
-        </div>
     )
 }
 
@@ -779,7 +725,7 @@ function CapitalList({ capitals, capitalCategories, sheetId, totalCapital }: {
                         Total net worth
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-foreground">
+                        <span className="font-semibold text-foreground">
                             €{totalCapital.toLocaleString("en-IE", { 
                                 minimumFractionDigits: 2, 
                                 maximumFractionDigits: 2 
@@ -810,7 +756,7 @@ function CapitalRow({ capital, isEditing, onEdit, onDone, totalCapital }: {
                             className="w-3 h-3 rounded-full shrink-0"
                             style={{ backgroundColor: capital.capitalCategory.color }}
                         />
-                        <p className="font-medium text-foreground">
+                        <p className="font-medium text-foreground text-sm">
                             {capital.capitalCategory.name}
                         </p>
                     </div>
@@ -896,50 +842,5 @@ function DeleteCapitalButton({ capitalId }: { capitalId: string }) {
             className="text-muted-foreground/40 hover:text-destructive disabled:opacity-30 transition-colors">
             <Trash2 className="size-4" />
         </button>
-    )
-}
-
-function CategoryBreakdownPanel({ title, entries, max, barColor, empty }: {
-    title: string
-    entries: [string, { amount: number; icon: string | null }][]
-    max: number
-    barColor: string
-    empty: string
-}) {
-    const [mounted, setMounted] = useState(false)
-    useEffect(() => {
-        const id = requestAnimationFrame(() => setMounted(true))
-        return () => cancelAnimationFrame(id)
-    }, [])
-
-    return (
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">{title}</p>
-            {entries.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{empty}</p>
-            ) : (
-                <div className="space-y-2.5">
-                    {entries.map(([name, { amount, icon }]) => (
-                        <div key={name} className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground w-24 shrink-0 truncate">
-                                {icon ? `${icon} ` : ""}{name}
-                            </span>
-                            <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
-                                <div
-                                    className={`h-full rounded-full ${barColor}`}
-                                    style={{
-                                        width: mounted ? `max(6px, ${(amount / max) * 100}%)` : "0px",
-                                        transition: "width 0.45s ease",
-                                    }}
-                                />
-                            </div>
-                            <span className="text-xs text-muted-foreground w-16 text-right shrink-0">
-                                €{amount.toFixed(0)}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
     )
 }
