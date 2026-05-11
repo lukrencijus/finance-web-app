@@ -3,7 +3,7 @@
 import { useMedia } from "react-use"
 import { Menu } from "lucide-react"
 import { useState } from "react"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname, useRouter, useParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { NavButton } from "./nav-button"
@@ -22,8 +22,11 @@ export const Navigation = () => {
     const pathname = usePathname()
     const isMobile = useMedia("(max-width: 1024px)", false)
 
-    const sharedMatch = pathname.match(/^\/shared\/([^/]+)/)
-    const sharedUserId = sharedMatch?.[1]
+    const params = useParams()
+    
+    // params.userId will be defined if we are inside the /shared/[userId] folder
+    // It will be undefined if we are on our own dashboard
+    const sharedUserId = params.userId as string | undefined
 
     const routes = sharedUserId ? [
         { href: `/shared/${sharedUserId}`, label: "Dashboard" },
