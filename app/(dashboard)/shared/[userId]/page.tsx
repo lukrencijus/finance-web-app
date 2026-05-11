@@ -23,8 +23,11 @@ export default async function SharedProfilePage({
                 ownerId: targetUserId,
                 sharedWithId: currentUser.id
             }
+        },
+        include: {
+            owner: { select: { name: true, email: true } }
         }
-    });
+    })
 
     if (!access) {
         redirect("/");
@@ -58,8 +61,9 @@ export default async function SharedProfilePage({
             isFuture={year > now.getFullYear() || (year === now.getFullYear() && month > now.getMonth() + 1)}
             serverCurrentMonth={now.getMonth() + 1}
             serverCurrentYear={now.getFullYear()}
-            readOnly={true}
+            readOnly={access.permission === "VIEW"}
             userId={targetUserId}
+            ownerName={access.owner.name ?? access.owner.email}
         />
     );
 }

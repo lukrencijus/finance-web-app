@@ -50,6 +50,7 @@ type Props = {
     serverCurrentYear: number
     readOnly?: boolean
     userId?: string
+    ownerName?: string
 }
 
 const MONTH_NAMES = [
@@ -73,6 +74,7 @@ export function MonthlySheetClient({
     serverCurrentYear,
     readOnly = false,
     userId,
+    ownerName,
 }: Props) {
     const [activeTab, setActiveTab] = useState<Tab>("Income")
 
@@ -89,10 +91,12 @@ export function MonthlySheetClient({
         <div className="-mt-24 pb-10">
             <div className="max-w-screen-2xl mx-auto px-4">
 
-                {readOnly && (
+                {!!userId && (
                     <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm">
                         <Eye className="size-4 shrink-0" />
-                        <span>You are viewing a shared profile in read-only mode</span>
+                        <span>
+                            You are viewing {ownerName ? `${ownerName}'s` : "a shared"} profile in {readOnly ? "read-only" : "edit"} mode
+                        </span>
                     </div>
                 )}
 
@@ -160,7 +164,7 @@ export function MonthlySheetClient({
                                         categories={incomeCategories}
                                         month={month}
                                         year={year}
-                                        readOnly={readOnly}
+                                        isShared={!!userId}
                                     />
                                 )}
                                 <TransactionList
@@ -171,6 +175,7 @@ export function MonthlySheetClient({
                                     year={year}
                                     sheetId={sheet.id}
                                     readOnly={readOnly}
+                                    isShared={!!userId}
                                 />
                             </div>
                         )}
@@ -183,7 +188,7 @@ export function MonthlySheetClient({
                                         categories={expenseCategories}
                                         month={month}
                                         year={year}
-                                        readOnly={readOnly}
+                                        isShared={!!userId}
                                     />
                                 )}
                                 <TransactionList
@@ -194,6 +199,7 @@ export function MonthlySheetClient({
                                     year={year}
                                     sheetId={sheet.id}
                                     readOnly={readOnly}
+                                    isShared={!!userId}
                                 />
                             </div>
                         )}
@@ -203,6 +209,7 @@ export function MonthlySheetClient({
                                 capitalCategories={capitalCategories}
                                 sheetId={sheet.id}
                                 readOnly={readOnly}
+                                isShared={!!userId}
                             />
                         )}
                     </div>
@@ -213,13 +220,13 @@ export function MonthlySheetClient({
 }
 
 // Add Transaction Form
-function AddTransactionForm({ type, sheetId, categories, month, year, readOnly }: {
+function AddTransactionForm({ type, sheetId, categories, month, year, isShared = false }: {
     type: "INCOME" | "EXPENSE"
     sheetId: string
     categories: Category[]
     month: number
     year: number
-    readOnly: boolean
+    isShared?: boolean
 }) {
     const [state, formAction, isPending] = useActionState(createTransaction, null)
     const [isOpen, setIsOpen] = useState(false)
@@ -282,10 +289,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, readOnly }
             <div>
                 <div className="flex items-center justify-between mb-1">
                     <label className="text-xs text-muted-foreground font-medium">Category</label>
-                    <CategoryManager
-                        type={type}
-                        categories={categories}
-                    />
+                    {!isShared && <CategoryManager type={type} categories={categories} />}
                 </div>
                 <select
                     name="categoryId"
@@ -337,7 +341,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, readOnly }
     )
 }
 
-function TransactionList({ transactions, categories, emptyMessage, month, year, sheetId, readOnly }: {
+function TransactionList({ transactions, categories, emptyMessage, month, year, sheetId, readOnly, isShared }: {
     transactions: Transaction[]
     categories: Category[]
     emptyMessage: string
@@ -345,6 +349,7 @@ function TransactionList({ transactions, categories, emptyMessage, month, year, 
     year: number
     sheetId: string
     readOnly?: boolean
+    isShared?: boolean
 }) {
     const [editingId, setEditingId] = useState<string | null>(null)
 
@@ -364,6 +369,7 @@ function TransactionList({ transactions, categories, emptyMessage, month, year, 
                             year={year}
                             sheetId={sheetId}
                             onDone={() => setEditingId(null)}
+                            isShared={isShared}
                         />
                     ) : (
                         <TransactionRow
@@ -419,13 +425,14 @@ function TransactionRow({ transaction: t, onEdit, readOnly }: {
 }
 
 // Inline edit row
-function EditTransactionRow({ transaction: t, categories, month, year, sheetId, onDone }: {
+function EditTransactionRow({ transaction: t, categories, month, year, sheetId, onDone, isShared }: {
     transaction: Transaction
     categories: Category[]
     month: number
     year: number
     sheetId: string
     onDone: () => void
+    isShared?: boolean
 }) {
     const [error, setError] = useState<string | null>(null)
     const [isPending, setIsPending] = useState(false)
@@ -479,10 +486,12 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
             <div>
                 <div className="flex items-center justify-between mb-1">
                     <label className="text-xs text-muted-foreground font-medium">Category</label>
-                    <CategoryManager
-                        type={t.type as "INCOME" | "EXPENSE"}
-                        categories={categories}
-                    />
+                    {!isShared && (
+                        <CategoryManager
+                            type={t.type as "INCOME" | "EXPENSE"}
+                            categories={categories}
+                        />
+                    )}
                 </div>
                 <select
                     name="categoryId"
@@ -556,11 +565,12 @@ function DeleteButton({ transactionId }: { transactionId: string }) {
 }
 
 // Overview
-function Overview({ capitals, capitalCategories, sheetId, readOnly = false}: {
+function Overview({ capitals, capitalCategories, sheetId, readOnly = false, isShared = false }: {
     capitals: Capital[]
     capitalCategories: CapitalCategory[]
     sheetId: string
     readOnly?: boolean
+    isShared?: boolean
 }) {
 
     const totalCapital = capitals.reduce((sum, c) => sum + c.amount, 0)
@@ -573,6 +583,7 @@ function Overview({ capitals, capitalCategories, sheetId, readOnly = false}: {
                         sheetId={sheetId}
                         capitalCategories={capitalCategories}
                         existingCategoryIds={capitals.map(c => c.capitalCategoryId)}
+                        isShared={isShared}
                     />
                 )}
                 <CapitalList
@@ -646,10 +657,11 @@ function MonthPicker({ allSheets, currentMonth, currentYear, readOnly, userId }:
     )
 }
 
-function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds }: {
+function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isShared = false }: {
     sheetId: string
     capitalCategories: CapitalCategory[]
     existingCategoryIds: string[]
+    isShared?: boolean
 }) {
     const [state, formAction, isPending] = useActionState(createCapital, null)
     const [isOpen, setIsOpen] = useState(false)
@@ -678,7 +690,7 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds }: {
             <div>
                 <div className="flex items-center justify-between mb-1">
                     <label className="text-xs text-muted-foreground font-medium">Category</label>
-                    <CapitalCategoryManager categories={capitalCategories} />
+                    {!isShared && <CapitalCategoryManager categories={capitalCategories} />}
                 </div>
                 <select
                     name="capitalCategoryId"

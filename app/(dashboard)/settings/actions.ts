@@ -54,7 +54,7 @@ export async function deleteAccount() {
     await signOut({ redirectTo: "/sign-in" })
 }
 
-export async function shareProfile(email: string) {
+export async function shareProfile(email: string, permission: "VIEW" | "EDIT" = "VIEW") {
     const currentUser = await getCurrentDbUser()
     
     if (currentUser.email === email) {
@@ -73,7 +73,8 @@ export async function shareProfile(email: string) {
         await prisma.sharedAccess.create({
             data: {
                 ownerId: currentUser.id,
-                sharedWithId: targetUser.id
+                sharedWithId: targetUser.id,
+                permission
             }
         })
         revalidatePath("/settings")
@@ -81,6 +82,21 @@ export async function shareProfile(email: string) {
     } catch (error) {
         return { error: "Profile already shared with this user." }
     }
+}
+
+export async function updatePermission(sharedWithId: string, permission: "VIEW" | "EDIT") {
+    const user = await getCurrentDbUser()
+    await prisma.sharedAccess.update({
+        where: {
+            ownerId_sharedWithId: {
+                ownerId: user.id,
+                sharedWithId
+            }
+        },
+        data: { permission }
+    })
+    revalidatePath("/settings")
+    return { success: true }
 }
 
 export async function revokeShare(sharedWithId: string) {

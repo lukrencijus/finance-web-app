@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
-import { updateProfile, changePassword, deleteAccount, shareProfile, revokeShare } from "./actions"
+import { updateProfile, changePassword, deleteAccount, shareProfile, revokeShare, updatePermission } from "./actions"
 import { useTheme } from "next-themes"
 import { Sun, Moon, Check, XCircle, Share2, UserMinus, ExternalLink } from "lucide-react"
 import Link from "next/link"
@@ -43,9 +43,11 @@ export function ThemeToggle() {
 
 type SharingData = {
     sharedWithOthers: {
+        permission: string
         sharedWith: { id: string; email: string; name: string | null }
     }[]
     sharedWithMe: {
+        permission: string
         owner: { id: string; email: string; name: string | null }
     }[]
 }
@@ -67,17 +69,19 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
     const [revokingId, setRevokingId] = useState<string | null>(null)
     const [shareMsg, setShareMsg] = useState<{ error?: string; success?: boolean } | null>(null)
     const [shareEmail, setShareEmail] = useState("")
+    const [sharePermission, setSharePermission] = useState<"VIEW" | "EDIT">("VIEW")
 
     async function handleShare(e: React.FormEvent) {
         e.preventDefault()
         setShareMsg(null)
-        const res = await shareProfile(shareEmail)
+        const res = await shareProfile(shareEmail, sharePermission)
         
         if ("error" in res) {
             setShareMsg({ error: res.error })
         } else {
             setShareMsg({ success: true })
             setShareEmail("")
+            setSharePermission("VIEW")
         }
     }
 
@@ -142,6 +146,14 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                             className="flex-1 border border-input rounded-md px-3 py-2 text-sm bg-background"
                             required
                         />
+                        <select
+                            value={sharePermission}
+                            onChange={(e) => setSharePermission(e.target.value as "VIEW" | "EDIT")}
+                            className="border border-input rounded-md px-2 py-2 text-sm bg-background text-foreground"
+                        >
+                            <option value="VIEW">View</option>
+                            <option value="EDIT">Edit</option>
+                        </select>
                         <button type="submit" className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:opacity-90">
                             Share
                         </button>
@@ -163,13 +175,19 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                                         <p className="font-medium">{s.sharedWith.name || "User"}</p>
                                         <p className="text-xs text-muted-foreground">{s.sharedWith.email}</p>
                                     </div>
-                                    <button
-                                        onClick={() => handleRevoke(s.sharedWith.id)}
-                                        disabled={revokingId === s.sharedWith.id}
-                                        className="text-destructive p-2 hover:bg-destructive/10 rounded-full transition-colors disabled:opacity-40"
-                                    >
-                                        <UserMinus className="size-4" />
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <select
+                                            value={s.permission}
+                                            onChange={(e) => updatePermission(s.sharedWith.id, e.target.value as "VIEW" | "EDIT")}
+                                            className="border border-input rounded-md px-2 py-1 text-xs bg-background text-foreground"
+                                        >
+                                            <option value="VIEW">View</option>
+                                            <option value="EDIT">Edit</option>
+                                        </select>
+                                        <button onClick={() => handleRevoke(s.sharedWith.id)} disabled={revokingId === s.sharedWith.id} className="text-destructive p-2 hover:bg-destructive/10 rounded-full transition-colors disabled:opacity-40">
+                                            <UserMinus className="size-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>

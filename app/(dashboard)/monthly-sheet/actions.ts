@@ -5,6 +5,19 @@ import { getCurrentDbUser } from "@/lib/current-user"
 import { revalidatePath } from "next/cache"
 import { transactionSchema, capitalSchema } from "@/lib/validations"
 
+async function hasEditAccess(sheetOwnerId: string, currentUserId: string): Promise<boolean> {
+    if (sheetOwnerId === currentUserId) return true
+    const access = await prisma.sharedAccess.findUnique({
+        where: {
+            ownerId_sharedWithId: {
+                ownerId: sheetOwnerId,
+                sharedWithId: currentUserId
+            }
+        }
+    })
+    return access?.permission === "EDIT"
+}
+
 export async function createTransaction(prevState: any, formData: FormData) {
     const user = await getCurrentDbUser()
 
@@ -28,7 +41,7 @@ export async function createTransaction(prevState: any, formData: FormData) {
     const sheet = await prisma.monthlySheet.findUnique({
         where: { id: monthlySheetId },
     })
-    if (!sheet || sheet.userId !== user.id) {
+    if (!sheet || !await hasEditAccess(sheet.userId, user.id)) {
         return { error: "Unauthorized" }
     }
 
@@ -44,7 +57,7 @@ export async function createTransaction(prevState: any, formData: FormData) {
     const category = await prisma.category.findUnique({
         where: { id: categoryId },
     })
-    if (!category || category.userId !== user.id) {
+    if (!category || category.userId !== sheet.userId) {
         return { error: "Invalid category" }
     }
 
@@ -75,7 +88,7 @@ export async function deleteTransaction(transactionId: string) {
         include: { monthlySheet: true },
     })
 
-    if (!transaction || transaction.monthlySheet.userId !== user.id) {
+    if (!transaction || !await hasEditAccess(transaction.monthlySheet.userId, user.id)) {
         return { error: "Not found or unauthorized" }
     }
 
@@ -105,7 +118,7 @@ export async function updateTransaction(transactionId: string, formData: FormDat
         include: { monthlySheet: true },
     })
 
-    if (!transaction || transaction.monthlySheet.userId !== user.id) {
+    if (!transaction || !await hasEditAccess(transaction.monthlySheet.userId, user.id)) {
         return { error: "Not found or unauthorized" }
     }
 
@@ -120,7 +133,7 @@ export async function updateTransaction(transactionId: string, formData: FormDat
 
     // Verify category belongs to user
     const category = await prisma.category.findUnique({ where: { id: categoryId } })
-    if (!category || category.userId !== user.id) {
+    if (!category || category.userId !== transaction.monthlySheet.userId) {
         return { error: "Invalid category" }
     }
 
@@ -146,10 +159,10 @@ export async function createCapital(prevState: any, formData: FormData) {
     const { amount, capitalCategoryId, monthlySheetId } = parsed.data
 
     const sheet = await prisma.monthlySheet.findUnique({ where: { id: monthlySheetId } })
-    if (!sheet || sheet.userId !== user.id) return { error: "Unauthorized" }
+    if (!sheet || !await hasEditAccess(sheet.userId, user.id)) return { error: "Unauthorized" }
 
     const category = await prisma.capitalCategory.findUnique({ where: { id: capitalCategoryId } })
-    if (!category || category.userId !== user.id) return { error: "Invalid category" }
+    if (!category || category.userId !== sheet.userId) return { error: "Invalid category" }
 
     // One entry per category per sheet
     const existing = await prisma.capital.findFirst({
@@ -178,7 +191,7 @@ export async function updateCapital(capitalId: string, formData: FormData) {
         where: { id: capitalId },
         include: { monthlySheet: true },
     })
-    if (!capital || capital.monthlySheet.userId !== user.id) return { error: "Not found or unauthorized" }
+    if (!capital || !await hasEditAccess(capital.monthlySheet.userId, user.id)) return { error: "Not found or unauthorized" }
 
     await prisma.capital.update({ where: { id: capitalId }, data: { amount } })
     revalidatePath("/monthly-sheet")
@@ -192,7 +205,7 @@ export async function deleteCapital(capitalId: string) {
         where: { id: capitalId },
         include: { monthlySheet: true },
     })
-    if (!capital || capital.monthlySheet.userId !== user.id) return { error: "Not found or unauthorized" }
+    if (!capital || !await hasEditAccess(capital.monthlySheet.userId, user.id)) return { error: "Not found or unauthorized" }
 
     await prisma.capital.delete({ where: { id: capitalId } })
     revalidatePath("/monthly-sheet")
