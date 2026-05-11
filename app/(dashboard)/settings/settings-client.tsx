@@ -166,7 +166,7 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                 <div className="space-y-3">
                     <h3 className="text-sm font-semibold">People you share with</h3>
                     {sharing.sharedWithOthers.length === 0 ? (
-                        <p className="text-xs text-muted-foreground italic">You haven't shared your profile with anyone yet.</p>
+                        <p className="text-xs text-muted-foreground italic">You have not shared your profile with anyone yet.</p>
                     ) : (
                         <div className="space-y-2">
                             {sharing.sharedWithOthers.map((s) => (

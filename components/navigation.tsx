@@ -15,35 +15,29 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet"
 
-const routes = [
-    {
-        href: "/",
-        label: "Dashboard"
-    },
-    {
-        href: "/monthly-sheet",
-        label: "Monthly Sheet"
-    },
-    {
-        href: "/recurring-transactions",
-        label: "Recurring Transactions"
-    },
-    {
-        href: "/categories",
-        label: "Transaction Categories"
-    },
-    {
-        href: "/capital",
-        label: "Capital Categories"
-    },
-]
-
 export const Navigation = () => {
     const [isOpen, setIsOpen] = useState(false)
 
     const router = useRouter()
     const pathname = usePathname()
     const isMobile = useMedia("(max-width: 1024px)", false)
+
+    const sharedMatch = pathname.match(/^\/shared\/([^/]+)/)
+    const sharedUserId = sharedMatch?.[1]
+
+    const routes = sharedUserId ? [
+        { href: `/shared/${sharedUserId}`, label: "Dashboard" },
+        { href: `/shared/${sharedUserId}/monthly-sheet`, label: "Monthly Sheet" },
+        { href: `/shared/${sharedUserId}/recurring-transactions`, label: "Recurring Transactions" },
+        { href: `/shared/${sharedUserId}/categories`, label: "Transaction Categories" },
+        { href: `/shared/${sharedUserId}/capital`, label: "Capital Categories" },
+    ] : [
+        { href: "/", label: "Dashboard" },
+        { href: "/monthly-sheet", label: "Monthly Sheet" },
+        { href: "/recurring-transactions", label: "Recurring Transactions" },
+        { href: "/categories", label: "Transaction Categories" },
+        { href: "/capital", label: "Capital Categories" },
+    ]
 
     const onClick = (href: string) => {
         router.push(href)

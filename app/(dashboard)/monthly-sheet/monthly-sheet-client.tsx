@@ -127,20 +127,20 @@ export function MonthlySheetClient({
                 {isFuture ? (
                     <div className="bg-card rounded-xl p-10 shadow-sm border border-border text-center">
                         <p className="text-lg font-medium text-foreground mb-1">
-                            This month hasn't happened yet
+                            This month has not happened yet
                         </p>
                         <p className="text-sm text-muted-foreground">
                             {MONTH_NAMES[month - 1]} {year} is in the future - no sheet exists yet.
                         </p>
-                        <Link href={readOnly && userId ? `/shared/${userId}` : "/monthly-sheet" } className="inline-block mt-4 text-sm text-blue-500 hover:text-blue-400 hover:underline transition-colors">
+                        <Link href={userId ? `/shared/${userId}/monthly-sheet` : "/monthly-sheet"} className="inline-block mt-4 text-sm text-blue-500 hover:text-blue-400 hover:underline transition-colors">
                             Go to current month
                         </Link>
                     </div>
                 ) : !sheet ? (
                     <div className="bg-card rounded-xl p-10 shadow-sm border border-border text-center text-muted-foreground">
                         <p className="text-lg font-medium text-foreground mb-1">No data for this month</p>
-                        <p className="text-sm"> {readOnly ? "This user didn't have" : "You didn't have"} an active sheet in {MONTH_NAMES[month - 1]} {year}.</p>
-                        <Link href={readOnly && userId ? `/shared/${userId}` : "/monthly-sheet" } className="inline-block mt-4 text-sm text-blue-500 hover:text-blue-400 hover:underline transition-colors">
+                        <p className="text-sm"> {!!userId ? "This user did not have" : "You did not have"} an active sheet in {MONTH_NAMES[month - 1]} {year}.</p>
+                        <Link href={userId ? `/shared/${userId}/monthly-sheet` : "/monthly-sheet"} className="inline-block mt-4 text-sm text-blue-500 hover:text-blue-400 hover:underline transition-colors">
                             Go to current month
                         </Link>
                     </div>
@@ -619,8 +619,8 @@ function MonthPicker({ allSheets, currentMonth, currentYear, readOnly, userId }:
                                 {allSheets.map(s => {
                                     const isActive = s.month === currentMonth && s.year === currentYear
 
-                                    const href = (readOnly && userId)
-                                        ? `/shared/${userId}?month=${s.month}&year=${s.year}`
+                                    const href = userId
+                                        ? `/shared/${userId}/monthly-sheet?month=${s.month}&year=${s.year}`
                                         : `/monthly-sheet?month=${s.month}&year=${s.year}`
 
                                     return (

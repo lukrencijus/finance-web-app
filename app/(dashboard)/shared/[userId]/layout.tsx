@@ -34,22 +34,30 @@ export default async function SharedLayout({
     return (
         <>
             {children}
-            <div className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border px-4 py-2.5 flex items-center justify-between shadow-lg">
-                <div className="flex items-center gap-2 text-sm text-foreground">
-                    {isReadOnly
-                        ? <Eye className="size-4 text-muted-foreground shrink-0" />
-                        : <Pencil className="size-4 text-muted-foreground shrink-0" />
-                    }
-                    <span>
-                        Viewing <span className="font-medium">{ownerName}</span> profile
-                        {" "}
-                        <span className="text-muted-foreground">({isReadOnly ? "read-only mode" : "edit mode"})</span>
-                    </span>
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-2xl">
+                <div className="bg-primary/5 backdrop-blur-md border border-primary/20 px-6 py-3 rounded-full flex items-center justify-between shadow-2xl shadow-primary/20">
+                    <div className="flex items-center gap-3 text-sm">
+                        <div className="bg-primary/10 p-1.5 rounded-full">
+                            {isReadOnly
+                                ? <Eye className="size-4 text-primary shrink-0" />
+                                : <Pencil className="size-4 text-primary shrink-0" />
+                            }
+                        </div>
+                        <span className="text-foreground font-medium">
+                            Viewing <span className="text-primary font-bold">{ownerName}</span> profile
+                            <span className="ml-2 opacity-70 font-normal text-xs uppercase tracking-wider">
+                                • {isReadOnly ? "Read Only" : "Edit Mode"}
+                            </span>
+                        </span>
+                    </div>
+                    <Link 
+                        href="/" 
+                        className="flex items-center gap-1.5 text-xs font-semibold bg-primary text-primary-foreground px-4 py-1.5 rounded-full hover:opacity-90 transition-all active:scale-95"
+                    >
+                        <ArrowLeft className="size-3.5" />
+                        Back to my profile
+                    </Link>
                 </div>
-                <Link href="/" className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                    <ArrowLeft className="size-3.5" />
-                    Back to my profile
-                </Link>
             </div>
         </>
     )
