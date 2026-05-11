@@ -91,15 +91,6 @@ export function MonthlySheetClient({
         <div className="-mt-24 pb-10">
             <div className="max-w-screen-2xl mx-auto px-4">
 
-                {!!userId && (
-                    <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm">
-                        <Eye className="size-4 shrink-0" />
-                        <span>
-                            You are viewing {ownerName ? `${ownerName}'s` : "a shared"} profile in {readOnly ? "read-only" : "edit"} mode
-                        </span>
-                    </div>
-                )}
-
                 {/* Month picker */}
                 <div className="flex items-center gap-x-3 mb-6">
                     <MonthPicker

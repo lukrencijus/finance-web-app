@@ -204,7 +204,7 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                             {sharing.sharedWithMe.map((s) => (
                                 <div key={s.owner.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
                                     <div className="text-sm">
-                                        <p className="font-medium">{s.owner.name || "User"}'s Profile</p>
+                                        <p className="font-medium">{s.owner.name || "User"}</p>
                                         <p className="text-xs text-muted-foreground">{s.owner.email}</p>
                                     </div>
                                     <Link href={`/shared/${s.owner.id}`} className="flex items-center gap-1.5 text-xs font-medium text-blue-500 hover:underline">
