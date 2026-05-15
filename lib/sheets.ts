@@ -7,42 +7,93 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
         include: {
             transactions: {
                 include: { category: true },
-                orderBy: [
-                    { createdAt: "desc" },
-                    { date: "desc" },
-                ],
+                orderBy: [{ createdAt: "desc" }, { date: "desc" }],
             },
             capitals: {
                 include: { capitalCategory: true },
                 orderBy: [
                     { capitalCategory: { order: "asc" } },
                     { capitalCategory: { createdAt: "desc" } },
-                ]
-            }
+                ],
+            },
         },
     })
+
     if (!sheet) {
+        // Create the new sheet first
         sheet = await prisma.monthlySheet.create({
             data: { month, year, userId },
             include: {
                 transactions: {
                     include: { category: true },
-                    orderBy: [
-                        { createdAt: "desc" },
-                        { date: "desc" },
-                    ],
+                    orderBy: [{ createdAt: "desc" }, { date: "desc" }],
                 },
                 capitals: {
                     include: { capitalCategory: true },
                     orderBy: [
                         { capitalCategory: { order: "asc" } },
                         { capitalCategory: { createdAt: "desc" } },
-                    ]
-                }
+                    ],
+                },
             },
         })
+
+        // Auto-insert recurring transactions from previous month
+        const prevMonth = month === 1 ? 12 : month - 1
+        const prevYear = month === 1 ? year - 1 : year
+
+        const prevSheet = await prisma.monthlySheet.findUnique({
+            where: { month_year_userId: { month: prevMonth, year: prevYear, userId } },
+            include: {
+                transactions: {
+                    where: { isRecurring: true },
+                    include: { category: true },
+                },
+            },
+        })
+
+        if (prevSheet && prevSheet.transactions.length > 0) {
+            // Clamp day to last day of new month (e.g. Feb 28/29)
+            const lastDayOfMonth = new Date(year, month, 0).getDate()
+
+            await prisma.transaction.createMany({
+                data: prevSheet.transactions.map((t) => {
+                    const originalDay = new Date(t.date).getDate()
+                    const day = Math.min(originalDay, lastDayOfMonth)
+                    return {
+                        amount: t.amount,
+                        description: t.description,
+                        date: new Date(year, month - 1, day),
+                        type: t.type,
+                        categoryId: t.categoryId,
+                        monthlySheetId: sheet!.id,
+                        isRecurring: true,
+                        // Do not copy splitGroupId/splitIndex - recurring copies are fresh
+                    }
+                }),
+            })
+
+            // Re-fetch sheet with the newly inserted recurring transactions
+            sheet = await prisma.monthlySheet.findUnique({
+                where: { month_year_userId: { month, year, userId } },
+                include: {
+                    transactions: {
+                        include: { category: true },
+                        orderBy: [{ createdAt: "desc" }, { date: "desc" }],
+                    },
+                    capitals: {
+                        include: { capitalCategory: true },
+                        orderBy: [
+                            { capitalCategory: { order: "asc" } },
+                            { capitalCategory: { createdAt: "desc" } },
+                        ],
+                    },
+                },
+            })
+        }
     }
-    return sheet
+
+    return sheet!
 }
 
 export async function getMonthSheet(userId: string, month: number, year: number) {

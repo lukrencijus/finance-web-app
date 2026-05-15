@@ -107,6 +107,10 @@ model Transaction {
   monthlySheet   MonthlySheet @relation(fields: [monthlySheetId], references: [id], onDelete: Cascade)
 
   isRecurring    Boolean      @default(false)
+
+  splitMonths    Int?         // total parts (null = not a split)
+  splitIndex     Int?         // which part
+  splitGroupId   String?      // links all parts of one split together
 }
 
 model Capital {
