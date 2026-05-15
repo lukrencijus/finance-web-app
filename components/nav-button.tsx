@@ -12,23 +12,26 @@ export const NavButton = ({
     href,
     label,
     isActive,
- }: Props) => {
+}: Props) => {
     return (
         <Button
             asChild
             size="sm"
-            variant="outline"
+            variant="ghost"
             className={cn(
-                "w-full lg:w-auto justify-between font-medium border border-white/20 focus-visible:ring-offset-0 focus-visible:ring-transparent outline-none transition-all duration-200",
+                "w-full lg:w-auto justify-between font-medium rounded-full border-none outline-none transition-all duration-200 px-4 h-9 whitespace-nowrap",
                 
-                "text-white/80 hover:text-white",
-                
-                "hover:bg-white/20",
-                
-                isActive ? "bg-white/10 text-white font-semibold" : "bg-transparent",
-                
-                "focus:bg-white/30"
-            )}>
+                "text-white/70 hover:text-white hover:bg-white/20",
+            
+                isActive && [
+                    "bg-white text-blue-600",
+                    "dark:bg-slate-100 dark:text-blue-950", 
+                    "hover:bg-white/90 dark:hover:bg-slate-200",
+                    "hover:text-blue-600 dark:hover:text-blue-950",
+                    "shadow-sm active:scale-95"
+                ]
+            )}
+        >
             <Link href={href}>
                 {label}
             </Link>

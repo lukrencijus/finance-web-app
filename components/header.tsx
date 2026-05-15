@@ -1,7 +1,6 @@
 import { signOut, auth } from "@/auth"
 import { HeaderLogo } from "./header-logo"
 import { Navigation } from "./navigation"
-import { WelcomeMsg } from "./welcome-msg"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 
@@ -12,18 +11,19 @@ export const Header = async () => {
         : null
 
     return (
-        <header className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-900 dark:to-blue-950 text-white px-4 py-4 lg:px-14 lg:py-6 transition-colors duration-500 shadow-sm">
+        <header className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-900 dark:to-blue-950 text-white px-4 py-2.5 lg:px-14 transition-colors duration-500 shadow-sm">
             <div className="max-w-screen-2xl mx-auto">
-                <div className="w-full flex items-center justify-between mb-6 lg:mb-8">
-                    <div className="flex items-center lg:gap-x-12">
+                <div className="w-full flex items-center justify-between">
+                    <div className="flex items-center lg:gap-x-8">
                         <HeaderLogo />
                         <Navigation />
                     </div>
+                    
                     <div className="hidden lg:flex items-center gap-2">
                         {user?.role === "ADMIN" && (
                             <Link
                                 href="/admin/users"
-                                className="text-xs font-medium border border-white/20 rounded px-2.5 py-1 hover:bg-white/10 transition-all"
+                                className="text-xs font-medium bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-4 py-1.5 transition-all"
                             >
                                 Admin
                             </Link>
@@ -31,9 +31,9 @@ export const Header = async () => {
 
                         <Link
                             href="/settings"
-                            className="text-xs font-medium border border-white/20 rounded px-2.5 py-1 hover:bg-white/10 transition-all"
+                            className="text-xs font-medium bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-4 py-1.5 transition-all"
                         >
-                            {session?.user?.name}
+                            Settings
                         </Link>
 
                         <form action={async () => {
@@ -41,13 +41,12 @@ export const Header = async () => {
                             await signOut({ redirectTo: "/sign-in" })
                         }}>
                             <button type="submit"
-                                className="text-xs font-medium border border-white/20 rounded px-2.5 py-1 hover:bg-white/10 transition-all">
+                                className="text-xs font-medium bg-red-600 hover:bg-red-700 border border-red-700 rounded-full px-4 py-1.5 transition-all">
                                 Sign Out
                             </button>
                         </form>
                     </div>
                 </div>
-                <WelcomeMsg />
             </div>
         </header>
     )

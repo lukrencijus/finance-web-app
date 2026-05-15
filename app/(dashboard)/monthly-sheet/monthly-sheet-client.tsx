@@ -100,7 +100,7 @@ export function MonthlySheetClient({
     const expenseCategories = categories.filter(c => c.type === "EXPENSE")
 
     return (
-        <div className="-mt-24 pb-10">
+        <div className="py-8 pb-20"> 
             <div className="max-w-screen-2xl mx-auto px-4">
 
                 {/* Month picker */}
@@ -113,7 +113,7 @@ export function MonthlySheetClient({
                         userId={userId}
                     />
                     {isActualCurrentMonth && (
-                        <span className="text-xs font-normal bg-white/20 text-white px-2 py-0.5 rounded-full border border-white/10">
+                        <span className="text-xs font-normal bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20">
                             Current
                         </span>
                     )}
@@ -127,8 +127,8 @@ export function MonthlySheetClient({
                             onClick={() => setActiveTab(tab)}
                             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors
                                 ${activeTab === tab
-                                    ? "bg-white text-gray-900 shadow-sm"
-                                    : "bg-white/10 text-white hover:bg-white/20"
+                                    ? "bg-primary text-primary-foreground shadow-sm"
+                                    : "bg-muted text-muted-foreground hover:bg-muted/80"
                                 }`}
                         >
                             {tab}
@@ -729,7 +729,7 @@ function MonthPicker({ allSheets, currentMonth, currentYear, readOnly, userId }:
     return (
         <div className="relative">
             <button onClick={() => setIsOpen(prev => !prev)}
-                className="flex items-center gap-x-2 text-2xl font-semibold text-white hover:text-white/80 transition-colors focus:outline-none">
+                className="flex items-center gap-x-2 text-2xl font-semibold text-foreground hover:opacity-70 transition-colors focus:outline-none">
                 {MONTH_NAMES[currentMonth - 1]} {currentYear}
                 <ChevronDown className={`size-5 mt-0.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
             </button>
