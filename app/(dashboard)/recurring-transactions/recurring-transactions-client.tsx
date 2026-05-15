@@ -50,7 +50,7 @@ export function RecurringTransactionsClient({ income, expenses, currentMonth, cu
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 flex items-start gap-3">
                         <RefreshCw className="size-4 text-blue-500 mt-0.5 shrink-0" />
                         <p className="text-sm text-blue-600 dark:text-blue-400">
-                            These <span className="font-semibold">{totalCount} transaction{totalCount !== 1 ? "s" : ""}</span> will
+                            <span className="font-semibold">{totalCount} transaction{totalCount !== 1 ? "s" : ""}</span> will
                             automatically repeat when{" "}
                             <span className="font-semibold">{MONTH_NAMES[nextMonth - 1]} {nextYear}</span> opens.
                             Click the stop button to cancel recurrence.

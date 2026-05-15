@@ -120,7 +120,7 @@ export function MonthlySheetClient({
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-x-2 mb-6">
+                <div className="grid grid-cols-3 gap-x-2 mb-6">
                     {TABS.map(tab => (
                         <button
                             key={tab}
@@ -258,12 +258,14 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
 
     if (!isOpen) {
         return (
-            <button
-                onClick={() => setIsOpen(true)}
-                className="w-full border-2 border-dashed border-border rounded-lg py-3 text-sm text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors"
-            >
-                + Add {type === "INCOME" ? "Income" : "Expense"}
-            </button>
+            <div className="lg:static fixed bottom-[72px] left-0 right-0 px-4 z-40 lg:px-0 lg:bottom-auto lg:z-auto">
+                <button
+                    onClick={() => setIsOpen(true)}
+                    className="w-full border-2 border-dashed border-border rounded-lg py-4 lg:py-3 text-sm font-medium text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors bg-card/95 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none shadow-lg lg:shadow-none"
+                >
+                    + Add {type === "INCOME" ? "Income" : "Expense"}
+                </button>
+            </div>
         )
     }
 
@@ -306,7 +308,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                 </p>
             )}
 
-            <div className={`grid gap-3 ${mode === "split" ? "grid-cols-3" : "grid-cols-2"}`}>
+            <div className={`grid gap-3 ${mode === "split" ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}>
                 <div>
                     <label className="text-xs text-muted-foreground mb-1 block font-medium">
                         {mode === "split" ? "Total Amount (€)" : "Amount (€)"}
@@ -334,7 +336,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                     />
                 </div>
                 {mode === "split" && (
-                    <div>
+                    <div className="col-span-2 sm:col-span-1">
                         <label className="text-xs text-muted-foreground mb-1 block font-medium">Months</label>
                         <input
                             name="splitMonths"
@@ -786,10 +788,14 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
 
     if (!isOpen) {
         return (
-            <button onClick={() => setIsOpen(true)}
-                className="w-full border-2 border-dashed border-border rounded-lg py-3 text-sm text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors">
-                + Add Capital Entry
-            </button>
+            <div className="lg:static fixed bottom-[72px] left-0 right-0 px-4 z-40 lg:px-0 lg:bottom-auto lg:z-auto">
+                <button
+                    onClick={() => setIsOpen(true)}
+                    className="w-full border-2 border-dashed border-border rounded-lg py-4 lg:py-3 text-sm font-medium text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors bg-card/95 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none shadow-lg lg:shadow-none"
+                >
+                    + Add Capital Entry
+                </button>
+            </div>
         )
     }
 
