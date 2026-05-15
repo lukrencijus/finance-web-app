@@ -19,7 +19,7 @@ export const Header = async () => {
                         <HeaderLogo />
                         <Navigation />
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="hidden lg:flex items-center gap-3">
                         {user?.role === "ADMIN" && (
                             <Link
                                 href="/admin/users"
