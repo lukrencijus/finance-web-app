@@ -105,7 +105,7 @@ function RecurringRow({ transaction: t }: { transaction: RecurringTransaction })
     const handleStop = async () => {
         if (isPending) return
         if (!confirm(
-            `Stop recurring "${t.category.name}${t.description ? ` – ${t.description}` : ""}"?\n\nThis month's entry stays, but it won't repeat next month.`
+            `Stop recurring "${t.category.name}${t.description ? ` - ${t.description}` : ""}"?\n\nThis month's entry stays, but it won't repeat next month.`
         )) return
         setIsPending(true)
         await toggleRecurring(t.id)
