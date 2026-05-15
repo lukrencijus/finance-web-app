@@ -104,14 +104,14 @@ function Section({ title, type, transactions }: {
         <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
             <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
                 <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{title}</span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeClass}`}>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-xl border ${badgeClass}`}>
                     {transactions.length}
                 </span>
             </div>
             <ul className="divide-y divide-border">
                 {transactions.map(t => (
                     <li key={t.id} className="flex items-center gap-3 px-6 py-4">
-                        <div className="shrink-0 w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                        <div className="shrink-0 w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center">
                             <RefreshCw className="size-3.5 text-blue-500" />
                         </div>
                         <div className="flex-1 min-w-0">

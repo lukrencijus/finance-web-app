@@ -25,7 +25,7 @@ export default async function SharedCapitalPage({
                     {categories.map(c => (
                         <li key={c.id} className="flex items-center gap-3 px-4 py-3 bg-card">
                             <span
-                                className="w-3 h-3 rounded-full shrink-0"
+                                className="w-3 h-3 rounded-xl shrink-0"
                                 style={{ backgroundColor: c.color }}
                             />
                             <span className="text-sm font-medium text-foreground">

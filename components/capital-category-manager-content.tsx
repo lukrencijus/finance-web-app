@@ -61,7 +61,7 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
                     key={c}
                     type="button"
                     onClick={() => onChange(c)}
-                    className="w-5 h-5 rounded-full transition-transform hover:scale-110 focus:outline-none shrink-0"
+                    className="w-5 h-5 rounded-xl transition-transform hover:scale-110 focus:outline-none shrink-0"
                     style={{
                         backgroundColor: c,
                         boxShadow: value === c ? `0 0 0 2px white, 0 0 0 3.5px ${c}` : undefined,
@@ -69,7 +69,7 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
                 />
             ))}
             <label
-                className="w-5 h-5 rounded-full border-2 border-dashed border-border flex items-center justify-center cursor-pointer relative overflow-hidden hover:border-muted-foreground transition-colors shrink-0"
+                className="w-5 h-5 rounded-xl border-2 border-dashed border-border flex items-center justify-center cursor-pointer relative overflow-hidden hover:border-muted-foreground transition-colors shrink-0"
                 title="Custom color"
                 style={{ backgroundColor: PRESET_COLORS.includes(value) ? "transparent" : value }}
             >
@@ -111,7 +111,7 @@ function ConfirmDeleteDialog({ category, capitals, onConfirm, onCancel, isPendin
                             </span>{" "}
                             across monthly sheets.
                         </p>
-                        <div className="max-h-60 overflow-y-auto rounded-lg border border-border mb-5">
+                        <div className="max-h-60 overflow-y-auto rounded-xl border border-border mb-5">
                             <table className="w-full text-xs">
                                 <thead className="bg-muted/50 sticky top-0 text-muted-foreground">
                                     <tr>
@@ -137,11 +137,11 @@ function ConfirmDeleteDialog({ category, capitals, onConfirm, onCancel, isPendin
                 )}
                 <div className="flex justify-end gap-2 pt-2">
                     <button onClick={onCancel} disabled={isPending}
-                        className="rounded-md border border-border px-4 py-1.5 text-xs font-medium hover:bg-muted transition-colors text-foreground">
+                        className="rounded-xl border border-border px-4 py-1.5 text-xs font-medium hover:bg-muted transition-colors text-foreground">
                         Cancel
                     </button>
                     <button onClick={onConfirm} disabled={isPending}
-                        className="rounded-md bg-destructive text-destructive-foreground px-4 py-1.5 text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-opacity">
+                        className="rounded-xl bg-destructive text-destructive-foreground px-4 py-1.5 text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-opacity">
                         {isPending ? "Deleting..." : "Yes, delete"}
                     </button>
                 </div>
@@ -170,12 +170,12 @@ function EditCategoryRow({ category, onDone }: { category: CapitalCategory; onDo
     }
 
     return (
-        <div className="space-y-3 px-3 py-2 bg-muted/30 rounded-md">
+        <div className="space-y-3 px-3 py-2 bg-muted/30 rounded-xl">
             <div className="flex items-center gap-1.5">
                 <GripVertical className="size-4 text-transparent shrink-0" />
                 <input ref={nameRef} defaultValue={category.name} autoFocus
                     onKeyDown={e => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onDone() }}
-                    className="flex-1 border border-input rounded px-2 py-1 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />
+                    className="flex-1 border border-input rounded-xl px-2 py-1 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />
                 <button onClick={handleSave} disabled={isPending}
                     className="text-green-600 dark:text-green-400 hover:opacity-80 p-0.5 disabled:opacity-50">
                     <Check className="size-4" />
@@ -232,13 +232,13 @@ function SortableCategoryRow({ category }: { category: CapitalCategory }) {
     return (
         <>
             <li ref={setNodeRef} style={style}
-                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted/50 transition-colors group">
+                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-muted/50 transition-colors group">
                 <button type="button"
                     className="text-muted-foreground/30 hover:text-muted-foreground cursor-grab active:cursor-grabbing p-0.5 shrink-0 touch-none"
                     {...attributes} {...listeners}>
                     <GripVertical className="size-4" />
                 </button>
-                <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: category.color }} />
+                <span className="w-3 h-3 rounded-xl shrink-0" style={{ backgroundColor: category.color }} />
                 <span className="flex-1 text-sm text-foreground">{category.name}</span>
                 <button onClick={() => setEditing(true)}
                     className="text-muted-foreground/40 hover:text-blue-500 p-1 transition-colors shrink-0">
@@ -282,13 +282,13 @@ function AddCategoryRow({ onClose }: { onClose: () => void }) {
     }
 
     return (
-        <div className="space-y-3 p-2 bg-muted/20 rounded-lg border border-border/50">
+        <div className="space-y-3 p-2 bg-muted/20 rounded-xl border border-border/50">
             <div className="flex items-center gap-1.5">
                 <input ref={nameRef} placeholder="e.g. Savings" autoFocus
                     onKeyDown={e => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") onClose() }}
-                    className="flex-1 border border-input rounded px-2 py-1.5 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />
+                    className="flex-1 border border-input rounded-xl px-2 py-1.5 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />
                 <button onClick={handleAdd} disabled={isPending}
-                    className="px-3 py-1.5 rounded bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 disabled:opacity-50 shrink-0">
+                    className="px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 disabled:opacity-50 shrink-0">
                     {isPending ? "..." : "Add"}
                 </button>
                 <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-0.5">

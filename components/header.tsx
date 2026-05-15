@@ -23,7 +23,7 @@ export const Header = async () => {
                         {user?.role === "ADMIN" && (
                             <Link
                                 href="/admin/users"
-                                className="text-xs font-medium bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-4 py-1.5 transition-all"
+                                className="text-xs font-medium bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-1.5 transition-all"
                             >
                                 Admin
                             </Link>
@@ -31,7 +31,7 @@ export const Header = async () => {
 
                         <Link
                             href="/settings"
-                            className="text-xs font-medium bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-4 py-1.5 transition-all"
+                            className="text-xs font-medium bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-1.5 transition-all"
                         >
                             Settings
                         </Link>
@@ -41,7 +41,7 @@ export const Header = async () => {
                             await signOut({ redirectTo: "/sign-in" })
                         }}>
                             <button type="submit"
-                                className="text-xs font-medium bg-red-600 hover:bg-red-700 border border-red-700 rounded-full px-4 py-1.5 transition-all">
+                                className="text-xs font-medium bg-red-600 hover:bg-red-700 border border-red-700 rounded-xl px-4 py-1.5 transition-all">
                                 Sign Out
                             </button>
                         </form>

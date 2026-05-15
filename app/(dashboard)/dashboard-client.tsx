@@ -156,9 +156,9 @@ function MetricCard({
 
             {/* Progress Bar (for Savings Rate) */}
             {bar !== undefined && (
-                <div className="mt-3 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div className="mt-3 h-1.5 bg-muted rounded-xl overflow-hidden">
                     <div
-                        className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                        className={`h-full rounded-xl transition-all duration-500 ${barColor}`}
                         style={{ width: `${Math.min(Math.max(Math.abs(bar) * 100, 0), 100)}%` }}
                     />
                 </div>
@@ -205,9 +205,9 @@ function CategoryBars({
             {items.map((cat, i) => (
                 <div key={cat.name} className="flex items-center gap-2">
                     <span className="text-xs text-gray-500 w-20 shrink-0 truncate">{cat.name}</span>
-                    <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                    <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden">
                         <div
-                            className="h-full rounded-full"
+                            className="h-full rounded-xl"
                             style={{
                                 width: mounted ? `max(6px, ${(cat.amount / max) * 100}%)` : "0px",
                                 backgroundColor: colors[i % colors.length],
@@ -404,7 +404,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
     const monthLabel = `${MONTH_FULL[data.currentMonth - 1]} ${data.currentYear}`
 
     return (
-        <div className="p-6 max-w-5xl mx-auto space-y-6">
+        <div className="p-6 max-w-6xl mx-auto space-y-6">
             
             {/* Header Area with Settings Toggle */}
             <div className="flex items-center justify-between mb-2">
@@ -418,7 +418,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                 <div className="relative">
                     <button 
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="flex items-center gap-2 text-xs border border-border rounded-lg px-3 py-2 hover:bg-muted transition-colors font-medium bg-card"
+                        className="flex items-center gap-2 text-xs border border-border rounded-xl px-3 py-2 hover:bg-muted transition-colors font-medium bg-card"
                     >
                         Customize Dashboard
                     </button>
@@ -433,11 +433,11 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                                         <button
                                             key={key}
                                             onClick={() => toggleWidget(key as keyof typeof settings)}
-                                            className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-muted rounded-md text-sm transition-colors"
+                                            className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-muted rounded-xl text-sm transition-colors"
                                         >
                                             <span>{WIDGET_LABELS[key as keyof typeof defaultSettings]}</span>
-                                            <div className={`w-8 h-4 rounded-full transition-colors relative ${value ? 'bg-blue-600' : 'bg-muted-foreground/30'}`}>
-                                                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${value ? 'left-4.5' : 'left-0.5'}`} />
+                                            <div className={`w-8 h-4 rounded-xl transition-colors relative ${value ? 'bg-blue-600' : 'bg-muted-foreground/30'}`}>
+                                                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-xl transition-all ${value ? 'left-4.5' : 'left-0.5'}`} />
                                             </div>
                                         </button>
                                     ))}
@@ -475,11 +475,11 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                             ) : (
                                 <>
                                     {data.totalCapital > 0 && (
-                                        <div className="flex h-3 rounded-full overflow-hidden gap-0.5 bg-muted mb-4">
+                                        <div className="flex h-3 rounded-xl overflow-hidden gap-0.5 bg-muted mb-4">
                                             {data.capitals.map(c => (
                                                 <div
                                                     key={c.id}
-                                                    className="h-full first:rounded-l-full last:rounded-r-full"
+                                                    className="h-full first:rounded-l-full last:rounded-xl"
                                                     style={{
                                                         width: `${(c.amount / data.totalCapital) * 100}%`,
                                                         backgroundColor: c.color,
@@ -497,7 +497,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                                             {data.capitals.map((c) => (
                                                 <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+                                                        <span className="w-2 h-2 rounded-xl shrink-0" style={{ backgroundColor: c.color }} />
                                                         <span className="text-sm text-foreground">{c.name}</span>
                                                     </div>
                                                     <div className="flex items-center gap-3">
@@ -605,7 +605,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                                             >
                                                 <div className="flex items-center gap-2 min-w-0">
                                                     <div
-                                                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0"
+                                                        className="w-7 h-7 rounded-xl flex items-center justify-center text-xs shrink-0"
                                                         style={{
                                                             backgroundColor: isIncome ? "#EAF3DE" : "#FCEBEB",
                                                             color: isIncome ? "#3B6D11" : "#A32D2D",

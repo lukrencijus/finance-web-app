@@ -19,7 +19,7 @@ export const NavButton = ({
             size="sm"
             variant="ghost"
             className={cn(
-                "w-full lg:w-auto justify-between font-medium rounded-full border-none outline-none transition-all duration-200 px-4 h-9 whitespace-nowrap",
+                "w-full lg:w-auto justify-between font-medium rounded-xl border-none outline-none transition-all duration-200 px-4 h-9 whitespace-nowrap",
                 
                 "text-white/70 hover:text-white hover:bg-white/20",
             

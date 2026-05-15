@@ -102,35 +102,35 @@ function ActionButtons({ user, currentUserId, isExpanded, setExpandedId }: {
         <div className="flex flex-wrap gap-2">
             {!isActive && (
                 <form action={approveUser.bind(null, user.id)}>
-                    <button type="submit" className="rounded-md border border-green-500/30 px-3 py-1 text-xs font-medium text-green-600 dark:text-green-400 hover:bg-green-500/10">
+                    <button type="submit" className="rounded-xl border border-green-500/30 px-3 py-1 text-xs font-medium text-green-600 dark:text-green-400 hover:bg-green-500/10">
                         Approve
                     </button>
                 </form>
             )}
             {isActive && !isAdmin && (
                 <form action={revokeUser.bind(null, user.id)}>
-                    <button type="submit" className="rounded-md border border-yellow-500/30 px-3 py-1 text-xs font-medium text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/10">
+                    <button type="submit" className="rounded-xl border border-yellow-500/30 px-3 py-1 text-xs font-medium text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500/10">
                         Revoke
                     </button>
                 </form>
             )}
             {!isAdmin && isActive && (
                 <form action={makeAdmin.bind(null, user.id)}>
-                    <button type="submit" className="rounded-md border border-blue-500/30 px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-500/10">
+                    <button type="submit" className="rounded-xl border border-blue-500/30 px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-500/10">
                         Make Admin
                     </button>
                 </form>
             )}
             {isAdmin && (
                 <form action={revokeAdmin.bind(null, user.id)}>
-                    <button type="submit" className="rounded-md border border-red-500/30 px-3 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10">
+                    <button type="submit" className="rounded-xl border border-red-500/30 px-3 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10">
                         Revoke Admin
                     </button>
                 </form>
             )}
             <button
                 onClick={() => setExpandedId(isExpanded ? null : user.id)}
-                className={`rounded-md border border-border px-3 py-1 text-xs font-medium hover:bg-muted ${isExpanded ? "bg-muted" : ""}`}
+                className={`rounded-xl border border-border px-3 py-1 text-xs font-medium hover:bg-muted ${isExpanded ? "bg-muted" : ""}`}
             >
                 {isExpanded ? "Close" : "Edit"}
             </button>
@@ -138,7 +138,7 @@ function ActionButtons({ user, currentUserId, isExpanded, setExpandedId }: {
                 action={deleteUser.bind(null, user.id)}
                 onSubmit={(e) => !window.confirm(`Delete ${user.email}?`) && e.preventDefault()}
             >
-                <button type="submit" className="rounded-md border border-destructive/30 px-3 py-1 text-xs font-medium text-destructive hover:bg-destructive/10">
+                <button type="submit" className="rounded-xl border border-destructive/30 px-3 py-1 text-xs font-medium text-destructive hover:bg-destructive/10">
                     Delete
                 </button>
             </form>
@@ -206,7 +206,7 @@ function UserCard({ user, currentUserId, isExpanded, setExpandedId, resetMsg, ha
             </div>
 
             {isExpanded && (
-                <div className="mt-4 pt-4 border-t border-border bg-muted/20 -mx-4 px-4 pb-4 rounded-b-xl">
+                <div className="mt-4 pt-4 border-t border-border bg-muted/20 -mx-4 px-4 pb-4 rounded-xl">
                     <EditSection user={user} resetMsg={resetMsg} handleResetPassword={handleResetPassword} />
                 </div>
             )}
@@ -223,7 +223,7 @@ function Badge({ children, variant }: { children: React.ReactNode, variant: "blu
         muted: "border-border text-muted-foreground bg-muted"
     }
     return (
-        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border font-semibold inline-block ${styles[variant]}`}>
+        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-xl border font-semibold inline-block ${styles[variant]}`}>
             {children}
         </span>
     )
@@ -235,21 +235,21 @@ function EditSection({ user, resetMsg, handleResetPassword }: any) {
             <form action={(formData) => adminUpdateName(user.id, formData)} className="flex items-end gap-2">
                 <div className="space-y-1">
                     <label className="text-[10px] uppercase font-bold text-muted-foreground">Display Name</label>
-                    <input name="name" defaultValue={user.name ?? ""} className="border border-input rounded-md px-3 py-1.5 text-sm bg-background text-foreground w-full sm:w-48 focus:ring-1 focus:ring-ring focus:outline-none" />
+                    <input name="name" defaultValue={user.name ?? ""} className="border border-input rounded-xl px-3 py-1.5 text-sm bg-background text-foreground w-full sm:w-48 focus:ring-1 focus:ring-ring focus:outline-none" />
                 </div>
-                <button type="submit" className="rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-xs font-medium hover:opacity-90">Save</button>
+                <button type="submit" className="rounded-xl bg-primary text-primary-foreground px-3 py-1.5 text-xs font-medium hover:opacity-90">Save</button>
             </form>
 
             {user.password ? (
                 <form onSubmit={(e) => { e.preventDefault(); handleResetPassword(user.id, new FormData(e.currentTarget)) }} className="flex items-end gap-2">
                     <div className="space-y-1">
                         <label className="text-[10px] uppercase font-bold text-muted-foreground">New Password</label>
-                        <input name="password" type="password" className="border border-input rounded-md px-3 py-1.5 text-sm bg-background text-foreground w-full sm:w-48 focus:ring-1 focus:ring-ring focus:outline-none" />
+                        <input name="password" type="password" className="border border-input rounded-xl px-3 py-1.5 text-sm bg-background text-foreground w-full sm:w-48 focus:ring-1 focus:ring-ring focus:outline-none" />
                     </div>
-                    <button type="submit" className="rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-xs font-medium hover:opacity-90">Reset</button>
+                    <button type="submit" className="rounded-xl bg-primary text-primary-foreground px-3 py-1.5 text-xs font-medium hover:opacity-90">Reset</button>
                 </form>
             ) : (
-                <div className="self-center py-1 px-3 rounded bg-muted text-xs text-muted-foreground italic">Google Auth User</div>
+                <div className="self-center py-1 px-3 rounded-xl bg-muted text-xs text-muted-foreground italic">Google Auth User</div>
             )}
 
             {resetMsg[user.id] && (

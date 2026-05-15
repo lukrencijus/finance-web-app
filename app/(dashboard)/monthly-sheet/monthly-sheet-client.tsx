@@ -100,8 +100,7 @@ export function MonthlySheetClient({
     const expenseCategories = categories.filter(c => c.type === "EXPENSE")
 
     return (
-        <div className="py-8 pb-20"> 
-            <div className="max-w-screen-2xl mx-auto px-4">
+            <div className="p-6 max-w-6xl mx-auto space-y-6">
 
                 {/* Month picker */}
                 <div className="flex items-center gap-x-3 mb-6">
@@ -113,7 +112,7 @@ export function MonthlySheetClient({
                         userId={userId}
                     />
                     {isActualCurrentMonth && (
-                        <span className="text-xs font-normal bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20">
+                        <span className="text-xs font-normal bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-xl border border-blue-500/20">
                             Current
                         </span>
                     )}
@@ -125,7 +124,7 @@ export function MonthlySheetClient({
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors
+                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors
                                 ${activeTab === tab
                                     ? "bg-primary text-primary-foreground shadow-sm"
                                     : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -222,7 +221,6 @@ export function MonthlySheetClient({
                     </div>
                 )}
             </div>
-        </div>
     )
 }
 
@@ -261,7 +259,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
             <div className="lg:static fixed bottom-[72px] left-0 right-0 px-4 z-40 lg:px-0 lg:bottom-auto lg:z-auto">
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="w-full border-2 border-dashed border-border rounded-lg py-4 lg:py-3 text-sm font-medium text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors bg-card/95 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none shadow-lg lg:shadow-none"
+                    className="w-full border-2 border-dashed border-border rounded-xl py-4 lg:py-3 text-sm font-medium text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors bg-card/95 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none shadow-lg lg:shadow-none"
                 >
                     + Add {type === "INCOME" ? "Income" : "Expense"}
                 </button>
@@ -272,18 +270,18 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
     const formAction = mode === "split" ? splitAction : normalAction
 
     return (
-        <form action={formAction} className="bg-muted/50 border border-border rounded-lg p-4 space-y-3">
+        <form action={formAction} className="bg-muted/50 border border-border rounded-xl p-4 space-y-3">
             <input type="hidden" name="type" value={type} />
             <input type="hidden" name="monthlySheetId" value={sheetId} />
 
             {/* Mode selector */}
-            <div className="flex gap-1.5 p-1 bg-muted rounded-lg w-fit">
+            <div className="flex gap-1.5 p-1 bg-muted rounded-xl w-fit">
                 {(["normal", "recurring", ...(type === "EXPENSE" ? ["split"] : [])] as FormMode[]).map(m => (
                     <button
                         key={m}
                         type="button"
                         onClick={() => setMode(m)}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors capitalize
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-medium transition-colors capitalize
                             ${mode === m
                                 ? "bg-background text-foreground shadow-sm"
                                 : "text-muted-foreground hover:text-foreground"
@@ -298,12 +296,12 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
 
             {/* Mode description hints */}
             {mode === "recurring" && (
-                <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-md px-3 py-1.5">
+                <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-1.5">
                     🔄 This transaction will auto-repeat every month.
                 </p>
             )}
             {mode === "split" && (
-                <p className="text-xs text-purple-600 dark:text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-md px-3 py-1.5">
+                <p className="text-xs text-purple-600 dark:text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-xl px-3 py-1.5">
                     ✂️ Total amount will be split evenly across {splitMonths} months.
                 </p>
             )}
@@ -320,7 +318,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                         min="0.01"
                         placeholder="0.00"
                         required
-                        className="w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                 </div>
                 <div>
@@ -332,7 +330,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                         max={maxDate}
                         defaultValue={defaultDate}
                         required
-                        className="w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     />
                 </div>
                 {mode === "split" && (
@@ -345,7 +343,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                             max="24"
                             value={splitMonths}
                             onChange={e => setSplitMonths(parseInt(e.target.value) || 2)}
-                            className="w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                            className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         />
                     </div>
                 )}
@@ -365,7 +363,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                 <select
                     name="categoryId"
                     required
-                    className="w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                     <option value="">Select a category...</option>
                     {categories.map(c => (
@@ -382,7 +380,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                     name="description"
                     type="text"
                     placeholder="e.g. Grocery run"
-                    className="w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
             </div>
 
@@ -394,7 +392,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                 <button
                     type="submit"
                     disabled={isPending}
-                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
                 >
                     <Check className="size-3.5" />
                     {isPending ? "Saving..." : mode === "split" ? `Split into ${splitMonths} months` : "Save"}
@@ -402,7 +400,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                 <button
                     type="button"
                     onClick={() => { setIsOpen(false); setMode("normal") }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
                 >
                     <XCircle className="size-3.5" />
                     Cancel
@@ -480,13 +478,13 @@ function TransactionRow({ transaction: t, onEdit, readOnly }: {
                     </p>
                     {/* Recurring badge */}
                     {t.isRecurring && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
                             <RefreshCw className="size-2.5" /> recurring
                         </span>
                     )}
                     {/* Split badge */}
                     {isSplit && t.splitIndex && t.splitMonths && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
                             <Scissors className="size-2.5" /> {t.splitIndex}/{t.splitMonths}
                         </span>
                     )}
@@ -563,20 +561,20 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
                 if (result?.success) onDone()
                 else if (result?.error) setError(result.error)
             }}
-            className="py-3 px-3 my-1 space-y-2 bg-muted/50 border border-border rounded-lg"
+            className="py-3 px-3 my-1 space-y-2 bg-muted/50 border border-border rounded-xl"
         >
             <div className="grid grid-cols-2 gap-2">
                 <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Amount (€)</label>
                     <input name="amount" type="number" step="0.01" min="0.01"
                         defaultValue={t.amount} required
-                        className="w-full border border-input bg-background text-foreground rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                        className="w-full border border-input bg-background text-foreground rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                 </div>
                 <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Date</label>
                     <input name="date" type="date" min={minDate} max={maxDate}
                         defaultValue={new Date(t.date).toISOString().split("T")[0]} required
-                        className="w-full border border-input bg-background text-foreground rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                        className="w-full border border-input bg-background text-foreground rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                 </div>
             </div>
 
@@ -586,7 +584,7 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
                     {!isShared && <CategoryManager type={t.type as "INCOME" | "EXPENSE"} categories={categories} />}
                 </div>
                 <select name="categoryId" defaultValue={t.categoryId} required
-                    className="w-full border border-input bg-background text-foreground rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                    className="w-full border border-input bg-background text-foreground rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
                     {categories.map(c => (
                         <option key={c.id} value={c.id} className="bg-background">{c.icon} {c.name}</option>
                     ))}
@@ -597,19 +595,19 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
                 <label className="text-xs text-muted-foreground mb-1 block">Description (optional)</label>
                 <input name="description" type="text" defaultValue={t.description ?? ""}
                     placeholder="e.g. Grocery run"
-                    className="w-full border border-input bg-background text-foreground rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    className="w-full border border-input bg-background text-foreground rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
 
             {error && <p className="text-destructive text-xs">{error}</p>}
 
             <div className="flex gap-2">
                 <button type="submit" disabled={isPending}
-                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
+                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
                     <Check className="size-3.5" />
                     {isPending ? "Saving..." : "Save"}
                 </button>
                 <button type="button" onClick={onDone}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
                     <XCircle className="size-3.5" />
                     Cancel
                 </button>
@@ -665,11 +663,11 @@ function DeleteButton({ transaction }: { transaction: Transaction }) {
                         </p>
                         <div className="flex flex-col gap-2">
                             <button onClick={handleDeleteOne} disabled={isPending}
-                                className="w-full border border-border rounded-md px-4 py-2 text-sm font-medium hover:bg-muted transition-colors text-foreground">
+                                className="w-full border border-border rounded-xl px-4 py-2 text-sm font-medium hover:bg-muted transition-colors text-foreground">
                                 Delete only this part ({transaction.splitIndex}/{transaction.splitMonths})
                             </button>
                             <button onClick={handleDeleteAll} disabled={isPending}
-                                className="w-full bg-destructive text-destructive-foreground rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity">
+                                className="w-full bg-destructive text-destructive-foreground rounded-xl px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity">
                                 Delete all {transaction.splitMonths} parts
                             </button>
                             <button onClick={() => setShowSplitDialog(false)} disabled={isPending}
@@ -791,7 +789,7 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
             <div className="lg:static fixed bottom-[72px] left-0 right-0 px-4 z-40 lg:px-0 lg:bottom-auto lg:z-auto">
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="w-full border-2 border-dashed border-border rounded-lg py-4 lg:py-3 text-sm font-medium text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors bg-card/95 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none shadow-lg lg:shadow-none"
+                    className="w-full border-2 border-dashed border-border rounded-xl py-4 lg:py-3 text-sm font-medium text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors bg-card/95 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none shadow-lg lg:shadow-none"
                 >
                     + Add Capital Entry
                 </button>
@@ -800,7 +798,7 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
     }
 
     return (
-        <form action={formAction} className="bg-muted/50 border border-border rounded-lg p-4 space-y-3">
+        <form action={formAction} className="bg-muted/50 border border-border rounded-xl p-4 space-y-3">
             <input type="hidden" name="monthlySheetId" value={sheetId} />
 
             <div>
@@ -811,7 +809,7 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
                 <select
                     name="capitalCategoryId"
                     required
-                    className="w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                     <option value="">Select a category...</option>
                     {available.map(c => (
@@ -836,7 +834,7 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
                     min="0.01"
                     placeholder="0.00"
                     required
-                    className="w-full border border-input bg-background text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
             </div>
 
@@ -844,12 +842,12 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
 
             <div className="flex gap-2 pt-1">
                 <button type="submit" disabled={isPending}
-                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
+                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
                     <Check className="size-3.5" />
                     {isPending ? "Saving..." : "Save"}
                 </button>
                 <button type="button" onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
                     <XCircle className="size-3.5" />
                     Cancel
                 </button>
@@ -916,7 +914,7 @@ function CapitalRow({ capital, isEditing, onEdit, onDone, totalCapital, readOnly
                 <div className="py-3 flex items-center gap-2 group">
                     <div className="flex-1 flex items-center gap-2">
                         <span
-                            className="w-3 h-3 rounded-full shrink-0"
+                            className="w-3 h-3 rounded-xl shrink-0"
                             style={{ backgroundColor: capital.capitalCategory.color }}
                         />
                         <p className="font-medium text-foreground text-sm">
@@ -959,7 +957,7 @@ function EditCapitalRow({ capital, onDone }: { capital: Capital; onDone: () => v
                 if (result?.success) onDone()
                 else if (result?.error) setError(result.error)
             }}
-            className="py-3 px-3 my-1 space-y-2 bg-muted/50 border border-border rounded-lg"
+            className="py-3 px-3 my-1 space-y-2 bg-muted/50 border border-border rounded-xl"
         >
             <p className="text-sm font-medium text-foreground">
                 {capital.capitalCategory.name}
@@ -973,17 +971,17 @@ function EditCapitalRow({ capital, onDone }: { capital: Capital; onDone: () => v
                     min="0.01"
                     defaultValue={capital.amount}
                     required
-                    className="w-full border border-input bg-background text-foreground rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="w-full border border-input bg-background text-foreground rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
             </div>
             {error && <p className="text-destructive text-xs">{error}</p>}
             <div className="flex gap-2">
                 <button type="submit" disabled={isPending}
-                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
+                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
                     <Check className="size-3.5" /> {isPending ? "Saving..." : "Save"}
                 </button>
                 <button type="button" onClick={onDone}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
                     <XCircle className="size-3.5" /> Cancel
                 </button>
             </div>

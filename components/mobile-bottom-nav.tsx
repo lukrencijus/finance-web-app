@@ -67,14 +67,14 @@ export function MobileBottomNav() {
 
             {/* Dropdown Menu */}
             {isMenuOpen && (
-                <div className="lg:hidden fixed bottom-16 left-0 right-0 z-40 bg-card border border-border rounded-t-xl shadow-lg">
+                <div className="lg:hidden fixed bottom-16 left-0 right-0 z-40 bg-card border border-border rounded-xl shadow-lg">
                     <div className="flex flex-col px-4 py-3 gap-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
                         {menuRoutes.map(({ href, label, icon: Icon }) => (
                             <Link
                                 key={href}
                                 href={href}
                                 onClick={() => setIsMenuOpen(false)}
-                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                                className="flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                             >
                                 <Icon className="size-4" />
                                 <span className="text-sm font-medium">{label}</span>
@@ -86,7 +86,7 @@ export function MobileBottomNav() {
                             <Link
                                 href="/admin/users"
                                 onClick={() => setIsMenuOpen(false)}
-                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                                className="flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                             >
                                 <Menu className="size-4" />
                                 <span className="text-sm font-medium">Admin</span>
@@ -97,7 +97,7 @@ export function MobileBottomNav() {
                         <Link
                             href="/api/auth/signout"
                             onClick={() => setIsMenuOpen(false)}
-                            className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-red-500/10 transition-colors"
+                            className="flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-red-500/10 transition-colors"
                         >
                             <LogOut className="size-4" />
                             <span className="text-sm font-medium">Logout</span>

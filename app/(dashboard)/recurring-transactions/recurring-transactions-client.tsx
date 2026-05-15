@@ -33,8 +33,8 @@ export function RecurringTransactionsClient({ income, expenses, currentMonth, cu
     const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear
 
     return (
-        <div className="max-w-lg mx-auto py-8 space-y-6">
-            <h1 className="text-3xl font-semibold">Recurring Transactions</h1>
+        <div className="max-w-lg mx-auto py-8 space-y-2">
+            <h1 className="text-3xl font-semibold mb-8">Recurring Transactions</h1>
 
             {totalCount === 0 ? (
                 <div className="bg-card rounded-xl p-10 shadow-sm border border-border text-center">
@@ -85,7 +85,7 @@ function Section({ title, type, transactions }: {
                 <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                     {title}
                 </span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeClass}`}>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-xl border ${badgeClass}`}>
                     {transactions.length}
                 </span>
             </div>
@@ -115,7 +115,7 @@ function RecurringRow({ transaction: t }: { transaction: RecurringTransaction })
 
     return (
         <li className="flex items-center gap-3 px-6 py-4 hover:bg-muted/30 transition-colors">
-            <div className="shrink-0 w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+            <div className="shrink-0 w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center">
                 <RefreshCw className="size-3.5 text-blue-500" />
             </div>
             <div className="flex-1 min-w-0">

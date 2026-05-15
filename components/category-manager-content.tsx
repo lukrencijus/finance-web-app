@@ -67,7 +67,7 @@ function ConfirmDeleteDialog({ category, transactions, onConfirm, onCancel, isPe
                                 {transactions.length} transaction{transactions.length !== 1 ? "s" : ""}
                             </span>:
                         </p>
-                        <div className="max-h-60 overflow-y-auto rounded-lg border border-border mb-5">
+                        <div className="max-h-60 overflow-y-auto rounded-xl border border-border mb-5">
                             <table className="w-full text-xs">
                                 <thead className="bg-muted/50 sticky top-0 text-muted-foreground">
                                     <tr>
@@ -84,7 +84,7 @@ function ConfirmDeleteDialog({ category, transactions, onConfirm, onCancel, isPe
                                                 {new Date(t.date).toLocaleDateString()}
                                             </td>
                                             <td className="px-3 py-2">
-                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                                <span className={`px-1.5 py-0.5 rounded-xl text-[10px] font-bold uppercase tracking-wider ${
                                                     t.type === "INCOME" 
                                                         ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20" 
                                                         : "bg-destructive/10 text-destructive border border-destructive/20"
@@ -107,11 +107,11 @@ function ConfirmDeleteDialog({ category, transactions, onConfirm, onCancel, isPe
                 )}
                 <div className="flex justify-end gap-2 pt-2">
                     <button onClick={onCancel} disabled={isPending}
-                        className="rounded-md border border-border px-4 py-1.5 text-xs font-medium hover:bg-muted transition-colors text-foreground">
+                        className="rounded-xl border border-border px-4 py-1.5 text-xs font-medium hover:bg-muted transition-colors text-foreground">
                         Cancel
                     </button>
                     <button onClick={onConfirm} disabled={isPending}
-                        className="rounded-md bg-destructive text-destructive-foreground px-4 py-1.5 text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-opacity">
+                        className="rounded-xl bg-destructive text-destructive-foreground px-4 py-1.5 text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-opacity">
                         {isPending ? "Deleting..." : "Yes, delete"}
                     </button>
                 </div>
@@ -144,13 +144,13 @@ function EditCategoryRow({ category, onDone }: { category: Category; onDone: () 
     }
 
     return (
-        <div className="flex items-center gap-1.5 px-3 py-2 bg-muted/30 rounded-md">
+        <div className="flex items-center gap-1.5 px-3 py-2 bg-muted/30 rounded-xl">
             <GripVertical className="size-4 text-transparent shrink-0" />
             <input ref={iconRef} defaultValue={category.icon ?? ""} placeholder="💰"
-                className="w-10 border border-input rounded px-1.5 py-1 text-sm bg-background text-foreground text-center focus:outline-none focus:ring-1 focus:ring-ring" />
+                className="w-10 border border-input rounded-xl px-1.5 py-1 text-sm bg-background text-foreground text-center focus:outline-none focus:ring-1 focus:ring-ring" />
             <input ref={nameRef} defaultValue={category.name} autoFocus
                 onKeyDown={e => { if (e.key === "Enter") handleSave(); if (e.key === "Escape") onDone() }}
-                className="flex-1 border border-input rounded px-2 py-1 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />
+                className="flex-1 border border-input rounded-xl px-2 py-1 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />
             <button onClick={handleSave} disabled={isPending}
                 className="text-green-600 dark:text-green-400 hover:opacity-80 p-0.5 disabled:opacity-50" title="Save">
                 <Check className="size-4" />
@@ -206,7 +206,7 @@ function SortableCategoryRow({ category }: { category: Category }) {
     return (
         <>
             <li ref={setNodeRef} style={style}
-                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted/50 transition-colors group">
+                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-muted/50 transition-colors group">
                 {/* Drag handle */}
                 <button
                     type="button"
@@ -272,15 +272,15 @@ function AddCategoryRow({ type, onClose }: { type: "INCOME" | "EXPENSE"; onClose
     }
 
     return (
-        <div className="space-y-2 p-2 bg-muted/20 rounded-lg border border-border/50">
+        <div className="space-y-2 p-2 bg-muted/20 rounded-xl border border-border/50">
             <div className="flex items-center gap-1.5">
                 <input ref={iconRef} placeholder="💰"
-                    className="w-10 border border-input rounded px-1.5 py-1.5 text-sm bg-background text-foreground text-center focus:outline-none focus:ring-1 focus:ring-ring" />
+                    className="w-10 border border-input rounded-xl px-1.5 py-1.5 text-sm bg-background text-foreground text-center focus:outline-none focus:ring-1 focus:ring-ring" />
                 <input ref={nameRef} placeholder="Category name" autoFocus
                     onKeyDown={e => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") onClose() }}
-                    className="flex-1 border border-input rounded px-2 py-1.5 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />
+                    className="flex-1 border border-input rounded-xl px-2 py-1.5 text-sm bg-background text-foreground min-w-0 focus:outline-none focus:ring-1 focus:ring-ring" />
                 <button onClick={handleAdd} disabled={isPending}
-                    className="px-3 py-1.5 rounded bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 disabled:opacity-50 shrink-0">
+                    className="px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 disabled:opacity-50 shrink-0">
                     {isPending ? "..." : "Add"}
                 </button>
                 <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-0.5">
@@ -330,7 +330,7 @@ function CategorySection({ type, initialCategories }: {
             {/* Section header */}
             <div className="flex items-center gap-2 px-1">
                 <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{label}</span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badge}`}>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-xl border ${badge}`}>
                     {categories.length}
                 </span>
             </div>

@@ -35,9 +35,9 @@ export default async function SharedLayout({
         <>
             {children}
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-2xl">
-                <div className="bg-primary/5 backdrop-blur-md border border-primary/20 px-6 py-3 rounded-full flex items-center justify-between shadow-2xl shadow-primary/20">
+                <div className="bg-primary/5 backdrop-blur-md border border-primary/20 px-6 py-3 rounded-xl flex items-center justify-between shadow-2xl shadow-primary/20">
                     <div className="flex items-center gap-3 text-sm">
-                        <div className="bg-primary/10 p-1.5 rounded-full">
+                        <div className="bg-primary/10 p-1.5 rounded-xl">
                             {isReadOnly
                                 ? <Eye className="size-4 text-primary shrink-0" />
                                 : <Pencil className="size-4 text-primary shrink-0" />
@@ -52,7 +52,7 @@ export default async function SharedLayout({
                     </div>
                     <Link 
                         href="/" 
-                        className="flex items-center gap-1.5 text-xs font-semibold bg-primary text-primary-foreground px-4 py-1.5 rounded-full hover:opacity-90 transition-all active:scale-95"
+                        className="flex items-center gap-1.5 text-xs font-semibold bg-primary text-primary-foreground px-4 py-1.5 rounded-xl hover:opacity-90 transition-all active:scale-95"
                     >
                         <ArrowLeft className="size-3.5" />
                         Back to my profile

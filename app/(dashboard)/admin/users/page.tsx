@@ -12,8 +12,8 @@ export default async function AdminUsersPage() {
     })
 
     return (
-        <main className="p-6">
-            <div className="mx-auto max-w-6xl">
+        <main className="p-10">
+            <div className="mx-auto max-w-4xl">
                 <h1 className="text-3xl font-semibold">User Management</h1>
                 <p className="mt-2 text-sm text-muted-foreground">
                     All users: {users.length}
