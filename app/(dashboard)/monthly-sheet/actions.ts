@@ -37,6 +37,8 @@ export async function createTransaction(prevState: any, formData: FormData) {
 
     const { amount, description, date, type, categoryId, monthlySheetId } = parsed.data
 
+    const isRecurring = formData.get("isRecurring") === "true"
+
     // make sure the sheet belongs to this user
     const sheet = await prisma.monthlySheet.findUnique({
         where: { id: monthlySheetId },
@@ -70,6 +72,7 @@ export async function createTransaction(prevState: any, formData: FormData) {
                 type,
                 categoryId,
                 monthlySheetId,
+                isRecurring,
             },
         })
         revalidatePath("/monthly-sheet")
@@ -209,4 +212,151 @@ export async function deleteCapital(capitalId: string) {
 
     await prisma.capital.delete({ where: { id: capitalId } })
     revalidatePath("/monthly-sheet")
+}
+
+export async function toggleRecurring(transactionId: string) {
+    const user = await getCurrentDbUser()
+
+    const transaction = await prisma.transaction.findUnique({
+        where: { id: transactionId },
+        include: { monthlySheet: true },
+    })
+
+    if (!transaction || !await hasEditAccess(transaction.monthlySheet.userId, user.id)) {
+        return { error: "Not found or unauthorized" }
+    }
+
+    await prisma.transaction.update({
+        where: { id: transactionId },
+        data: { isRecurring: !transaction.isRecurring },
+    })
+
+    revalidatePath("/monthly-sheet")
+    return { success: true }
+}
+
+export async function createSplitTransaction(prevState: any, formData: FormData) {
+    const user = await getCurrentDbUser()
+
+    const amount = parseFloat(String(formData.get("amount") ?? ""))
+    const description = String(formData.get("description") ?? "").trim() || undefined
+    const date = String(formData.get("date") ?? "").trim()
+    const type = String(formData.get("type") ?? "").trim()
+    const categoryId = String(formData.get("categoryId") ?? "").trim()
+    const monthlySheetId = String(formData.get("monthlySheetId") ?? "").trim()
+    const splitMonths = parseInt(String(formData.get("splitMonths") ?? ""))
+
+    if (isNaN(amount) || amount <= 0) return { error: "Amount must be greater than 0" }
+    if (!date) return { error: "Date is required" }
+    if (isNaN(splitMonths) || splitMonths < 2 || splitMonths > 24) {
+        return { error: "Split must be between 2 and 24 months" }
+    }
+
+    // Verify the starting sheet belongs to user
+    const startSheet = await prisma.monthlySheet.findUnique({
+        where: { id: monthlySheetId },
+    })
+    if (!startSheet || !await hasEditAccess(startSheet.userId, user.id)) {
+        return { error: "Unauthorized" }
+    }
+
+    // Verify category
+    const category = await prisma.category.findUnique({ where: { id: categoryId } })
+    if (!category || category.userId !== startSheet.userId) {
+        return { error: "Invalid category" }
+    }
+
+    const splitAmount = parseFloat((amount / splitMonths).toFixed(2))
+    // Last part gets any rounding remainder
+    const lastAmount = parseFloat((amount - splitAmount * (splitMonths - 1)).toFixed(2))
+
+    const splitGroupId = crypto.randomUUID()
+    const startDate = new Date(date)
+
+    // Build all (month, year) pairs starting from the sheet's month
+    const parts: { month: number; year: number; amount: number; date: Date }[] = []
+    for (let i = 0; i < splitMonths; i++) {
+        let m = startSheet.month + i
+        let y = startSheet.year
+        while (m > 12) { m -= 12; y += 1 }
+
+        const lastDayOfMonth = new Date(y, m, 0).getDate()
+        const day = Math.min(startDate.getDate(), lastDayOfMonth)
+        const partDate = new Date(y, m - 1, day)
+        const partAmount = i === splitMonths - 1 ? lastAmount : splitAmount
+
+        parts.push({ month: m, year: y, amount: partAmount, date: partDate })
+    }
+
+    // Ensure all needed sheets exist (creates future sheets too)
+    const sheetIds: Record<string, string> = {}
+    sheetIds[`${startSheet.month}-${startSheet.year}`] = startSheet.id
+
+    for (const part of parts) {
+        const key = `${part.month}-${part.year}`
+        if (sheetIds[key]) continue
+
+        const existing = await prisma.monthlySheet.findUnique({
+            where: {
+                month_year_userId: {
+                    month: part.month,
+                    year: part.year,
+                    userId: startSheet.userId,
+                },
+            },
+        })
+
+        if (existing) {
+            sheetIds[key] = existing.id
+        } else {
+            const created = await prisma.monthlySheet.create({
+                data: {
+                    month: part.month,
+                    year: part.year,
+                    userId: startSheet.userId,
+                },
+            })
+            sheetIds[key] = created.id
+        }
+    }
+
+    // Create all split transactions
+    await prisma.transaction.createMany({
+        data: parts.map((part, i) => ({
+            amount: part.amount,
+            description: description || null,
+            date: part.date,
+            type,
+            categoryId,
+            monthlySheetId: sheetIds[`${part.month}-${part.year}`],
+            isRecurring: false,
+            splitMonths,
+            splitIndex: i + 1,
+            splitGroupId,
+        })),
+    })
+
+    revalidatePath("/monthly-sheet")
+    return { success: true }
+}
+
+export async function deleteSplitGroup(splitGroupId: string) {
+    const user = await getCurrentDbUser()
+
+    // Find all transactions in this group and verify ownership
+    const transactions = await prisma.transaction.findMany({
+        where: { splitGroupId },
+        include: { monthlySheet: true },
+    })
+
+    if (transactions.length === 0) return { error: "Not found" }
+
+    const allOwned = await Promise.all(
+        transactions.map(t => hasEditAccess(t.monthlySheet.userId, user.id))
+    )
+    if (allOwned.some(v => !v)) return { error: "Unauthorized" }
+
+    await prisma.transaction.deleteMany({ where: { splitGroupId } })
+    revalidatePath("/monthly-sheet")
+    return { success: true }
 }
