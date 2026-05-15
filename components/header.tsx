@@ -12,18 +12,18 @@ export const Header = async () => {
         : null
 
     return (
-        <header className="bg-blue-600 dark:bg-blue-900 text-white px-4 py-8 lg:px-14 pb-36 transition-colors duration-500">
+        <header className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-900 dark:to-blue-950 text-white px-4 py-4 lg:px-14 lg:py-6 transition-colors duration-500 shadow-sm">
             <div className="max-w-screen-2xl mx-auto">
-                <div className="w-full flex items-center justify-between mb-14">
-                    <div className="flex items-center lg:gap-x-16">
+                <div className="w-full flex items-center justify-between mb-6 lg:mb-8">
+                    <div className="flex items-center lg:gap-x-12">
                         <HeaderLogo />
                         <Navigation />
                     </div>
-                    <div className="hidden lg:flex items-center gap-3">
+                    <div className="hidden lg:flex items-center gap-2">
                         {user?.role === "ADMIN" && (
                             <Link
                                 href="/admin/users"
-                                className="text-sm font-medium border border-white/20 rounded-md px-3 py-1.5 hover:bg-white/10 transition-all"
+                                className="text-xs font-medium border border-white/20 rounded px-2.5 py-1 hover:bg-white/10 transition-all"
                             >
                                 Admin
                             </Link>
@@ -31,7 +31,7 @@ export const Header = async () => {
 
                         <Link
                             href="/settings"
-                            className="text-sm font-medium border border-white/20 rounded-md px-3 py-1.5 hover:bg-white/10 transition-all flex items-center gap-x-2"
+                            className="text-xs font-medium border border-white/20 rounded px-2.5 py-1 hover:bg-white/10 transition-all"
                         >
                             {session?.user?.name}
                         </Link>
@@ -41,7 +41,7 @@ export const Header = async () => {
                             await signOut({ redirectTo: "/sign-in" })
                         }}>
                             <button type="submit"
-                                className="text-sm font-medium border border-white/20 rounded-md px-3 py-1.5 hover:bg-white/10 transition-all flex items-center gap-x-2">
+                                className="text-xs font-medium border border-white/20 rounded px-2.5 py-1 hover:bg-white/10 transition-all">
                                 Sign Out
                             </button>
                         </form>

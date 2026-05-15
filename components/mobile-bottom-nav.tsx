@@ -14,7 +14,7 @@ export function MobileBottomNav() {
     const mainRoutes = sharedUserId ? [
         { href: `/shared/${sharedUserId}`, label: "Dashboard", icon: Home },
         { href: `/shared/${sharedUserId}/monthly-sheet`, label: "Sheet", icon: CalendarDays },
-        { href: `/shared/${sharedUserId}/settings`, label: "Settings", icon: Settings },
+        { href: "/settings", label: "Settings", icon: Settings },
     ] : [
         { href: "/", label: "Dashboard", icon: Home },
         { href: "/monthly-sheet", label: "Sheet", icon: CalendarDays },
