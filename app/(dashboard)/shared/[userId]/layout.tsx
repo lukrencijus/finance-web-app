@@ -31,33 +31,42 @@ export default async function SharedLayout({
     const ownerName = access.owner.name ?? access.owner.email
     const isReadOnly = access.permission === "VIEW"
 
-    return (
+return (
         <>
-            {children}
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-2xl">
-                <div className="bg-primary/5 backdrop-blur-md border border-primary/20 px-6 py-3 rounded-xl flex items-center justify-between shadow-2xl shadow-primary/20">
-                    <div className="flex items-center gap-3 text-sm">
-                        <div className="bg-primary/10 p-1.5 rounded-xl">
+            <div className="fixed top-4 lg:top-auto lg:bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[95%] max-w-2xl">
+                <div className="bg-card/80 backdrop-blur-2xl border border-primary/20 px-4 py-2 rounded-2xl flex items-center justify-between shadow-2xl shadow-primary/10">
+                    
+                    <div className="flex items-center gap-2 overflow-hidden">
+                        <div className="bg-primary/10 p-1.5 rounded-xl shrink-0">
                             {isReadOnly
-                                ? <Eye className="size-4 text-primary shrink-0" />
-                                : <Pencil className="size-4 text-primary shrink-0" />
+                                ? <Eye className="size-4 text-primary" />
+                                : <Pencil className="size-4 text-primary" />
                             }
                         </div>
-                        <span className="text-foreground font-medium">
-                            Viewing <span className="text-primary font-bold">{ownerName}</span> profile
-                            <span className="ml-2 opacity-70 font-normal text-xs uppercase tracking-wider">
+                        
+                        <div className="flex items-center gap-1.5 text-xs whitespace-nowrap overflow-hidden">
+                            <span className="text-foreground font-semibold truncate max-w-[120px] xs:max-w-none">
+                                Viewing <span className="text-primary">{ownerName}</span>
+                            </span>
+                            <span className="opacity-60 font-medium uppercase text-[10px] shrink-0">
                                 • {isReadOnly ? "Read Only" : "Edit Mode"}
                             </span>
-                        </span>
+                        </div>
                     </div>
+                    
                     <Link 
                         href="/" 
-                        className="flex items-center gap-1.5 text-xs font-semibold bg-primary text-primary-foreground px-4 py-1.5 rounded-xl hover:opacity-90 transition-all active:scale-95"
+                        className="flex items-center gap-1.5 text-xs font-bold bg-primary text-primary-foreground px-3 py-1.5 rounded-xl hover:opacity-90 transition-all active:scale-95 shadow-lg shadow-primary/20 shrink-0 ml-2"
                     >
                         <ArrowLeft className="size-3.5" />
-                        Back to my profile
+                        <span>Back to my profile</span>
                     </Link>
                 </div>
+            </div>
+            
+            {/* Content Container */}
+            <div className="pt-20 lg:pt-0 lg:pb-24"> 
+                {children}
             </div>
         </>
     )
