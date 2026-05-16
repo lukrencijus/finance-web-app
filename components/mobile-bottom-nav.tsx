@@ -34,13 +34,13 @@ export function MobileBottomNav({ isAdmin }: MobileBottomNavProps) {
     ]
 
     const menuRoutes = sharedUserId ? [
+        { href: `/shared/${sharedUserId}/recurring-transactions`, label: "Recurring", icon: RefreshCw },
         { href: `/shared/${sharedUserId}/categories`, label: "Categories", icon: LayoutGrid },
         { href: `/shared/${sharedUserId}/capital`, label: "Capital", icon: Wallet },
-        { href: `/shared/${sharedUserId}/recurring-transactions`, label: "Recurring", icon: RefreshCw },
     ] : [
+        { href: "/recurring-transactions", label: "Recurring", icon: RefreshCw },
         { href: "/categories", label: "Categories", icon: LayoutGrid },
         { href: "/capital", label: "Capital", icon: Wallet },
-        { href: "/recurring-transactions", label: "Recurring", icon: RefreshCw },
     ]
 
     const isInsideMenu = menuRoutes.some(route => pathname === route.href) || pathname === "/admin/users";
@@ -109,7 +109,7 @@ export function MobileBottomNav({ isAdmin }: MobileBottomNavProps) {
                                     <div className="flex items-center justify-center size-10 bg-primary/5 rounded-2xl">
                                         <Shield className="size-5 text-primary" />
                                     </div>
-                                    <span className="text-sm font-semibold tracking-tight">Admin Panel</span>
+                                    <span className="text-sm font-semibold tracking-tight">Admin</span>
                                 </Link>
                             )}
 

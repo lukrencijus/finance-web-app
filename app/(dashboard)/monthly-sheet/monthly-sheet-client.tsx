@@ -100,7 +100,7 @@ export function MonthlySheetClient({
     const expenseCategories = categories.filter(c => c.type === "EXPENSE")
 
     return (
-            <div className="p-6 max-w-6xl mx-auto space-y-6">
+            <div className="p-6 max-w-6xl mx-auto space-y-6 pb-36 lg:pb-6">
 
                 {/* Month picker */}
                 <div className="flex items-center gap-x-3 mb-6">
@@ -118,8 +118,8 @@ export function MonthlySheetClient({
                     )}
                 </div>
 
-                {/* Tabs */}
-                <div className="grid grid-cols-3 gap-x-2 mb-6">
+                {/* Desktop Tabs (hidden on mobile) */}
+                <div className="hidden lg:grid grid-cols-3 gap-x-2 mb-6">
                     {TABS.map(tab => (
                         <button
                             key={tab}
@@ -220,7 +220,33 @@ export function MonthlySheetClient({
                         )}
                     </div>
                 )}
+
+                {/* Mobile Tab Bar */}
+                <MobileTabBar activeTab={activeTab} onChange={setActiveTab} />
             </div>
+    )
+}
+
+// Mobile Bottom Tab Bar Component
+function MobileTabBar({ activeTab, onChange }: { activeTab: Tab; onChange: (t: Tab) => void }) {
+    return (
+        <div className="lg:hidden fixed bottom-[120px] left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-[400px]">
+            <div className="bg-card/80 backdrop-blur-xl border border-border shadow-lg rounded-2xl p-1 flex gap-1">
+                {TABS.map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => onChange(tab)}
+                        className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200
+                            ${activeTab === tab
+                                ? "bg-primary text-primary-foreground shadow-sm scale-[1.02]"
+                                : "text-muted-foreground hover:bg-muted/60"
+                            }`}
+                    >
+                        {tab}
+                    </button>
+                ))}
+            </div>
+        </div>
     )
 }
 
@@ -256,10 +282,10 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
 
     if (!isOpen) {
         return (
-            <div className="lg:static fixed bottom-[72px] left-0 right-0 px-4 z-40 lg:px-0 lg:bottom-auto lg:z-auto">
+            <div className="lg:static fixed bottom-[152px] left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-[400px] lg:w-full lg:max-w-none lg:px-0 lg:bottom-auto lg:z-auto lg:translate-x-0">
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="w-full border-2 border-dashed border-border rounded-xl py-4 lg:py-3 text-sm font-medium text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors bg-card/95 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none shadow-lg lg:shadow-none"
+                    className="w-full bg-primary text-primary-foreground lg:bg-transparent lg:text-muted-foreground border-2 border-dashed border-border lg:hover:border-muted-foreground/50 lg:hover:text-foreground rounded-2xl lg:rounded-xl py-3 text-xs font-semibold lg:font-medium transition-all shadow-lg lg:shadow-none active:scale-95 lg:active:scale-100"
                 >
                     + Add {type === "INCOME" ? "Income" : "Expense"}
                 </button>
@@ -786,10 +812,10 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
 
     if (!isOpen) {
         return (
-            <div className="lg:static fixed bottom-[72px] left-0 right-0 px-4 z-40 lg:px-0 lg:bottom-auto lg:z-auto">
+            <div className="lg:static fixed bottom-[152px] left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-[400px] lg:w-full lg:max-w-none lg:px-0 lg:bottom-auto lg:z-auto lg:translate-x-0">
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="w-full border-2 border-dashed border-border rounded-xl py-4 lg:py-3 text-sm font-medium text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground transition-colors bg-card/95 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none shadow-lg lg:shadow-none"
+                    className="w-full bg-primary text-primary-foreground lg:bg-transparent lg:text-muted-foreground border-2 border-dashed border-border lg:hover:border-muted-foreground/50 lg:hover:text-foreground rounded-2xl lg:rounded-xl py-3 text-xs font-semibold lg:font-medium transition-all shadow-lg lg:shadow-none active:scale-95 lg:active:scale-100"
                 >
                     + Add Capital Entry
                 </button>
