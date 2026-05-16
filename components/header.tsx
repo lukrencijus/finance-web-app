@@ -1,8 +1,8 @@
-import { signOut, auth } from "@/auth"
+import { auth } from "@/auth"
 import { HeaderLogo } from "./header-logo"
 import { Navigation } from "./navigation"
 import { prisma } from "@/lib/prisma"
-import Link from "next/link"
+import { HeaderUserActions } from "./header-user-actions"
 
 export const Header = async () => {
     const session = await auth()
@@ -19,33 +19,7 @@ export const Header = async () => {
                         <Navigation />
                     </div>
                     
-                    <div className="hidden lg:flex items-center gap-2">
-                        {user?.role === "ADMIN" && (
-                            <Link
-                                href="/admin/users"
-                                className="text-xs font-medium bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-1.5 transition-all"
-                            >
-                                Admin
-                            </Link>
-                        )}
-
-                        <Link
-                            href="/settings"
-                            className="text-xs font-medium bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-1.5 transition-all"
-                        >
-                            Settings
-                        </Link>
-
-                        <form action={async () => {
-                            "use server"
-                            await signOut({ redirectTo: "/sign-in" })
-                        }}>
-                            <button type="submit"
-                                className="text-xs font-medium bg-red-600 hover:bg-red-700 border border-red-700 rounded-xl px-4 py-1.5 transition-all">
-                                Sign Out
-                            </button>
-                        </form>
-                    </div>
+                    <HeaderUserActions isAdmin={user?.role === "ADMIN"} />
                 </div>
             </div>
         </header>
