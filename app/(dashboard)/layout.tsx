@@ -1,3 +1,4 @@
+// DashboardLayout.tsx
 import { Header } from "@/components/header";
 import { redirect } from "next/navigation";
 import { getCurrentDbUser } from "@/lib/current-user";
@@ -24,7 +25,8 @@ const DashboardLayout = async ({ children }: Props) => {
             <main className="px-3 lg:px-14 pb-24 lg:pb-0">
                 {children}
             </main>
-            <MobileBottomNav />
+            {/* Pass the admin check here */}
+            <MobileBottomNav isAdmin={user.role === "ADMIN"} />
         </>
     )
 }

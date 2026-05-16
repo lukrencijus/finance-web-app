@@ -2,18 +2,25 @@
 
 import Link from "next/link"
 import { usePathname, useParams } from "next/navigation"
-import { Home, CalendarDays, Settings, LayoutGrid, Wallet, RefreshCw, LogOut, Menu, X, Shield } from "lucide-react"
+import { Home, CalendarDays, Settings, LayoutGrid, Wallet, RefreshCw, LogOut, Menu, X, Shield, AlertCircle } from "lucide-react"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
+import { signOut } from "next-auth/react"
 
-export function MobileBottomNav() {
+interface MobileBottomNavProps {
+    isAdmin: boolean
+}
+
+export function MobileBottomNav({ isAdmin }: MobileBottomNavProps) {
     const pathname = usePathname()
     const params = useParams()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
     const sharedUserId = params.userId as string | undefined
 
     useEffect(() => {
         setIsMenuOpen(false)
+        setShowLogoutConfirm(false)
     }, [pathname])
 
     const mainRoutes = sharedUserId ? [
@@ -40,7 +47,7 @@ export function MobileBottomNav() {
 
     return (
         <>
-            {/* Floating Navigation */}
+            {/* Floating Navigation Bar */}
             <div className="lg:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-[400px]">
                 <nav className="relative bg-card/70 backdrop-blur-2xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.4)] rounded-[2.5rem] p-2">
                     <div className="flex items-center justify-between relative z-10">
@@ -53,9 +60,7 @@ export function MobileBottomNav() {
                                     aria-label={label}
                                     className={cn(
                                         "relative flex-1 flex items-center justify-center h-14 rounded-full transition-all duration-300",
-                                        isActive 
-                                            ? "text-primary bg-primary/10" 
-                                            : "text-muted-foreground active:scale-90"
+                                        isActive ? "text-primary bg-primary/10" : "text-muted-foreground active:scale-90"
                                     )}
                                 >
                                     <Icon className={cn("size-6 transition-transform", isActive && "stroke-[2.5px] scale-110")} />
@@ -63,22 +68,14 @@ export function MobileBottomNav() {
                             )
                         })}
 
-                        {/* More Menu Toggle */}
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            aria-label="More"
                             className={cn(
                                 "relative flex-1 flex items-center justify-center h-14 rounded-full transition-all duration-300",
-                                (isMenuOpen || isInsideMenu) 
-                                    ? "text-primary bg-primary/10" 
-                                    : "text-muted-foreground active:scale-90"
+                                (isMenuOpen || isInsideMenu) ? "text-primary bg-primary/10" : "text-muted-foreground active:scale-90"
                             )}
                         >
-                            {isMenuOpen ? (
-                                <X className="size-6 scale-110" />
-                            ) : (
-                                <Menu className={cn("size-6 transition-transform", isInsideMenu && "stroke-[2.5px] scale-110")} />
-                            )}
+                            {isMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
                             {isInsideMenu && !isMenuOpen && (
                                 <span className="absolute bottom-2 size-1 bg-primary rounded-full" />
                             )}
@@ -87,8 +84,8 @@ export function MobileBottomNav() {
                 </nav>
             </div>
 
-            {/* Dropdown */}
-            {isMenuOpen && (
+            {/* Dropdown Menu */}
+            {isMenuOpen && !showLogoutConfirm && (
                 <div className="lg:hidden fixed inset-x-0 bottom-32 z-50 flex flex-col items-center px-6">
                     <div className="w-full max-w-[300px] bg-card/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-3 shadow-2xl animate-in fade-in zoom-in-95 slide-in-from-bottom-10 duration-300">
                         <div className="flex flex-col gap-1">
@@ -105,33 +102,70 @@ export function MobileBottomNav() {
                                 </Link>
                             ))}
                             
-                            <div className="h-px bg-white/5 my-2 mx-4" />
+                            {(isAdmin || !sharedUserId) && <div className="h-px bg-white/5 my-2 mx-4" />}
 
-                            {!sharedUserId && (
+                            {isAdmin && !sharedUserId && (
                                 <Link href="/admin/users" className="flex items-center gap-4 px-4 py-4 rounded-[1.5rem] hover:bg-primary/10 transition-colors">
                                     <div className="flex items-center justify-center size-10 bg-primary/5 rounded-2xl">
                                         <Shield className="size-5 text-primary" />
                                     </div>
-                                    <span className="text-sm font-semibold tracking-tight">Admin</span>
+                                    <span className="text-sm font-semibold tracking-tight">Admin Panel</span>
                                 </Link>
                             )}
 
-                            <Link href="/api/auth/signout" className="flex items-center gap-4 px-4 py-4 rounded-[1.5rem] hover:bg-red-500/10 transition-colors text-red-500">
+                            <button 
+                                onClick={() => setShowLogoutConfirm(true)}
+                                className="flex items-center gap-4 px-4 py-4 rounded-[1.5rem] hover:bg-red-500/10 text-red-500 w-full"
+                            >
                                 <div className="flex items-center justify-center size-10 bg-red-500/5 rounded-2xl">
                                     <LogOut className="size-5" />
                                 </div>
-                                <span className="text-sm font-semibold tracking-tight">Logout</span>
-                            </Link>
+                                <span className="text-sm font-semibold tracking-tight">Sign Out</span>
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Background Overlay */}
-            {isMenuOpen && (
+            {/* Logout Warning Dialog */}
+            {showLogoutConfirm && (
+                <div className="lg:hidden fixed inset-0 z-[60] flex items-center justify-center px-6">
+                    <div className="w-full max-w-[320px] bg-card/95 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-300 text-center">
+                        <div className="flex justify-center mb-6">
+                            <div className="size-20 bg-red-500/10 rounded-full flex items-center justify-center">
+                                <AlertCircle className="size-10 text-red-500" />
+                            </div>
+                        </div>
+                        <h3 className="text-xl font-bold mb-2">Sign Out?</h3>
+                        <p className="text-sm text-muted-foreground mb-8">
+                            Are you sure you want to log out?
+                        </p>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={() => signOut({ callbackUrl: "/sign-in" })}
+                                className="w-full py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-2xl active:scale-95 transition-all"
+                            >
+                                Sign Out
+                            </button>
+                            <button
+                                onClick={() => setShowLogoutConfirm(false)}
+                                className="w-full py-4 bg-secondary hover:bg-secondary/80 text-foreground font-semibold rounded-2xl active:scale-95 transition-all"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Blurred Overlay */}
+            {(isMenuOpen || showLogoutConfirm) && (
                 <div
-                    className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[4px] animate-in fade-in duration-500"
-                    onClick={() => setIsMenuOpen(false)}
+                    className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-[4px] animate-in fade-in duration-500"
+                    onClick={() => {
+                        setIsMenuOpen(false)
+                        setShowLogoutConfirm(false)
+                    }}
                 />
             )}
         </>
