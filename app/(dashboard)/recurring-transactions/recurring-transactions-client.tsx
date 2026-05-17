@@ -47,19 +47,11 @@ export function RecurringTransactionsClient({ income, expenses, currentMonth, cu
                 </div>
             ) : (
                 <>
-                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3 flex items-start gap-3">
-                        <RefreshCw className="size-4 text-blue-500 mt-0.5 shrink-0" />
-                        <p className="text-sm text-blue-600 dark:text-blue-400">
-                            <span className="font-semibold">{totalCount} transaction{totalCount !== 1 ? "s" : ""}</span> will
-                            automatically repeat when{" "}
-                            <span className="font-semibold">{MONTH_NAMES[nextMonth - 1]} {nextYear}</span> opens.
-                            Click the stop button to cancel recurrence.
-                        </p>
-                    </div>
-
                     {income.length > 0 && (
                         <Section title="Income" type="INCOME" transactions={income} />
                     )}
+
+                    <div className="border"> </div>
 
                     {expenses.length > 0 && (
                         <Section title="Expenses" type="EXPENSE" transactions={expenses} />
@@ -80,8 +72,8 @@ function Section({ title, type, transactions }: {
         : "bg-destructive/10 text-destructive border-destructive/20"
 
     return (
-        <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-            <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
+        <div>
+            <div className="flex items-center gap-2 px-6 py-4 border-border">
                 <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                     {title}
                 </span>
@@ -89,11 +81,9 @@ function Section({ title, type, transactions }: {
                     {transactions.length}
                 </span>
             </div>
-            <ul className="divide-y divide-border">
                 {transactions.map(t => (
                     <RecurringRow key={t.id} transaction={t} />
                 ))}
-            </ul>
         </div>
     )
 }

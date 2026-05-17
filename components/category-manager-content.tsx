@@ -384,7 +384,7 @@ export function CategoryManagerContent({ categories, type }: {
     return (
         <div className="space-y-8" key={version}>
             {showIncome && <CategorySection type="INCOME" initialCategories={income} />}
-            {showIncome && showExpense && <div className="h-px bg-border/50 mx-1" />}
+            {showIncome && showExpense && <div className="border" />}
             {showExpense && <CategorySection type="EXPENSE" initialCategories={expense} />}
         </div>
     )
