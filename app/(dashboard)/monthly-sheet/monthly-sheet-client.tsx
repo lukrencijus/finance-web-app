@@ -18,6 +18,7 @@ import { CategoryManager } from "@/components/category-manager"
 import { type Category } from "@/components/category-manager-content"
 import { CapitalCategoryManager } from "@/components/capital-category-manager"
 import { type CapitalCategory } from "@/components/capital-category-manager-content"
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react"
 
 type Capital = {
     id: string
@@ -103,19 +104,14 @@ export function MonthlySheetClient({
             <div className="p-6 max-w-6xl mx-auto space-y-6 pb-36 lg:pb-6">
 
                 {/* Month picker */}
-                <div className="flex items-center gap-x-3 mb-6">
+                <div className="mb-6 w-full">
                     <MonthPicker
                         allSheets={allSheets}
                         currentMonth={month}
                         currentYear={year}
-                        readOnly={readOnly}
                         userId={userId}
+                        isActualCurrentMonth={isActualCurrentMonth}
                     />
-                    {isActualCurrentMonth && (
-                        <span className="text-xs font-normal bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-xl border border-blue-500/20">
-                            Current
-                        </span>
-                    )}
                 </div>
 
                 {/* Desktop Tabs (hidden on mobile) */}
@@ -741,53 +737,145 @@ function Overview({ capitals, capitalCategories, sheetId, readOnly = false, isSh
     )
 }
 
-function MonthPicker({ allSheets, currentMonth, currentYear, readOnly, userId }: {
-    allSheets: SheetSummary[]
+function MonthPicker({ allSheets, currentMonth, currentYear, userId, isActualCurrentMonth }: {
+    allSheets: { month: number; year: number }[]
     currentMonth: number
     currentYear: number
-    readOnly?: boolean
     userId?: string
+    isActualCurrentMonth?: boolean
 }) {
     const [isOpen, setIsOpen] = useState(false)
+    const [viewYear, setViewYear] = useState(currentYear)
+
+    const today = new Date()
+    const thisMonth = today.getMonth() + 1
+    const thisYear = today.getFullYear()
+
+    useEffect(() => {
+        if (!isOpen) {
+            setViewYear(currentYear)
+        }
+    }, [isOpen, currentYear])
+
+    const hasSheet = (m: number, y: number) => 
+        allSheets.some(s => s.month === m && s.year === y)
 
     return (
-        <div className="relative">
-            <button onClick={() => setIsOpen(prev => !prev)}
-                className="flex items-center gap-x-2 text-2xl font-semibold text-foreground hover:opacity-70 transition-colors focus:outline-none">
-                {MONTH_NAMES[currentMonth - 1]} {currentYear}
-                <ChevronDown className={`size-5 mt-0.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <div className="relative w-full">
+            <button 
+                onClick={() => setIsOpen(prev => !prev)}
+                className="group flex items-center justify-center gap-x-4 w-full px-4 py-3 rounded-2xl bg-card border border-border hover:bg-muted active:bg-muted/50 transition-all focus:outline-none shadow-sm"
+            >
+                <div className="bg-primary/10 p-2 rounded-xl group-hover:bg-primary/20 transition-colors">
+                    <CalendarIcon className="size-5 text-primary" />
+                </div>
+                <div className="text-center">
+                    <div className="flex items-center justify-center gap-1">
+                        <span className="text-xl font-bold text-foreground tabular-nums">
+                            {MONTH_NAMES[currentMonth - 1]} {currentYear}
+                        </span>
+                        <ChevronDown className={`size-4 text-muted-foreground transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+                    </div>
+                </div>
+                {isActualCurrentMonth && (
+                    <span className="text-xs font-normal bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-xl border border-blue-500/20">
+                        Current
+                    </span>
+                )}
             </button>
 
             {isOpen && (
                 <>
-                    <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-                    <div className="absolute left-0 top-full mt-2 z-20 bg-card rounded-xl shadow-lg border border-border overflow-hidden min-w-48 animate-in fade-in zoom-in-95 duration-100">
-                        {allSheets.length === 0 ? (
-                            <p className="px-4 py-3 text-sm text-muted-foreground">No sheets yet</p>
-                        ) : (
-                            <ul>
-                                {allSheets.map(s => {
-                                    const isActive = s.month === currentMonth && s.year === currentYear
+                    <div 
+                        className="fixed inset-0 z-[100] lg:z-10 bg-background/60 backdrop-blur-sm lg:backdrop-blur-none lg:bg-transparent" 
+                        onClick={() => setIsOpen(false)} 
+                    />
 
-                                    const href = userId
-                                        ? `/shared/${userId}/monthly-sheet?month=${s.month}&year=${s.year}`
-                                        : `/monthly-sheet?month=${s.month}&year=${s.year}`
+                    {/* Picker Container*/}
+                    <div className="fixed inset-x-0 bottom-0 z-[101] lg:absolute lg:inset-auto lg:left-1/2 lg:-translate-x-1/2 lg:top-full lg:mt-2 w-full lg:w-80 bg-card border-t lg:border border-border shadow-[0_-8px_30px_rgb(0,0,0,0.12)] lg:shadow-xl rounded-t-[2.5rem] lg:rounded-2xl p-6 lg:p-4 animate-in slide-in-from-bottom lg:slide-in-from-top-2 lg:fade-in duration-300 lg:duration-200">
+                        
+                        <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-6 lg:hidden" />
 
-                                    return (
-                                        <li key={`${s.year}-${s.month}`}>
-                                            <Link href={href} onClick={() => setIsOpen(false)}
-                                                className={`block w-full px-4 py-2.5 text-sm transition-colors
-                                                    ${isActive
-                                                        ? "bg-muted font-semibold text-foreground"
-                                                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                                                    }`}>
-                                                {MONTH_NAMES[s.month - 1]} {s.year}
-                                            </Link>
-                                        </li>
-                                    )
-                                })}
-                            </ul>
-                        )}
+                        <div className="flex items-center justify-between mb-6 lg:mb-4">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setViewYear(v => v - 1) }}
+                                className="p-3 lg:p-1.5 hover:bg-muted rounded-xl transition-colors"
+                            >
+                                <ChevronLeft className="size-5 lg:size-4" />
+                            </button>
+                            <span className="font-bold text-lg lg:text-sm tabular-nums">{viewYear}</span>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setViewYear(v => v + 1) }}
+                                className="p-3 lg:p-1.5 hover:bg-muted rounded-xl transition-colors"
+                            >
+                                <ChevronRight className="size-5 lg:size-4" />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-3 lg:gap-2">
+                            {MONTH_NAMES.map((name, index) => {
+                                const m = index + 1
+                                const isSelected = currentMonth === m && currentYear === viewYear
+                                const isToday = thisMonth === m && thisYear === viewYear
+                                const exists = hasSheet(m, viewYear)
+                                
+                                const href = userId
+                                    ? `/shared/${userId}/monthly-sheet?month=${m}&year=${viewYear}`
+                                    : `/monthly-sheet?month=${m}&year=${viewYear}`
+
+                                return (
+                                    <Link
+                                        key={name}
+                                        href={href}
+                                        onClick={() => setIsOpen(false)}
+                                        className={`
+                                            relative py-5 lg:py-3 rounded-2xl lg:rounded-xl text-sm lg:text-xs font-semibold flex flex-col items-center justify-center transition-all active:scale-95
+                                            ${isSelected 
+                                                ? "bg-primary text-primary-foreground shadow-lg lg:shadow-sm" 
+                                                : "bg-muted/30 lg:bg-transparent hover:bg-muted text-foreground"
+                                            }
+                                            ${!exists && !isSelected ? "opacity-30" : "opacity-100"}
+                                        `}
+                                    >
+                                        {name.substring(0, 3)}
+                                        <div className="absolute bottom-2 lg:bottom-1.5 flex gap-1">
+                                            {isToday && (
+                                                <span className={`size-1.5 lg:size-1 rounded-full ${isSelected ? "bg-primary-foreground" : "bg-blue-500"}`} />
+                                            )}
+                                            {exists && !isSelected && (
+                                                <span className="size-1.5 lg:size-1 rounded-full bg-muted-foreground/40" />
+                                            )}
+                                        </div>
+                                    </Link>
+                                )
+                            })}
+                        </div>
+
+                        <div className="mt-6 lg:mt-4 pt-6 lg:pt-4 border-t border-border flex flex-col items-center gap-4">
+                            <Link 
+                                href={userId ? `/shared/${userId}/monthly-sheet` : "/monthly-sheet"}
+                                onClick={() => setIsOpen(false)}
+                                className="w-full lg:w-auto min-w-[160px] text-center px-6 py-3 lg:py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-sm font-bold rounded-2xl lg:rounded-xl transition-all active:scale-95"
+                            >
+                                Go to Current Month
+                            </Link>
+                            
+                            <div className="flex items-center gap-4 text-[10px] text-muted-foreground font-medium">
+                                <span className="flex items-center gap-1.5">
+                                    <span className="size-1.5 rounded-full bg-blue-500" /> Today
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="size-1.5 rounded-full bg-muted-foreground/40" /> Recorded Data
+                                </span>
+                            </div>
+
+                            <button 
+                                onClick={() => setIsOpen(false)}
+                                className="lg:hidden text-xs font-bold text-muted-foreground/60 uppercase tracking-widest pt-2"
+                            >
+                                Close Picker
+                            </button>
+                        </div>
                     </div>
                 </>
             )}
