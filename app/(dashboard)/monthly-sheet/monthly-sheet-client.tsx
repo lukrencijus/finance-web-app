@@ -275,6 +275,8 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
     const maxDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
     const today = new Date().toISOString().split("T")[0]
     const defaultDate = today >= minDate && today <= maxDate ? today : maxDate
+    const handleClose = () => { setIsOpen(false); setMode("normal") }
+    const formAction = mode === "split" ? splitAction : normalAction
 
     if (!isOpen) {
         return (
@@ -289,26 +291,17 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
         )
     }
 
-    const formAction = mode === "split" ? splitAction : normalAction
-
-    return (
-        <form action={formAction} className="bg-muted/50 border border-border rounded-xl p-4 space-y-3">
+    // Shared fields rendered in both shells
+    const fields = (
+        <>
             <input type="hidden" name="type" value={type} />
             <input type="hidden" name="monthlySheetId" value={sheetId} />
 
-            {/* Mode selector */}
             <div className="flex gap-1.5 p-1 bg-muted rounded-xl w-fit">
                 {(["normal", "recurring", ...(type === "EXPENSE" ? ["split"] : [])] as FormMode[]).map(m => (
-                    <button
-                        key={m}
-                        type="button"
-                        onClick={() => setMode(m)}
+                    <button key={m} type="button" onClick={() => setMode(m)}
                         className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-medium transition-colors capitalize
-                            ${mode === m
-                                ? "bg-background text-foreground shadow-sm"
-                                : "text-muted-foreground hover:text-foreground"
-                            }`}
-                    >
+                            ${mode === m ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                         {m === "recurring" && <RefreshCw className="size-3" />}
                         {m === "split" && <Scissors className="size-3" />}
                         {m}
@@ -333,102 +326,84 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                     <label className="text-xs text-muted-foreground mb-1 block font-medium">
                         {mode === "split" ? "Total Amount (€)" : "Amount (€)"}
                     </label>
-                    <input
-                        name="amount"
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        placeholder="0.00"
-                        required
-                        className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
+                    <input name="amount" type="number" step="0.01" min="0.01" placeholder="0.00" required
+                        className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                 </div>
                 <div>
                     <label className="text-xs text-muted-foreground mb-1 block font-medium">Date</label>
-                    <input
-                        name="date"
-                        type="date"
-                        min={minDate}
-                        max={maxDate}
-                        defaultValue={defaultDate}
-                        required
-                        className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
+                    <input name="date" type="date" min={minDate} max={maxDate} defaultValue={defaultDate} required
+                        className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                 </div>
                 {mode === "split" && (
                     <div className="col-span-2 sm:col-span-1">
                         <label className="text-xs text-muted-foreground mb-1 block font-medium">Months</label>
-                        <input
-                            name="splitMonths"
-                            type="number"
-                            min="2"
-                            max="24"
-                            value={splitMonths}
+                        <input name="splitMonths" type="number" min="2" max="24" value={splitMonths}
                             onChange={e => setSplitMonths(parseInt(e.target.value) || 2)}
-                            className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
+                            className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                     </div>
                 )}
             </div>
 
-            {/* Hidden recurring flag */}
-            {mode === "recurring" && (
-                <input type="hidden" name="isRecurring" value="true" />
-            )}
+            {mode === "recurring" && <input type="hidden" name="isRecurring" value="true" />}
 
-            {/* Category */}
             <div>
                 <div className="flex items-center justify-between mb-1">
                     <label className="text-xs text-muted-foreground font-medium">Category</label>
                     {!isShared && <CategoryManager type={type} categories={categories} />}
                 </div>
-                <select
-                    name="categoryId"
-                    required
-                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                >
+                <select name="categoryId" required
+                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
                     <option value="">Select a category...</option>
                     {categories.map(c => (
-                        <option key={c.id} value={c.id} className="bg-background">
-                            {c.icon} {c.name}
-                        </option>
+                        <option key={c.id} value={c.id} className="bg-background">{c.icon} {c.name}</option>
                     ))}
                 </select>
             </div>
 
             <div>
                 <label className="text-xs text-muted-foreground mb-1 block font-medium">Description (optional)</label>
-                <input
-                    name="description"
-                    type="text"
-                    placeholder="e.g. Grocery run"
-                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
+                <input name="description" type="text" placeholder="e.g. Grocery run"
+                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
 
-            {state?.error && (
-                <p className="text-destructive text-xs font-medium">{state.error}</p>
-            )}
+            {state?.error && <p className="text-destructive text-xs font-medium">{state.error}</p>}
 
             <div className="flex gap-2 pt-1">
-                <button
-                    type="submit"
-                    disabled={isPending}
-                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
-                >
+                <button type="submit" disabled={isPending}
+                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
                     <Check className="size-3.5" />
                     {isPending ? "Saving..." : mode === "split" ? `Split into ${splitMonths} months` : "Save"}
                 </button>
-                <button
-                    type="button"
-                    onClick={() => { setIsOpen(false); setMode("normal") }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
-                >
+                <button type="button" onClick={handleClose}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
                     <XCircle className="size-3.5" />
                     Cancel
                 </button>
             </div>
-        </form>
+        </>
+    )
+
+    return (
+        <>
+            {/* MOBILE: bottom sheet */}
+            <div className="lg:hidden">
+                <div className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm" onClick={handleClose} />
+                <div className="fixed inset-x-0 bottom-0 z-[101] bg-card border-t border-border rounded-t-[2rem] shadow-[0_-8px_30px_rgb(0,0,0,0.12)] max-h-[92dvh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+                    <form action={formAction} className="p-6 space-y-3">
+                        <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-5" />
+                        <p className="text-base font-semibold text-foreground mb-1">
+                            Add {type === "INCOME" ? "Income" : "Expense"}
+                        </p>
+                        {fields}
+                    </form>
+                </div>
+            </div>
+
+            {/* DESKTOP: inline card */}
+            <form action={formAction} className="hidden lg:block bg-muted/50 border border-border rounded-xl p-4 space-y-3">
+                {fields}
+            </form>
+        </>
     )
 }
 
@@ -911,8 +886,8 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
         )
     }
 
-    return (
-        <form action={formAction} className="bg-muted/50 border border-border rounded-xl p-4 space-y-3">
+    const fields = (
+        <>
             <input type="hidden" name="monthlySheetId" value={sheetId} />
 
             <div>
@@ -920,16 +895,11 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
                     <label className="text-xs text-muted-foreground font-medium">Category</label>
                     {!isShared && <CapitalCategoryManager categories={capitalCategories} />}
                 </div>
-                <select
-                    name="capitalCategoryId"
-                    required
-                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                >
+                <select name="capitalCategoryId" required
+                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
                     <option value="">Select a category...</option>
                     {available.map(c => (
-                        <option key={c.id} value={c.id} className="bg-background">
-                            {c.name}
-                        </option>
+                        <option key={c.id} value={c.id} className="bg-background">{c.name}</option>
                     ))}
                 </select>
                 {available.length === 0 && (
@@ -941,15 +911,8 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
 
             <div>
                 <label className="text-xs text-muted-foreground mb-1 block font-medium">Amount (€)</label>
-                <input
-                    name="amount"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    placeholder="0.00"
-                    required
-                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
+                <input name="amount" type="number" step="0.01" min="0.01" placeholder="0.00" required
+                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
 
             {state?.error && <p className="text-destructive text-xs font-medium">{state.error}</p>}
@@ -966,7 +929,28 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
                     Cancel
                 </button>
             </div>
-        </form>
+        </>
+    )
+
+    return (
+        <>
+            {/* MOBILE: bottom sheet */}
+            <div className="lg:hidden">
+                <div className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+                <div className="fixed inset-x-0 bottom-0 z-[101] bg-card border-t border-border rounded-t-[2rem] shadow-[0_-8px_30px_rgb(0,0,0,0.12)] max-h-[92dvh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+                    <form action={formAction} className="p-6 space-y-3">
+                        <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-5" />
+                        <p className="text-base font-semibold text-foreground mb-1">Add Capital Entry</p>
+                        {fields}
+                    </form>
+                </div>
+            </div>
+
+            {/* DESKTOP: inline card */}
+            <form action={formAction} className="hidden lg:block bg-muted/50 border border-border rounded-xl p-4 space-y-3">
+                {fields}
+            </form>
+        </>
     )
 }
 

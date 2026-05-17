@@ -117,7 +117,7 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
     }
 
     return (
-        <div className="max-w-3xl mx-auto py-10 px-10 space-y-10 text-foreground">
+        <div className="max-w-3xl mx-auto py-10 px-4 sm:px-10 space-y-10 text-foreground">
             <h1 className="text-3xl font-semibold">Settings</h1>
 
             <section className="space-y-4">
@@ -134,35 +134,35 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                     <p className="text-sm text-muted-foreground">Manage who can view your financial monthly reports.</p>
                 </div>
 
-                {/* Form to share with someone */}
                 <form onSubmit={handleShare} className="space-y-3">
-                    <label className="text-sm font-medium">Share your profile (Email)</label>
-                    <div className="flex gap-2">
+                    <label className="text-sm font-medium">With whom you want to share your profile</label>
+                    <div className="flex flex-col sm:flex-row gap-2">
                         <input
                             type="email"
                             value={shareEmail}
                             onChange={(e) => setShareEmail(e.target.value)}
                             placeholder="user@example.com"
-                            className="flex-1 border border-input rounded-xl px-3 py-2 text-sm bg-background"
+                            className="flex-1 border border-input rounded-xl px-3 py-2 text-sm bg-background w-full"
                             required
                         />
-                        <select
-                            value={sharePermission}
-                            onChange={(e) => setSharePermission(e.target.value as "VIEW" | "EDIT")}
-                            className="border border-input rounded-xl px-2 py-2 text-sm bg-background text-foreground"
-                        >
-                            <option value="VIEW">View</option>
-                            <option value="EDIT">Edit</option>
-                        </select>
-                        <button type="submit" className="bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90">
-                            Share
-                        </button>
+                        <div className="flex gap-2">
+                            <select
+                                value={sharePermission}
+                                onChange={(e) => setSharePermission(e.target.value as "VIEW" | "EDIT")}
+                                className="flex-1 sm:flex-none border border-input rounded-xl px-2 py-2 text-sm bg-background text-foreground"
+                            >
+                                <option value="VIEW">View</option>
+                                <option value="EDIT">Edit</option>
+                            </select>
+                            <button type="submit" className="flex-1 sm:flex-none bg-primary text-primary-foreground px-6 py-2 rounded-xl text-sm font-medium hover:opacity-90">
+                                Share
+                            </button>
+                        </div>
                     </div>
                     {shareMsg?.error && <p className="text-xs text-destructive">{shareMsg.error}</p>}
                     {shareMsg?.success && <p className="text-xs text-green-600">Shared successfully!</p>}
                 </form>
 
-                {/* People who can see my profile */}
                 <div className="space-y-3">
                     <h3 className="text-sm font-semibold">People you share with</h3>
                     {sharing.sharedWithOthers.length === 0 ? (
@@ -170,12 +170,12 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                     ) : (
                         <div className="space-y-2">
                             {sharing.sharedWithOthers.map((s) => (
-                                <div key={s.sharedWith.id} className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30">
-                                    <div className="text-sm">
-                                        <p className="font-medium">{s.sharedWith.name || "User"}</p>
-                                        <p className="text-xs text-muted-foreground">{s.sharedWith.email}</p>
+                                <div key={s.sharedWith.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-border bg-muted/30 gap-3">
+                                    <div className="text-sm min-w-0">
+                                        <p className="font-medium truncate">{s.sharedWith.name || "User"}</p>
+                                        <p className="text-xs text-muted-foreground truncate">{s.sharedWith.email}</p>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 justify-end">
                                         <select
                                             value={s.permission}
                                             onChange={(e) => updatePermission(s.sharedWith.id, e.target.value as "VIEW" | "EDIT")}
@@ -202,12 +202,12 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                     ) : (
                         <div className="space-y-2">
                             {sharing.sharedWithMe.map((s) => (
-                                <div key={s.owner.id} className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30">
-                                    <div className="text-sm">
-                                        <p className="font-medium">{s.owner.name || "User"}</p>
-                                        <p className="text-xs text-muted-foreground">{s.owner.email}</p>
+                                <div key={s.owner.id} className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30 gap-3">
+                                    <div className="text-sm min-w-0">
+                                        <p className="font-medium truncate">{s.owner.name || "User"}</p>
+                                        <p className="text-xs text-muted-foreground truncate">{s.owner.email}</p>
                                     </div>
-                                    <Link href={`/shared/${s.owner.id}`} className="flex items-center gap-1.5 text-xs font-medium text-blue-500 hover:underline">
+                                    <Link href={`/shared/${s.owner.id}`} className="shrink-0 flex items-center gap-1.5 text-xs font-medium text-blue-500 hover:underline">
                                         <ExternalLink className="size-3.5" />
                                         View
                                     </Link>
@@ -250,7 +250,7 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                     {profileMsg && <p className="text-sm font-medium text-green-600 dark:text-green-400">{profileMsg}</p>}
                     <button
                         type="submit"
-                        className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
+                        className="flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
                     >
                         <Check className="size-3.5" />
                         Save Changes
@@ -289,7 +289,7 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                         )}
                         <button
                             type="submit"
-                            className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
+                            className="flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors"
                         >
                             <Check className="size-3.5" />
                             Update Password
@@ -313,24 +313,24 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                     ) : !deleteConfirm ? (
                         <button
                             onClick={() => setDeleteConfirm(true)}
-                            className="flex items-center gap-1.5 rounded-xl border border-destructive text-destructive px-3 py-1.5 text-xs font-medium hover:bg-destructive hover:text-white transition-all"
+                            className="flex items-center gap-1.5 rounded-xl border border-destructive text-destructive px-3 py-1.5 text-xs font-medium hover:bg-destructive hover:text-white transition-all w-full sm:w-auto justify-center"
                         >
                             <XCircle className="size-3.5" />
                             Delete Account
                         </button>
                     ) : (
                         <div className="mt-4 p-4 rounded-xl bg-background border border-destructive space-y-4 shadow-lg animate-in fade-in zoom-in-95">
-                            <p className="text-sm font-bold text-foreground">Are you absolutely sure? This cannot be undone.</p>
-                            <div className="flex gap-3">
+                            <p className="text-sm font-bold text-foreground text-center sm:text-left">Are you absolutely sure? This cannot be undone.</p>
+                            <div className="flex flex-col sm:flex-row gap-3">
                                 <button
                                     onClick={handleDelete}
-                                    className="rounded-xl bg-destructive text-white px-4 py-2 text-sm font-medium hover:opacity-90"
+                                    className="rounded-xl bg-destructive text-white px-4 py-2 text-sm font-medium hover:opacity-90 w-full sm:w-auto"
                                 >
                                     Yes, delete everything
                                 </button>
                                 <button
                                     onClick={() => setDeleteConfirm(false)}
-                                    className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
+                                    className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted w-full sm:w-auto"
                                 >
                                     Cancel
                                 </button>
