@@ -5,6 +5,33 @@ import { getCurrentDbUser } from "@/lib/current-user"
 import { revalidatePath } from "next/cache"
 import { transactionSchema, capitalSchema } from "@/lib/validations"
 
+async function deleteSheetIfEmptyFuture(sheetId: string) {
+    const now = new Date()
+    const currentMonth = now.getMonth() + 1
+    const currentYear = now.getFullYear()
+
+    const sheet = await prisma.monthlySheet.findUnique({
+        where: { id: sheetId },
+        select: {
+            month: true,
+            year: true,
+            _count: { select: { transactions: true, capitals: true } },
+        },
+    })
+
+    if (!sheet) return
+
+    const isFuture =
+        sheet.year > currentYear ||
+        (sheet.year === currentYear && sheet.month > currentMonth)
+
+    const isEmpty = sheet._count.transactions === 0 && sheet._count.capitals === 0
+
+    if (isFuture && isEmpty) {
+        await prisma.monthlySheet.delete({ where: { id: sheetId } })
+    }
+}
+
 async function hasEditAccess(sheetOwnerId: string, currentUserId: string): Promise<boolean> {
     if (sheetOwnerId === currentUserId) return true
     const access = await prisma.sharedAccess.findUnique({
@@ -96,6 +123,7 @@ export async function deleteTransaction(transactionId: string) {
     }
 
     await prisma.transaction.delete({ where: { id: transactionId } })
+    await deleteSheetIfEmptyFuture(transaction.monthlySheetId)
     revalidatePath("/monthly-sheet")
 }
 
@@ -356,7 +384,13 @@ export async function deleteSplitGroup(splitGroupId: string) {
     )
     if (allOwned.some(v => !v)) return { error: "Unauthorized" }
 
+    const sheetIds = [...new Set(transactions.map(t => t.monthlySheetId))]
+
     await prisma.transaction.deleteMany({ where: { splitGroupId } })
+
+    // Clean up any future sheets that are now empty
+    await Promise.all(sheetIds.map(deleteSheetIfEmptyFuture))
+
     revalidatePath("/monthly-sheet")
     return { success: true }
 }
