@@ -38,19 +38,28 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
             },
         })
 
-        // Auto-insert recurring transactions from previous month
-        const prevMonth = month === 1 ? 12 : month - 1
-        const prevYear = month === 1 ? year - 1 : year
+        // Auto-insert recurring transactions from the most recent past month that has any
+        // We walk back up to 12 months so recurring transactions survive skipped months
+        let searchMonth = month
+        let searchYear = year
+        let prevSheet = null
 
-        const prevSheet = await prisma.monthlySheet.findUnique({
-            where: { month_year_userId: { month: prevMonth, year: prevYear, userId } },
-            include: {
-                transactions: {
-                    where: { isRecurring: true },
-                    include: { category: true },
+        for (let i = 0; i < 12; i++) {
+            searchMonth = searchMonth === 1 ? 12 : searchMonth - 1
+            searchYear = searchMonth === 12 ? searchYear - 1 : searchYear
+
+            prevSheet = await prisma.monthlySheet.findUnique({
+                where: { month_year_userId: { month: searchMonth, year: searchYear, userId } },
+                include: {
+                    transactions: {
+                        where: { isRecurring: true },
+                        include: { category: true },
+                    },
                 },
-            },
-        })
+            })
+
+            if (prevSheet && prevSheet.transactions.length > 0) break
+        }
 
         if (prevSheet && prevSheet.transactions.length > 0) {
             // Clamp day to last day of new month (e.g. Feb 28/29)
