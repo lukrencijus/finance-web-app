@@ -28,11 +28,9 @@ export default async function MonthlySheetPage({ searchParams }: Props) {
     const isCurrentMonth = month === currentMonth && year === currentYear
 
     const [sheet, categories, capitalCategories, allSheets] = await Promise.all([
-        isFuture
-            ? null
-            : isCurrentMonth
-                ? getCurrentMonthSheet(user.id, currentMonth, currentYear)
-                : getMonthSheet(user.id, month, year),
+        isCurrentMonth
+            ? getCurrentMonthSheet(user.id, currentMonth, currentYear)
+            : getMonthSheet(user.id, month, year),
         prisma.category.findMany({
             where: { userId: user.id },
             orderBy: [

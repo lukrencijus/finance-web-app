@@ -99,6 +99,9 @@ export function MonthlySheetClient({
     const expenses = sheet?.transactions.filter(t => t.type === "EXPENSE") ?? []
     const incomeCategories = categories.filter(c => c.type === "INCOME")
     const expenseCategories = categories.filter(c => c.type === "EXPENSE")
+    const transactionCount = sheet?.transactions.length ?? 0
+    const capitalCount = sheet?.capitals.length ?? 0
+    const hasData = transactionCount > 0 || capitalCount > 0
 
     return (
             <div className="p-6 max-w-6xl mx-auto space-y-6 pb-36 lg:pb-6">
@@ -131,7 +134,7 @@ export function MonthlySheetClient({
                     ))}
                 </div>
 
-                {isFuture ? (
+                {(isFuture && !hasData) ? (
                     <div className="bg-card rounded-xl p-10 shadow-sm border border-border text-center">
                         <p className="text-lg font-medium text-foreground mb-1">
                             This month has not happened yet
