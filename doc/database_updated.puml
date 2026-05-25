@@ -1,0 +1,103 @@
+@startuml
+hide circle
+skinparam linetype ortho
+ 
+entity "User" as user {
+  id : TEXT <<PK>>
+  --
+  email : TEXT <<unique>>
+  password : TEXT
+  role : TEXT (ADMIN, USER)
+  status : TEXT (PENDING, ACTIVE)
+  name, image, createdAt
+}
+ 
+entity "Account" as account {
+  id : TEXT <<PK>>
+  --
+  userId : TEXT <<FK>>
+  provider, providerAccountId
+  [OAuth token fields]
+}
+ 
+entity "Session" as session {
+  id : TEXT <<PK>>
+  --
+  sessionToken : TEXT <<unique>>
+  userId : TEXT <<FK>>
+  expires : DATETIME
+}
+ 
+entity "Category" as cat {
+  id : TEXT <<PK>>
+  --
+  userId : TEXT <<FK>>
+  name : TEXT
+  type : TEXT (INCOME, EXPENSE)
+  icon : TEXT
+  order : INT
+}
+ 
+entity "CapitalCategory" as capcat {
+  id : TEXT <<PK>>
+  --
+  userId : TEXT <<FK>>
+  name : TEXT
+  icon : TEXT
+  color : TEXT
+  order : INT
+}
+ 
+entity "MonthlySheet" as sheet {
+  id : TEXT <<PK>>
+  --
+  userId : TEXT <<FK>>
+  month : INT
+  year : INT
+}
+ 
+entity "Transaction" as trans {
+  id : TEXT <<PK>>
+  --
+  monthlySheetId : TEXT <<FK>>
+  categoryId : TEXT <<FK>>
+  amount : FLOAT
+  type : TEXT (INCOME, EXPENSE)
+  description : TEXT
+  date : DATETIME
+  isRecurring : BOOLEAN
+  splitMonths : INT
+  splitIndex : INT
+  splitGroupId : TEXT
+}
+ 
+entity "Capital" as capital {
+  id : TEXT <<PK>>
+  --
+  monthlySheetId : TEXT <<FK>>
+  capitalCategoryId : TEXT <<FK>>
+  amount : FLOAT
+  order : INT
+}
+ 
+entity "SharedAccess" as sharing {
+  id : TEXT <<PK>>
+  --
+  ownerId : TEXT <<FK>>
+  sharedWithId : TEXT <<FK>>
+  permission : TEXT (VIEW, EDIT)
+}
+ 
+user ||--o{ account : ""
+user ||--o{ session : ""
+user ||--o{ sheet : "owns"
+user ||--o{ cat : "creates"
+user ||--o{ capcat : "creates"
+user ||--o{ sharing : "grants"
+user ||--o{ sharing : "receives"
+sheet ||--o{ trans : "contains"
+sheet ||--o{ capital : "tracks"
+cat ||--o{ trans : "classifies"
+capcat ||--o{ capital : "categorizes"
+ 
+@enduml

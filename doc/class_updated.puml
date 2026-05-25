@@ -1,0 +1,121 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype polyline
+ 
+title Personal finance tracker web app
+ 
+class User {
+  +id: string
+  +email: string
+  +password: string
+  +role: RoleType
+  +status: StatusType
+  +name: string
+  +image: string
+  +createdAt: DateTime
+  +login(): boolean
+  +register(): void
+}
+ 
+class Admin {
+  +approveUser(userId): void
+  +rejectUser(userId): void
+  +manageUsers(): void
+  +deleteUser(userId): void
+}
+ 
+class MonthlySheet {
+  +id: string
+  +userId: string
+  +month: int
+  +year: int
+  +createdAt: DateTime
+  +calculateTotalBalance(): float
+  +getDashboardData(): DashboardDTO
+  +initRecurringTransactions(): void
+}
+ 
+class Transaction {
+  +id: string
+  +amount: float
+  +type: TransactionType
+  +description: string
+  +date: DateTime
+  +isRecurring: boolean
+  +splitMonths: int
+  +splitIndex: int
+  +splitGroupId: string
+  +crud(): void
+}
+ 
+class Category {
+  +id: string
+  +userId: string
+  +name: string
+  +type: TransactionType
+  +icon: string
+  +order: int
+  +manageCategory(): void
+  +reorder(): void
+}
+ 
+class Capital {
+  +id: string
+  +monthlySheetId: string
+  +capitalCategoryId: string
+  +amount: float
+  +order: int
+  +updateValue(): void
+}
+ 
+class CapitalCategory {
+  +id: string
+  +userId: string
+  +name: string
+  +icon: string
+  +color: string
+  +order: int
+  +crud(): void
+  +reorder(): void
+}
+ 
+class SharedAccess {
+  +id: string
+  +ownerId: string
+  +sharedWithId: string
+  +permission: PermissionType
+  +createdAt: DateTime
+  +revokeAccess(): void
+}
+ 
+enum RoleType { 
+  ADMIN
+  USER 
+}
+
+enum StatusType { 
+  PENDING
+  ACTIVE 
+}
+
+enum TransactionType { 
+  INCOME
+  EXPENSE 
+}
+
+enum PermissionType { 
+  VIEW
+  EDIT 
+}
+ 
+Admin --|> User : inheritance
+User "1" *-- "0..*" MonthlySheet : owns >
+User "1" *-- "0..*" Category : defines >
+User "1" *-- "0..*" CapitalCategory : defines >
+MonthlySheet "1" *-- "0..*" Transaction : contains >
+MonthlySheet "1" *-- "0..*" Capital : tracks snapshots >
+Category "1" -- "0..*" Transaction : classifies >
+CapitalCategory "1" -- "0..*" Capital : classifies >
+User "1" -- "0..*" SharedAccess : shares profile >
+ 
+@enduml

@@ -1,0 +1,134 @@
+@startuml
+skinparam monochrome false
+skinparam packageStyle rectangle
+skinparam shadowing true
+
+title Personal Finance Tracker - Detailed Activity Flow
+
+start
+
+:User enters the application;
+
+' --- Authentication & Admin Bootstrap ---
+if (User is registered?) then (no)
+  :User fills registration form;
+  if (Is this the first user?) then (yes)
+    :Set Role to ADMIN & Status to ACTIVE;
+  else (no)
+    :Set Role to USER & Status to PENDING;
+    :Display "Waiting for Approval" screen;
+    stop
+  endif
+else (yes)
+  split
+    :Login with Credentials (email + password);
+  split again
+    :Login with Google OAuth;
+  end split
+endif
+
+if (Is account status ACTIVE?) then (no)
+  :Display "Waiting for Approval" screen;
+  stop
+else (yes)
+  ' --- Automated Monthly Sheet Initialization ---
+  :System checks current date;
+  if (MonthlySheet for current month exists?) then (no)
+    :Create New MonthlySheet;
+    if (Recurring transactions found?) then (yes)
+      :Insert recurring transactions into new sheet;
+    endif
+  else (yes)
+    :Load current MonthlySheet;
+  endif
+endif
+
+' --- Main Dashboard / Home Hub ---
+:Display Home Dashboard;
+:Calculate Monthly Balance;
+:Generate Visual Charts;
+:Display Dashboard Insights;
+
+repeat
+  if (Select Global Action) then (General Settings)
+    split
+      :Enter settings page;
+      :Toggle Dark/White Theme;
+      :Share Profile with other user (VIEW or EDIT permission);
+      :Update account details;
+      :Delete account;
+    split again
+      :Manage Recurring Transactions;
+    split again
+      :Manage Transaction Categories;
+    split again
+      :Manage Capital Categories;
+    split again
+      if (Is Admin?) then (yes)
+        :Access Admin Panel;
+        :Approve / Reject / Delete users;
+      else (no)
+        :Access Denied;
+      endif
+    end split
+
+  elseif (Enter/Switch Monthly Sheet) then (Select Month)
+    :Load selected MonthlySheet data;
+    
+    repeat
+      :Display Sheet Interface (Tabbed View);
+      
+      split
+        ' --- Income Tab ---
+        :Select Income Tab;
+        :Display Income Transactions;
+        if (Add Transaction?) then (yes)
+          if (Manage Categories?) then (yes)
+            :Add/Edit/Delete/Reorder Income Categories;
+          endif
+          :Select Category;
+          :Input Amount, Date, Description;
+          :Mark as Recurring? (isRecurring flag);
+          :Save Income Transaction;
+        endif
+
+      split again
+        ' --- Expenses Tab ---
+        :Select Expenses Tab;
+        :Display Expense Transactions;
+        if (Add Transaction?) then (yes)
+          if (Manage Categories?) then (yes)
+            :Add/Edit/Delete/Reorder Expense Categories;
+          endif
+          :Select Category;
+          :Input Amount, Date, Description;
+          :Mark as Recurring? (isRecurring flag);
+          if (Split transaction?) then (yes)
+            :Set splitMonths (how many months);
+            :System creates splitIndex entries with splitGroupId;
+          endif
+          :Save Expense Transaction;
+        endif
+
+      split again
+        ' --- Monthly View Tab ---
+        :Select Capital Tab;
+        :Display Capital Transactions;
+        if (Update Capital?) then (yes)
+          if (Manage Capital Categories?) then (yes)
+            :Add/Edit/Delete/Reorder CapitalCategories (name, icon, color);
+          endif
+          :Input amount per CapitalCategory;
+        endif
+      end split
+      
+    backward:Continue in Sheet;
+    repeat while (Stay in this Monthly Sheet?) is (yes)
+  endif
+
+backward:Return to Main Menu;
+repeat while (User remains logged in?) is (yes)
+
+:User logs out;
+stop
+@enduml
