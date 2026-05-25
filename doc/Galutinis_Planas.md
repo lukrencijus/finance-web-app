@@ -184,6 +184,20 @@ Duomenų bazė - SQLite (failas dev.db), valdoma per Prisma ORM su @prisma/adapt
 | SharedAccess    | Profilio dalinimasis: owner + sharedWith + permission                           |
 <div class="page-break" style="page-break-before: always;"></div>
 
+## Automatiškai sugeneruoti failai ir katalogai
+
+| Failas / Katalogas       | Kaip sugeneruota                               |
+| ------------------------ | ---------------------------------------------- |
+| node_modules/            | npm install - visos priklausomybės             |
+| prisma/migrations/       | npx prisma migrate dev - DB migracijų istorija |
+| app/generated/prisma/    | npx prisma generate - TypeScript tipai         |
+| components/ui/button.tsx | npx shadcn add button - shadcn komponentas     |
+| components/ui/sheet.tsx  | npx shadcn add sheet - shadcn komponentas      |
+## Parašytas kodas
+- Konfigūracijos failai: auth.ts, proxy.ts, prisma/schema.prisma, lib/prisma.ts, lib/sheets.ts, lib/current-user.ts, lib/validations.ts, .env.example
+- Puslapiai ir Server Actions: app/layout.tsx, app/(auth), app/pending/page.tsx, app/(dashboard)
+- Komponentai: header.tsx, header-logo.tsx, header-user-actions.tsx, navigation.tsx, mobile-bottom-nav.tsx, nav-button.tsx, category-manager.tsx, category-manager-content.tsx, capital-category-manager.tsx, capital-category-manager-content.tsx
+
 ## Pagrindinės bibliotekos
 
 | Biblioteka               | Paskirtis                           |
@@ -203,6 +217,8 @@ Duomenų bazė - SQLite (failas dev.db), valdoma per Prisma ORM su @prisma/adapt
 - Prie Category ir CapitalCategory modelių pridėtas order laukas, o UI naudoja @dnd-kit biblioteką drag-and-drop funkcionalumui - vartotojas gali rankiniu būdu keisti kategorijų eiliškumą.
 - Use-case diagramoje ir pradiniame plane buvo numatytas getMLInsights() metodas. Realizacijoje šis funkcionalumas realizuotas kaip statistika iš DB - lyginamos mėnesių sumos ir skaičiuojami procentiniai pokyčiai, nenaudojant ML modelio.
 - Prisijungimas - pridėtas Google OAuth.
+<div class="page-break" style="page-break-before: always;"></div>
+
 # Paleidimo instrukcija
 ## Klonavimas
 ```bash
