@@ -421,6 +421,7 @@ function TransactionList({ transactions, categories, emptyMessage, month, year, 
     isShared?: boolean
 }) {
     const [editingId, setEditingId] = useState<string | null>(null)
+    const [openRowId, setOpenRowId] = useState<string | null>(null)
 
     if (transactions.length === 0) {
         return <p className="text-muted-foreground text-sm py-4">{emptyMessage}</p>
@@ -445,6 +446,8 @@ function TransactionList({ transactions, categories, emptyMessage, month, year, 
                             transaction={t}
                             onEdit={() => setEditingId(t.id)}
                             readOnly={readOnly}
+                            isOpen={openRowId === t.id}
+                            onToggle={() => setOpenRowId(prevId => prevId === t.id ? null : t.id)}
                         />
                     )}
                 </li>
@@ -454,10 +457,18 @@ function TransactionList({ transactions, categories, emptyMessage, month, year, 
 }
 
 // Read-only transaction row
-function TransactionRow({ transaction: t, onEdit, readOnly }: {
+function TransactionRow({ 
+    transaction: t, 
+    onEdit, 
+    readOnly,
+    isOpen,
+    onToggle
+}: {
     transaction: Transaction
     onEdit: () => void
     readOnly?: boolean
+    isOpen: boolean
+    onToggle: () => void
 }) {
     const isSplit = !!t.splitGroupId
     const [recurringPending, setRecurringPending] = useState(false)
@@ -474,79 +485,94 @@ function TransactionRow({ transaction: t, onEdit, readOnly }: {
     const hasUniqueDesc = t.description && t.description !== t.category.name
 
     return (
-        <div className="py-3 flex items-center justify-between gap-2">
-            {/* Left: icon bubble + text */}
-            <div className="flex items-center gap-2 min-w-0">
-                <div
-                    className="w-7 h-7 rounded-xl flex items-center justify-center text-xs shrink-0"
-                    style={{
-                        backgroundColor: isIncome ? "#EAF3DE" : "#FCEBEB",
-                        color: isIncome ? "#3B6D11" : "#A32D2D",
-                    }}
-                >
-                    {t.category.icon ?? (isIncome ? "↑" : "↓")}
-                </div>
-                <div className="min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-sm font-medium text-foreground truncate">
-                            {t.description || t.category.name}
-                        </p>
-                        {/* Recurring badge */}
-                        {t.isRecurring && (
-                            <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                                <RefreshCw className="size-2.5" /> recurring
-                            </span>
-                        )}
-                        {/* Split badge */}
-                        {isSplit && t.splitIndex && t.splitMonths && (
-                            <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                                <Scissors className="size-2.5" /> {t.splitIndex}/{t.splitMonths}
-                            </span>
-                        )}
+        <div className="border-b border-border last:border-0">
+            {/* Main row - clickable to toggle actions when not read-only */}
+            <div
+                className={`py-3 flex items-center justify-between gap-3 ${!readOnly ? "cursor-pointer select-none" : ""}`}
+                onClick={() => !readOnly && onToggle()}
+            >
+                {/* Left: icon bubble + text */}
+                <div className="flex items-center gap-3 min-w-0">
+                    <div
+                        className="w-9 h-9 rounded-2xl flex items-center justify-center text-sm shrink-0"
+                        style={{
+                            backgroundColor: isIncome ? "#EAF3DE" : "#FCEBEB",
+                            color: isIncome ? "#3B6D11" : "#A32D2D",
+                        }}
+                    >
+                        {t.category.icon ?? (isIncome ? "↑" : "↓")}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                        {hasUniqueDesc ? `${t.category.name} · ` : ""}
-                        {txDate.toLocaleDateString("en-IE", { day: "numeric", month: "short" })}
-                    </p>
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-sm font-medium text-foreground truncate">
+                                {t.description || t.category.name}
+                            </p>
+                            {t.isRecurring && (
+                                <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                    <RefreshCw className="size-2.5" /> recurring
+                                </span>
+                            )}
+                            {isSplit && t.splitIndex && t.splitMonths && (
+                                <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                                    <Scissors className="size-2.5" /> {t.splitIndex}/{t.splitMonths}
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            {hasUniqueDesc ? `${t.category.name} · ` : ""}
+                            {txDate.toLocaleDateString("en-IE", { day: "numeric", month: "short" })}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Right: amount + chevron */}
+                <div className="flex items-center gap-2 shrink-0">
+                    <span
+                        className="text-sm font-semibold tabular-nums"
+                        style={{ color: isIncome ? "#529E19" : "#C83232" }}
+                    >
+                        {isIncome ? "+" : "-"}€{t.amount.toFixed(2)}
+                    </span>
+                    {!readOnly && (
+                        <ChevronDown
+                            className={`size-4 text-muted-foreground/40 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                        />
+                    )}
                 </div>
             </div>
 
-            {/* Right: amount + action buttons */}
-            <div className="flex items-center gap-2 shrink-0">
-                <span
-                    className="text-sm font-medium"
-                    style={{ color: isIncome ? "#529E19" : "#C83232" }}
-                >
-                    {isIncome ? "+" : "-"}€{t.amount.toFixed(2)}
-                </span>
-                {!readOnly && (
-                    <>
-                        {/* Toggle recurring button (only for non-split transactions) */}
-                        {!isSplit && (
-                            <button
-                                onClick={handleToggleRecurring}
-                                disabled={recurringPending}
-                                title={t.isRecurring ? "Stop recurring" : "Make recurring"}
-                                className={`transition-colors disabled:opacity-40 ${
-                                    t.isRecurring
-                                        ? "text-blue-500 hover:text-muted-foreground/40"
-                                        : "text-muted-foreground/40 hover:text-blue-500"
-                                }`}
-                            >
-                                <RefreshCw className="size-4" />
-                            </button>
-                        )}
+            {/* Expandable action bar */}
+            {!readOnly && isOpen && (
+                <div className="pb-3 flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <button
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            onEdit(); 
+                            onToggle();
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors"
+                    >
+                        <Pencil className="size-3.5" /> Edit
+                    </button>
+                    {!isSplit && (
                         <button
-                            onClick={onEdit}
-                            className="text-muted-foreground/40 hover:text-blue-500 transition-colors"
-                            title="Edit"
+                            onClick={(e) => { e.stopPropagation(); handleToggleRecurring() }}
+                            disabled={recurringPending}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors disabled:opacity-40 ${
+                                t.isRecurring
+                                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20"
+                                    : "bg-muted hover:bg-muted/80 text-foreground"
+                            }`}
                         >
-                            <Pencil className="size-4" />
+                            <RefreshCw className="size-3.5" />
+                            {t.isRecurring ? "Stop recurring" : "Make recurring"}
                         </button>
+                    )}
+                    <div onClick={(e) => e.stopPropagation()} className="ml-auto">
                         <DeleteButton transaction={t} />
-                    </>
-                )}
-            </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
@@ -668,8 +694,8 @@ function DeleteButton({ transaction }: { transaction: Transaction }) {
     return (
         <>
             <button onClick={handleDelete} disabled={isPending}
-                className="text-muted-foreground/40 hover:text-destructive disabled:opacity-30 transition-colors">
-                <Trash2 className="size-4" />
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 disabled:opacity-30 transition-colors">
+                <Trash2 className="size-3.5" /> Delete
             </button>
 
             {showSplitDialog && (
@@ -983,6 +1009,7 @@ function CapitalList({ capitals, sheetId, totalCapital, readOnly = false }: {
     readOnly?: boolean
 }) {
     const [editingId, setEditingId] = useState<string | null>(null)
+    const [openRowId, setOpenRowId] = useState<string | null>(null)
 
     if (capitals.length === 0) {
         return <p className="text-muted-foreground text-sm py-4">No capital entries this month.</p>
@@ -1000,6 +1027,8 @@ function CapitalList({ capitals, sheetId, totalCapital, readOnly = false }: {
                         onDone={() => setEditingId(null)}
                         totalCapital={totalCapital}
                         readOnly={readOnly}
+                        isOpen={openRowId === c.id}
+                        onToggle={() => setOpenRowId(prevId => prevId === c.id ? null : c.id)}
                     />
                 ))}
             </ul>
@@ -1018,44 +1047,77 @@ function CapitalList({ capitals, sheetId, totalCapital, readOnly = false }: {
     )
 }
 
-function CapitalRow({ capital, isEditing, onEdit, onDone, totalCapital, readOnly = false }: {
+function CapitalRow({ capital, isEditing, onEdit, onDone, totalCapital, readOnly = false, isOpen, onToggle }: {
     capital: Capital
     isEditing: boolean
     onEdit: () => void
     onDone: () => void
     totalCapital: number
     readOnly?: boolean
+    isOpen: boolean
+    onToggle: () => void
 }) {
     return (
         <li>
             {isEditing ? (
                 <EditCapitalRow capital={capital} onDone={onDone} />
             ) : (
-                <div className="py-3 flex items-center gap-2 group">
-                    <div className="flex-1 flex items-center gap-2">
-                        <span
-                            className="w-3 h-3 rounded-xl shrink-0"
-                            style={{ backgroundColor: capital.capitalCategory.color }}
-                        />
-                        <p className="font-medium text-foreground text-sm">
-                            {capital.capitalCategory.name}
-                        </p>
+                <div className="border-b border-border last:border-0">
+                    {/* Main Row - Clickable to toggle */}
+                    <div 
+                        className={`py-3 flex items-center justify-between gap-3 ${!readOnly ? "cursor-pointer select-none" : ""}`}
+                        onClick={() => !readOnly && onToggle()}
+                    >
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div
+                                className="w-9 h-9 rounded-2xl flex items-center justify-center text-sm font-bold shrink-0 text-white select-none"
+                                style={{ backgroundColor: capital.capitalCategory.color }}
+                            >
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate">
+                                    {capital.capitalCategory.name}
+                                </p>
+                                {totalCapital > 0 && (
+                                    <p className="text-xs text-muted-foreground">
+                                        {((capital.amount / totalCapital) * 100).toFixed(1)}% of net worth
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                            <span 
+                                className="text-sm font-semibold tabular-nums"
+                                style={{ color: "#2563EB" }}
+                            >
+                                €{capital.amount.toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                            {!readOnly && (
+                                <ChevronDown
+                                    className={`size-4 text-muted-foreground/40 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                                />
+                            )}
+                        </div>
                     </div>
-                    {totalCapital > 0 && (
-                        <span className="text-xs text-muted-foreground w-10 text-right shrink-0">
-                            {((capital.amount / totalCapital) * 100).toFixed(1)}%
-                        </span>
-                    )}
-                    <span className="font-semibold text-blue-600 dark:text-blue-400 w-20 text-right shrink-0">
-                        €{capital.amount.toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-                    {!readOnly && (
-                        <>
-                            <button onClick={onEdit} className="text-muted-foreground/40 hover:text-blue-500 transition-colors">
-                                <Pencil className="size-4" />
+
+                    {/* Expandable actions drawer */}
+                    {!readOnly && isOpen && (
+                        <div className="pb-3 flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                            <button
+                                onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    onEdit(); 
+                                    onToggle(); 
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors"
+                            >
+                                <Pencil className="size-3.5" /> Edit
                             </button>
-                            <DeleteCapitalButton capitalId={capital.id} />
-                        </>
+                            <div onClick={(e) => e.stopPropagation()} className="ml-auto">
+                                <DeleteCapitalButton capitalId={capital.id} />
+                            </div>
+                        </div>
                     )}
                 </div>
             )}
@@ -1121,8 +1183,8 @@ function DeleteCapitalButton({ capitalId }: { capitalId: string }) {
 
     return (
         <button onClick={handleDelete} disabled={isPending}
-            className="text-muted-foreground/40 hover:text-destructive disabled:opacity-30 transition-colors">
-            <Trash2 className="size-4" />
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 disabled:opacity-30 transition-colors">
+            <Trash2 className="size-3.5" /> Delete
         </button>
     )
 }
