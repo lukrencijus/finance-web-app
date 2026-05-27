@@ -479,7 +479,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                                             {data.capitals.map(c => (
                                                 <div
                                                     key={c.id}
-                                                    className="h-full first:rounded-l-full last:rounded-xl"
+                                                    className="h-full"
                                                     style={{
                                                         width: `${(c.amount / data.totalCapital) * 100}%`,
                                                         backgroundColor: c.color,

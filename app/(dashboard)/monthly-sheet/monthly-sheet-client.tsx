@@ -469,36 +469,55 @@ function TransactionRow({ transaction: t, onEdit, readOnly }: {
         setRecurringPending(false)
     }
 
+    const isIncome = t.type === "INCOME"
+    const txDate = new Date(t.date)
+    const hasUniqueDesc = t.description && t.description !== t.category.name
+
     return (
-        <div className="py-3 flex justify-between items-center gap-2">
-            <div className="min-w-0">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="font-medium text-foreground">
-                        {t.category.icon} {t.category.name}
-                    </p>
-                    {/* Recurring badge */}
-                    {t.isRecurring && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                            <RefreshCw className="size-2.5" /> recurring
-                        </span>
-                    )}
-                    {/* Split badge */}
-                    {isSplit && t.splitIndex && t.splitMonths && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                            <Scissors className="size-2.5" /> {t.splitIndex}/{t.splitMonths}
-                        </span>
-                    )}
+        <div className="py-3 flex items-center justify-between gap-2">
+            {/* Left: icon bubble + text */}
+            <div className="flex items-center gap-2 min-w-0">
+                <div
+                    className="w-7 h-7 rounded-xl flex items-center justify-center text-xs shrink-0"
+                    style={{
+                        backgroundColor: isIncome ? "#EAF3DE" : "#FCEBEB",
+                        color: isIncome ? "#3B6D11" : "#A32D2D",
+                    }}
+                >
+                    {t.category.icon ?? (isIncome ? "↑" : "↓")}
                 </div>
-                {t.description && (
-                    <p className="text-sm text-muted-foreground truncate">{t.description}</p>
-                )}
-                <p className="text-xs text-muted-foreground/60">
-                    {new Date(t.date).toISOString().split("T")[0]}
-                </p>
+                <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-sm font-medium text-foreground truncate">
+                            {t.description || t.category.name}
+                        </p>
+                        {/* Recurring badge */}
+                        {t.isRecurring && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                <RefreshCw className="size-2.5" /> recurring
+                            </span>
+                        )}
+                        {/* Split badge */}
+                        {isSplit && t.splitIndex && t.splitMonths && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                                <Scissors className="size-2.5" /> {t.splitIndex}/{t.splitMonths}
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                        {hasUniqueDesc ? `${t.category.name} · ` : ""}
+                        {txDate.toLocaleDateString("en-IE", { day: "numeric", month: "short" })}
+                    </p>
+                </div>
             </div>
+
+            {/* Right: amount + action buttons */}
             <div className="flex items-center gap-2 shrink-0">
-                <span className={`font-semibold ${t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
-                    {t.type === "INCOME" ? "+" : "-"}€{t.amount.toFixed(2)}
+                <span
+                    className="text-sm font-medium"
+                    style={{ color: isIncome ? "#529E19" : "#C83232" }}
+                >
+                    {isIncome ? "+" : "-"}€{t.amount.toFixed(2)}
                 </span>
                 {!readOnly && (
                     <>
