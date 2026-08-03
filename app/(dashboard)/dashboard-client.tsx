@@ -13,6 +13,7 @@ import {
 } from "chart.js"
 import { MonthPicker } from "@/components/month-picker"
 import { formatCurrency } from "@/lib/utils"
+import { ArrowUpRight, ArrowDownRight } from "lucide-react"
 
 Chart.register(LineElement, PointElement, LineController, CategoryScale, LinearScale, Tooltip, Filler)
 
@@ -140,14 +141,19 @@ function MetricCard({
     const barColor = bar !== undefined && bar < 0 ? "bg-destructive" : "bg-blue-600 dark:bg-blue-500"
 
     return (
-        <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+        <div className="relative bg-card border border-border rounded-xl p-5 shadow-sm">
+            {d && (
+                d.positive
+                    ? <ArrowUpRight className={`absolute top-4 right-4 size-4 ${deltaColor}`} />
+                    : <ArrowDownRight className={`absolute top-4 right-4 size-4 ${deltaColor}`} />
+            )}
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
                 {label}
             </p>
             <p className="text-2xl font-bold text-foreground leading-tight">
                 {value}
             </p>
-            
+
             {/* Trend Label */}
             {d && (
                 <p className={`text-xs mt-2 font-medium ${deltaColor}`}>
@@ -205,7 +211,9 @@ function CategoryBars({
         <div className="space-y-2">
             {items.map((cat, i) => (
                 <div key={cat.name} className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 w-20 shrink-0 truncate">{cat.name}</span>
+                    <span className="text-xs text-gray-500 w-20 shrink-0 truncate">
+                        {cat.icon && <span className="mr-1">{cat.icon}</span>}{cat.name}
+                    </span>
                     <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden">
                         <div
                             className="h-full rounded-xl"
@@ -528,12 +536,12 @@ export function DashboardClient({
                                     <div className="flex-1 flex flex-col min-h-52">
                                         <div className="overflow-y-auto flex-1 max-h-44">
                                             {data.capitals.map((c) => (
-                                                <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                                                    <div className="flex items-center gap-2">
+                                                <div key={c.id} className="flex items-center justify-between gap-2 py-2 border-b border-border last:border-0">
+                                                    <div className="flex items-center gap-2 min-w-0 flex-1">
                                                         <span className="w-2 h-2 rounded-xl shrink-0" style={{ backgroundColor: c.color }} />
-                                                        <span className="text-sm text-foreground">{c.name}</span>
+                                                        <span className="text-sm text-foreground truncate">{c.name}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-3 shrink-0">
                                                         <span className="text-xs text-muted-foreground">
                                                             {data.totalCapital > 0 ? ((c.amount / data.totalCapital) * 100).toFixed(1).replace(".", ",") : "0"}%
                                                         </span>
@@ -542,8 +550,8 @@ export function DashboardClient({
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="flex justify-between items-end pt-3 mt-auto border-t border-border">
-                                            <div>
+                                        <div className="flex justify-between items-end gap-2 pt-3 mt-auto border-t border-border">
+                                            <div className="min-w-0">
                                                 <span className="text-xs text-muted-foreground">Total net worth</span>
                                                 {capitalDelta && (
                                                     <p className={`text-xs font-medium mt-0.5 ${capitalDelta.positive ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
@@ -551,7 +559,7 @@ export function DashboardClient({
                                                     </p>
                                                 )}
                                             </div>
-                                            <span className="text-sm font-semibold text-foreground">{fmt(data.totalCapital)}</span>
+                                            <span className="text-sm font-semibold text-foreground shrink-0 tabular-nums">{fmt(data.totalCapital)}</span>
                                         </div>
                                     </div>
                                 </>
