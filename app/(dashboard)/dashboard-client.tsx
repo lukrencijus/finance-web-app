@@ -119,15 +119,54 @@ function calcDelta(
     return { label: `${pct >= 0 ? "+" : ""}${pct.toFixed(1).replace(".", ",")}% vs last month`, positive: pct >= 0 }
 }
 
+// Animates from 0 up to `value` on mount, and from the old value to the new
+// one whenever `value` changes (e.g. switching months).
+function useCountUp(value: number, duration = 700) {
+    const [display, setDisplay] = useState(0)
+    const fromRef = useRef(0)
+
+    useEffect(() => {
+        const from = fromRef.current
+        const to = value
+        if (from === to) return
+
+        const start = performance.now()
+        let raf: number
+
+        const tick = (now: number) => {
+            const t = Math.min(1, (now - start) / duration)
+            const eased = 1 - Math.pow(1 - t, 3) // ease-out cubic
+            const current = from + (to - from) * eased
+            setDisplay(current)
+            if (t < 1) {
+                raf = requestAnimationFrame(tick)
+            } else {
+                fromRef.current = to
+            }
+        }
+        raf = requestAnimationFrame(tick)
+        return () => cancelAnimationFrame(raf)
+    }, [value, duration])
+
+    return display
+}
+
+function AnimatedValue({ value, format }: { value: number; format: (n: number) => string }) {
+    const display = useCountUp(value)
+    return <>{format(display)}</>
+}
+
 function MetricCard({
     label,
     value,
+    format,
     d,
     positiveIsGood,
     bar,
 }: {
     label: string
-    value: string
+    value: number
+    format: (n: number) => string
     d?: { label: string; positive: boolean } | null
     positiveIsGood?: boolean
     bar?: number
@@ -150,8 +189,8 @@ function MetricCard({
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
                 {label}
             </p>
-            <p className="text-2xl font-bold text-foreground leading-tight">
-                {value}
+            <p className="text-2xl font-bold text-foreground leading-tight tabular-nums">
+                <AnimatedValue value={value} format={format} />
             </p>
 
             {/* Trend Label */}
@@ -484,12 +523,13 @@ export function DashboardClient({
 
             {/* Always Shown: Metric cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <MetricCard label="Total income"   value={fmt(data.currentIncome)}   d={incomeDelta}   positiveIsGood={true} />
-                <MetricCard label="Total expenses" value={fmt(data.currentExpenses)}  d={expensesDelta} positiveIsGood={false} />
-                <MetricCard label="Net saved"      value={fmt(data.netSaved)}         d={netDelta}      positiveIsGood={true} />
+                <MetricCard label="Total income"   value={data.currentIncome}   format={fmt} d={incomeDelta}   positiveIsGood={true} />
+                <MetricCard label="Total expenses" value={data.currentExpenses} format={fmt} d={expensesDelta} positiveIsGood={false} />
+                <MetricCard label="Net saved"      value={data.netSaved}        format={fmt} d={netDelta}      positiveIsGood={true} />
                 <MetricCard
                     label={data.savingsRate >= 0 ? "Savings rate" : "Burn rate"}
-                    value={`${(data.savingsRate * 100).toFixed(1).replace(".", ",")}%`}
+                    value={data.savingsRate * 100}
+                    format={(n) => `${n.toFixed(1).replace(".", ",")}%`}
                     bar={data.savingsRate}
                 />
             </div>
