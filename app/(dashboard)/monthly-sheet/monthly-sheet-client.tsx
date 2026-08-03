@@ -265,6 +265,10 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
     const [isOpen, setIsOpen] = useState(false)
     const [mode, setMode] = useState<FormMode>("normal")
     const [splitMonths, setSplitMonths] = useState(3)
+    // Bumped on every failed submit so the form below can be remounted with the
+    // returned values as defaultValue - React clears uncontrolled fields after
+    // any form action call, even ones that return an error instead of succeeding.
+    const [errorKey, setErrorKey] = useState(0)
 
     const isPending = normalPending || splitPending
     const state = mode === "split" ? splitState : normalState
@@ -273,6 +277,10 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
         // Close the form once the server action reports success.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         if (normalState?.success || splitState?.success) setIsOpen(false)
+        if (normalState?.error || splitState?.error) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setErrorKey(k => k + 1)
+        }
     }, [normalState, splitState])
 
     // Date limits locked to this sheet's month
@@ -333,11 +341,12 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                         {mode === "split" ? "Total Amount (€)" : "Amount (€)"}
                     </label>
                     <input name="amount" type="number" step="0.01" min="0.01" placeholder="0.00" required
+                        defaultValue={state?.values?.amount ?? ""}
                         className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                 </div>
                 <div>
                     <label className="text-xs text-muted-foreground mb-1 block font-medium">Date</label>
-                    <input name="date" type="date" min={minDate} max={maxDate} defaultValue={defaultDate} required
+                    <input name="date" type="date" min={minDate} max={maxDate} defaultValue={state?.values?.date || defaultDate} required
                         className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                 </div>
                 {mode === "split" && (
@@ -357,7 +366,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                     <label className="text-xs text-muted-foreground font-medium">Category</label>
                     {!isShared && <CategoryManager type={type} categories={categories} />}
                 </div>
-                <select name="categoryId" required
+                <select name="categoryId" required defaultValue={state?.values?.categoryId ?? ""}
                     className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
                     <option value="">Select a category...</option>
                     {categories.map(c => (
@@ -369,6 +378,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
             <div>
                 <label className="text-xs text-muted-foreground mb-1 block font-medium">Description (optional)</label>
                 <input name="description" type="text" placeholder="e.g. Grocery run"
+                    defaultValue={state?.values?.description ?? ""}
                     className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
 
@@ -395,7 +405,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
             <div className="lg:hidden">
                 <div className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm" onClick={handleClose} />
                 <div className="fixed inset-x-0 bottom-0 z-[101] bg-card border-t border-border rounded-t-[2rem] shadow-[0_-8px_30px_rgb(0,0,0,0.12)] max-h-[92dvh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-                    <form action={formAction} className="p-6 space-y-3">
+                    <form key={errorKey} action={formAction} className="p-6 space-y-3">
                         <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-5" />
                         <p className="text-base font-semibold text-foreground mb-1">
                             Add {type === "INCOME" ? "Income" : "Expense"}
@@ -406,7 +416,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
             </div>
 
             {/* DESKTOP: inline card */}
-            <form action={formAction} className="hidden lg:block bg-muted/50 border border-border rounded-xl p-4 space-y-3">
+            <form key={errorKey} action={formAction} className="hidden lg:block bg-muted/50 border border-border rounded-xl p-4 space-y-3">
                 {fields}
             </form>
         </>
@@ -779,11 +789,19 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
 }) {
     const [state, formAction, isPending] = useActionState(createCapital, null)
     const [isOpen, setIsOpen] = useState(false)
+    // Bumped on every failed submit so the form below remounts with the returned
+    // values as defaultValue - React clears uncontrolled fields after any form
+    // action call, even ones that return an error instead of succeeding.
+    const [errorKey, setErrorKey] = useState(0)
 
     useEffect(() => {
         // Close the form once the server action reports success.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         if (state?.success) setIsOpen(false)
+        if (state?.error) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setErrorKey(k => k + 1)
+        }
     }, [state])
 
     const available = capitalCategories.filter(c => !existingCategoryIds.includes(c.id))
@@ -810,7 +828,7 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
                     <label className="text-xs text-muted-foreground font-medium">Category</label>
                     {!isShared && <CapitalCategoryManager categories={capitalCategories} />}
                 </div>
-                <select name="capitalCategoryId" required
+                <select name="capitalCategoryId" required defaultValue={state?.values?.capitalCategoryId ?? ""}
                     className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
                     <option value="">Select a category...</option>
                     {available.map(c => (
@@ -827,6 +845,7 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
             <div>
                 <label className="text-xs text-muted-foreground mb-1 block font-medium">Amount (€)</label>
                 <input name="amount" type="number" step="0.01" min="0.01" placeholder="0.00" required
+                    defaultValue={state?.values?.amount ?? ""}
                     className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
 
@@ -853,7 +872,7 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
             <div className="lg:hidden">
                 <div className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
                 <div className="fixed inset-x-0 bottom-0 z-[101] bg-card border-t border-border rounded-t-[2rem] shadow-[0_-8px_30px_rgb(0,0,0,0.12)] max-h-[92dvh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-                    <form action={formAction} className="p-6 space-y-3">
+                    <form key={errorKey} action={formAction} className="p-6 space-y-3">
                         <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-5" />
                         <p className="text-base font-semibold text-foreground mb-1">Add Capital Entry</p>
                         {fields}
@@ -862,7 +881,7 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
             </div>
 
             {/* DESKTOP: inline card */}
-            <form action={formAction} className="hidden lg:block bg-muted/50 border border-border rounded-xl p-4 space-y-3">
+            <form key={errorKey} action={formAction} className="hidden lg:block bg-muted/50 border border-border rounded-xl p-4 space-y-3">
                 {fields}
             </form>
         </>

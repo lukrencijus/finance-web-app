@@ -48,6 +48,15 @@ async function hasEditAccess(sheetOwnerId: string, currentUserId: string): Promi
 export async function createTransaction(prevState: any, formData: FormData) {
     const user = await getCurrentDbUser()
 
+    // Echoed back on error so the form can restore what the user typed -
+    // React resets uncontrolled fields after any form action call, success or not.
+    const values = {
+        amount: String(formData.get("amount") ?? ""),
+        description: String(formData.get("description") ?? ""),
+        date: String(formData.get("date") ?? ""),
+        categoryId: String(formData.get("categoryId") ?? ""),
+    }
+
     const parsed = transactionSchema.safeParse({
         amount: parseFloat(String(formData.get("amount") ?? "")),
         description: String(formData.get("description") ?? "").trim() || undefined,
@@ -59,7 +68,7 @@ export async function createTransaction(prevState: any, formData: FormData) {
 
     // basic validation
     if (!parsed.success) {
-        return { error: parsed.error.issues[0].message }
+        return { error: parsed.error.issues[0].message, values }
     }
 
     const { amount, description, date, type, categoryId, monthlySheetId } = parsed.data
@@ -71,7 +80,7 @@ export async function createTransaction(prevState: any, formData: FormData) {
         where: { id: monthlySheetId },
     })
     if (!sheet || !await hasEditAccess(sheet.userId, user.id)) {
-        return { error: "Unauthorized" }
+        return { error: "Unauthorized", values }
     }
 
     const inputDate = new Date(date)
@@ -79,7 +88,7 @@ export async function createTransaction(prevState: any, formData: FormData) {
         inputDate.getMonth() + 1 !== sheet.month ||
         inputDate.getFullYear() !== sheet.year
     ) {
-        return { error: "Date must be within this month" }
+        return { error: "Date must be within this month", values }
     }
 
     // let's make sure the category also belongs to this user
@@ -87,7 +96,7 @@ export async function createTransaction(prevState: any, formData: FormData) {
         where: { id: categoryId },
     })
     if (!category || category.userId !== sheet.userId) {
-        return { error: "Invalid category" }
+        return { error: "Invalid category", values }
     }
 
     try {
@@ -105,7 +114,7 @@ export async function createTransaction(prevState: any, formData: FormData) {
         revalidatePath("/monthly-sheet")
         return { success: true }
     } catch (e) {
-        return { error: "Something went wrong. Please try again." }
+        return { error: "Something went wrong. Please try again.", values }
     }
 }
 
@@ -180,26 +189,33 @@ export async function updateTransaction(transactionId: string, formData: FormDat
 export async function createCapital(prevState: any, formData: FormData) {
     const user = await getCurrentDbUser()
 
+    // Echoed back on error so the form can restore what the user typed -
+    // React resets uncontrolled fields after any form action call, success or not.
+    const values = {
+        amount: String(formData.get("amount") ?? ""),
+        capitalCategoryId: String(formData.get("capitalCategoryId") ?? ""),
+    }
+
     const parsed = capitalSchema.safeParse({
         amount: parseFloat(String(formData.get("amount") ?? "")),
         capitalCategoryId: String(formData.get("capitalCategoryId") ?? "").trim(),
         monthlySheetId: String(formData.get("monthlySheetId") ?? "").trim(),
     })
-    if (!parsed.success) return { error: parsed.error.issues[0].message }
+    if (!parsed.success) return { error: parsed.error.issues[0].message, values }
 
     const { amount, capitalCategoryId, monthlySheetId } = parsed.data
 
     const sheet = await prisma.monthlySheet.findUnique({ where: { id: monthlySheetId } })
-    if (!sheet || !await hasEditAccess(sheet.userId, user.id)) return { error: "Unauthorized" }
+    if (!sheet || !await hasEditAccess(sheet.userId, user.id)) return { error: "Unauthorized", values }
 
     const category = await prisma.capitalCategory.findUnique({ where: { id: capitalCategoryId } })
-    if (!category || category.userId !== sheet.userId) return { error: "Invalid category" }
+    if (!category || category.userId !== sheet.userId) return { error: "Invalid category", values }
 
     // One entry per category per sheet
     const existing = await prisma.capital.findFirst({
         where: { monthlySheetId, capitalCategoryId },
     })
-    if (existing) return { error: "This category already has an entry for this month. Edit it instead." }
+    if (existing) return { error: "This category already has an entry for this month. Edit it instead.", values }
 
     try {
         await prisma.capital.create({
@@ -208,7 +224,7 @@ export async function createCapital(prevState: any, formData: FormData) {
         revalidatePath("/monthly-sheet")
         return { success: true }
     } catch {
-        return { error: "Something went wrong. Please try again." }
+        return { error: "Something went wrong. Please try again.", values }
     }
 }
 
@@ -274,10 +290,19 @@ export async function createSplitTransaction(prevState: any, formData: FormData)
     const monthlySheetId = String(formData.get("monthlySheetId") ?? "").trim()
     const splitMonths = parseInt(String(formData.get("splitMonths") ?? ""))
 
-    if (isNaN(amount) || amount <= 0) return { error: "Amount must be greater than 0" }
-    if (!date) return { error: "Date is required" }
+    // Echoed back on error so the form can restore what the user typed -
+    // React resets uncontrolled fields after any form action call, success or not.
+    const values = {
+        amount: String(formData.get("amount") ?? ""),
+        description: String(formData.get("description") ?? ""),
+        date,
+        categoryId,
+    }
+
+    if (isNaN(amount) || amount <= 0) return { error: "Amount must be greater than 0", values }
+    if (!date) return { error: "Date is required", values }
     if (isNaN(splitMonths) || splitMonths < 1 || splitMonths > 24) {
-        return { error: "Split must be between 1 and 24 months" }
+        return { error: "Split must be between 1 and 24 months", values }
     }
 
     // Verify the starting sheet belongs to user
@@ -285,13 +310,13 @@ export async function createSplitTransaction(prevState: any, formData: FormData)
         where: { id: monthlySheetId },
     })
     if (!startSheet || !await hasEditAccess(startSheet.userId, user.id)) {
-        return { error: "Unauthorized" }
+        return { error: "Unauthorized", values }
     }
 
     // Verify category
     const category = await prisma.category.findUnique({ where: { id: categoryId } })
     if (!category || category.userId !== startSheet.userId) {
-        return { error: "Invalid category" }
+        return { error: "Invalid category", values }
     }
 
     const splitAmount = parseFloat((amount / splitMonths).toFixed(2))
