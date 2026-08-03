@@ -4,6 +4,7 @@ import { useState } from "react"
 import { RefreshCw, StopCircle } from "lucide-react"
 import { toggleRecurring } from "@/app/(dashboard)/monthly-sheet/actions"
 import { useRouter } from "next/navigation"
+import { formatCurrency } from "@/lib/utils"
 
 const MONTH_NAMES = [
     "January","February","March","April","May","June",
@@ -122,7 +123,7 @@ function RecurringRow({ transaction: t }: { transaction: RecurringTransaction })
             <span className={`font-semibold text-sm shrink-0 ${
                 t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-destructive"
             }`}>
-                {t.type === "INCOME" ? "+" : "-"}€{t.amount.toFixed(2)}
+                {t.type === "INCOME" ? "+" : "-"}{formatCurrency(t.amount)}
             </span>
             <button
                 onClick={handleStop}

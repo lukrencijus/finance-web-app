@@ -12,6 +12,7 @@ import {
     Filler,
 } from "chart.js"
 import { MonthPicker } from "@/components/month-picker"
+import { formatCurrency } from "@/lib/utils"
 
 Chart.register(LineElement, PointElement, LineController, CategoryScale, LinearScale, Tooltip, Filler)
 
@@ -89,12 +90,7 @@ const INCOME_COLORS = [
     "#0F3D04",
 ]
 
-function fmt(n: number) {
-    return "€" + n.toLocaleString("en-IE", { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-    })
-}
+const fmt = formatCurrency
 
 function calcDelta(
     current: number,
@@ -119,7 +115,7 @@ function calcDelta(
     if (Math.abs(pct) > 999) {
         return { label: `${diff >= 0 ? "+" : ""}${fmt(diff)} vs last month`, positive: diff >= 0 }
     }
-    return { label: `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}% vs last month`, positive: pct >= 0 }
+    return { label: `${pct >= 0 ? "+" : ""}${pct.toFixed(1).replace(".", ",")}% vs last month`, positive: pct >= 0 }
 }
 
 function MetricCard({
@@ -348,7 +344,7 @@ export function DashboardClient({
                             color: "#888",
                             callback: (v) =>
                                 Number(v) >= 1000
-                                    ? "€" + (Number(v) / 1000).toFixed(1) + "k"
+                                    ? "€" + (Number(v) / 1000).toFixed(1).replace(".", ",") + "k"
                                     : "€" + v,
                         },
                     },
@@ -401,7 +397,7 @@ export function DashboardClient({
                             color: "#888",
                             callback: (v) =>
                                 Number(v) >= 1000
-                                    ? "€" + (Number(v) / 1000).toFixed(1) + "k"
+                                    ? "€" + (Number(v) / 1000).toFixed(1).replace(".", ",") + "k"
                                     : "€" + v,
                         },
                     },
@@ -485,7 +481,7 @@ export function DashboardClient({
                 <MetricCard label="Net saved"      value={fmt(data.netSaved)}         d={netDelta}      positiveIsGood={true} />
                 <MetricCard
                     label={data.savingsRate >= 0 ? "Savings rate" : "Burn rate"}
-                    value={`${(data.savingsRate * 100).toFixed(1)}%`}
+                    value={`${(data.savingsRate * 100).toFixed(1).replace(".", ",")}%`}
                     bar={data.savingsRate}
                 />
             </div>
@@ -522,7 +518,7 @@ export function DashboardClient({
                                                         backgroundColor: c.color,
                                                         minWidth: "4px",
                                                     }}
-                                                    title={`${c.name}: ${((c.amount / data.totalCapital) * 100).toFixed(1)}% (${fmt(c.amount)})`}
+                                                    title={`${c.name}: ${((c.amount / data.totalCapital) * 100).toFixed(1).replace(".", ",")}% (${fmt(c.amount)})`}
                                                 />
                                             ))}
                                         </div>
@@ -539,7 +535,7 @@ export function DashboardClient({
                                                     </div>
                                                     <div className="flex items-center gap-3">
                                                         <span className="text-xs text-muted-foreground">
-                                                            {data.totalCapital > 0 ? ((c.amount / data.totalCapital) * 100).toFixed(1) : "0"}%
+                                                            {data.totalCapital > 0 ? ((c.amount / data.totalCapital) * 100).toFixed(1).replace(".", ",") : "0"}%
                                                         </span>
                                                         <span className="text-sm font-medium text-foreground">{fmt(c.amount)}</span>
                                                     </div>

@@ -3,6 +3,7 @@
 import { useState, useTransition, useRef } from "react"
 import { Trash2, Pencil, Check, XCircle, Plus, X, GripVertical } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { formatCurrency } from "@/lib/utils"
 import {
     createCategory,
     deleteCategory,
@@ -96,7 +97,7 @@ function ConfirmDeleteDialog({ category, transactions, onConfirm, onCancel, isPe
                                             <td className={`px-3 py-2 text-right font-bold ${
                                                 t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-destructive"
                                             }`}>
-                                                {t.type === "INCOME" ? "+" : "-"}€{t.amount.toFixed(2)}
+                                                {t.type === "INCOME" ? "+" : "-"}{formatCurrency(t.amount)}
                                             </td>
                                         </tr>
                                     ))}

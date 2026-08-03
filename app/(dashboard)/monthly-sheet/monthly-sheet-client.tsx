@@ -19,6 +19,7 @@ import { type Category } from "@/components/category-manager-content"
 import { CapitalCategoryManager } from "@/components/capital-category-manager"
 import { type CapitalCategory } from "@/components/capital-category-manager-content"
 import { MonthPicker } from "@/components/month-picker"
+import { formatCurrency } from "@/lib/utils"
 
 type Capital = {
     id: string
@@ -429,6 +430,9 @@ function TransactionList({ transactions, categories, emptyMessage, month, year, 
         return <p className="text-muted-foreground text-sm py-4">{emptyMessage}</p>
     }
 
+    const now = new Date()
+    const isPastMonth = year < now.getFullYear() || (year === now.getFullYear() && month < now.getMonth() + 1)
+
     return (
         <ul className="divide-y divide-border">
             {transactions.map(t => (
@@ -450,6 +454,7 @@ function TransactionList({ transactions, categories, emptyMessage, month, year, 
                             readOnly={readOnly}
                             isOpen={openRowId === t.id}
                             onToggle={() => setOpenRowId(prevId => prevId === t.id ? null : t.id)}
+                            isPastMonth={isPastMonth}
                         />
                     )}
                 </li>
@@ -459,18 +464,20 @@ function TransactionList({ transactions, categories, emptyMessage, month, year, 
 }
 
 // Read-only transaction row
-function TransactionRow({ 
-    transaction: t, 
-    onEdit, 
+function TransactionRow({
+    transaction: t,
+    onEdit,
     readOnly,
     isOpen,
-    onToggle
+    onToggle,
+    isPastMonth,
 }: {
     transaction: Transaction
     onEdit: () => void
     readOnly?: boolean
     isOpen: boolean
     onToggle: () => void
+    isPastMonth?: boolean
 }) {
     const isSplit = !!t.splitGroupId
     const [recurringPending, setRecurringPending] = useState(false)
@@ -533,7 +540,7 @@ function TransactionRow({
                         className="text-sm font-semibold tabular-nums"
                         style={{ color: isIncome ? "#529E19" : "#C83232" }}
                     >
-                        {isIncome ? "+" : "-"}€{t.amount.toFixed(2)}
+                        {isIncome ? "+" : "-"}{formatCurrency(t.amount)}
                     </span>
                     {!readOnly && (
                         <ChevronDown
@@ -559,8 +566,9 @@ function TransactionRow({
                     {!isSplit && (
                         <button
                             onClick={(e) => { e.stopPropagation(); handleToggleRecurring() }}
-                            disabled={recurringPending}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors disabled:opacity-40 ${
+                            disabled={recurringPending || isPastMonth}
+                            title={isPastMonth ? "Recurring status can't be changed for past months" : undefined}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                                 t.isRecurring
                                     ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20"
                                     : "bg-muted hover:bg-muted/80 text-foreground"
@@ -898,7 +906,7 @@ function CapitalList({ capitals, sheetId, totalCapital, readOnly = false }: {
                         Total net worth
                     </div>
                     <span className="font-semibold text-foreground">
-                        €{totalCapital.toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatCurrency(totalCapital)}
                     </span>
                 </div>
             )}
@@ -939,7 +947,7 @@ function CapitalRow({ capital, isEditing, onEdit, onDone, totalCapital, readOnly
                                 </p>
                                 {totalCapital > 0 && (
                                     <p className="text-xs text-muted-foreground">
-                                        {((capital.amount / totalCapital) * 100).toFixed(1)}% of net worth
+                                        {((capital.amount / totalCapital) * 100).toFixed(1).replace(".", ",")}% of net worth
                                     </p>
                                 )}
                             </div>
@@ -950,7 +958,7 @@ function CapitalRow({ capital, isEditing, onEdit, onDone, totalCapital, readOnly
                                 className="text-sm font-semibold tabular-nums"
                                 style={{ color: "#2563EB" }}
                             >
-                                €{capital.amount.toLocaleString("en-IE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {formatCurrency(capital.amount)}
                             </span>
                             {!readOnly && (
                                 <ChevronDown

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { getCurrentDbUser } from "@/lib/current-user"
 import { RefreshCw } from "lucide-react"
+import { formatCurrency } from "@/lib/utils"
 
 const MONTH_NAMES = [
     "January","February","March","April","May","June",
@@ -128,7 +129,7 @@ function Section({ title, type, transactions }: {
                         <span className={`font-semibold text-sm shrink-0 ${
                             t.type === "INCOME" ? "text-green-600 dark:text-green-400" : "text-destructive"
                         }`}>
-                            {t.type === "INCOME" ? "+" : "-"}€{t.amount.toFixed(2)}
+                            {t.type === "INCOME" ? "+" : "-"}{formatCurrency(t.amount)}
                         </span>
                     </li>
                 ))}

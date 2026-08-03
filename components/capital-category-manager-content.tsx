@@ -3,6 +3,7 @@
 import { useState, useTransition, useRef, useEffect } from "react"
 import { Trash2, Pencil, Check, XCircle, Plus, X, GripVertical } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { formatCurrency } from "@/lib/utils"
 import {
     createCapitalCategory,
     deleteCapitalCategory,
@@ -126,7 +127,7 @@ function ConfirmDeleteDialog({ category, capitals, onConfirm, onCancel, isPendin
                                                 {c.monthlySheet.month}/{c.monthlySheet.year}
                                             </td>
                                             <td className="px-3 py-2 text-right font-bold text-foreground">
-                                                €{c.amount.toFixed(2)}
+                                                {formatCurrency(c.amount)}
                                             </td>
                                         </tr>
                                     ))}
