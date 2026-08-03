@@ -9,7 +9,7 @@ export async function registerUser(formData: FormData) {
   const name = (formData.get("name") as string)?.trim()
 
   const parsed = registerSchema.safeParse({
-    name: name || undefined,
+    name,
     email: formData.get("email"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
@@ -27,7 +27,7 @@ export async function registerUser(formData: FormData) {
   await prisma.user.create({
     data: {
       email,
-      name: parsed.data.name || null,
+      name: parsed.data.name,
       password: hashed,
       role: count === 0 ? "ADMIN" : "USER",
       status: count === 0 ? "ACTIVE" : "PENDING",

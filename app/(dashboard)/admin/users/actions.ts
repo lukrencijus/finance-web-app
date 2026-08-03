@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { getCurrentAdminUser } from "@/lib/current-user"
 import bcrypt from "bcryptjs"
+import { updateProfileSchema } from "@/lib/validations"
 
 async function guardSelf(userId: string) {
     const currentUser = await getCurrentAdminUser()
@@ -42,12 +43,17 @@ export async function deleteUser(userId: string) {
 
 export async function adminUpdateName(userId: string, formData: FormData) {
     await getCurrentAdminUser()
-    const name = String(formData.get("name") ?? "").trim()
+    const rawName = String(formData.get("name") ?? "").trim()
+
+    const parsed = updateProfileSchema.safeParse({ name: rawName })
+    if (!parsed.success) return { error: parsed.error.issues[0].message }
+
     await prisma.user.update({
         where: { id: userId },
-        data: { name: name || null },
+        data: { name: parsed.data.name },
     })
     revalidatePath("/admin/users")
+    return { success: true }
 }
 
 export async function adminResetPassword(userId: string, formData: FormData) {

@@ -10,10 +10,10 @@ export async function updateProfile(formData: FormData) {
     const user = await getCurrentDbUser()
     const rawName = String(formData.get("name") ?? "").trim()
 
-    const parsed = updateProfileSchema.safeParse({ name: rawName || undefined })
+    const parsed = updateProfileSchema.safeParse({ name: rawName })
     if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-    const name = parsed.data.name ?? null
+    const name = parsed.data.name
 
     await prisma.user.update({
         where: { id: user.id },

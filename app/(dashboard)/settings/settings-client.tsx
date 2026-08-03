@@ -249,6 +249,7 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Your name"
+                            required
                             className="w-full border border-input rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
                         />
                     </div>

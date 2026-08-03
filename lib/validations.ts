@@ -52,12 +52,11 @@ export const capitalSchema = z.object({
   monthlySheetId: z.string().min(1),
 })
 
-// A user's display name: optional (falls back to null), but if given must be 2-30 characters.
+// A user's display name: required, 2-30 characters.
 const personNameSchema = z.string()
   .trim()
   .min(2, "Name must be at least 2 characters")
   .max(30, "Name must be at most 30 characters")
-  .optional()
 
 export const registerSchema = z.object({
   name: personNameSchema,

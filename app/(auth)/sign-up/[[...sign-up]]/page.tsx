@@ -41,6 +41,7 @@ export default function SignUpPage() {
                 name="name"
                 type="text"
                 placeholder="John Doe"
+                required
                 className="w-full bg-background border border-input rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-muted-foreground"
               />
             </div>

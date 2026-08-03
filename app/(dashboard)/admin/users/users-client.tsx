@@ -27,6 +27,7 @@ type Props = {
 export function AdminUsersClient({ users, currentUserId }: Props) {
     const [expandedId, setExpandedId] = useState<string | null>(null)
     const [resetMsg, setResetMsg] = useState<Record<string, string>>({})
+    const [nameMsg, setNameMsg] = useState<Record<string, string>>({})
 
     async function handleResetPassword(userId: string, formData: FormData) {
         const result = await adminResetPassword(userId, formData)
@@ -34,6 +35,15 @@ export function AdminUsersClient({ users, currentUserId }: Props) {
             setResetMsg((prev) => ({ ...prev, [userId]: result.error || "An unknown error occurred" }))
         } else {
             setResetMsg((prev) => ({ ...prev, [userId]: "Password updated." }))
+        }
+    }
+
+    async function handleUpdateName(userId: string, formData: FormData) {
+        const result = await adminUpdateName(userId, formData)
+        if (result && "error" in result) {
+            setNameMsg((prev) => ({ ...prev, [userId]: result.error || "An unknown error occurred" }))
+        } else {
+            setNameMsg((prev) => ({ ...prev, [userId]: "Name updated." }))
         }
     }
 
@@ -61,6 +71,8 @@ export function AdminUsersClient({ users, currentUserId }: Props) {
                                 setExpandedId={setExpandedId}
                                 resetMsg={resetMsg}
                                 handleResetPassword={handleResetPassword}
+                                nameMsg={nameMsg}
+                                handleUpdateName={handleUpdateName}
                             />
                         ))}
                     </tbody>
@@ -78,6 +90,8 @@ export function AdminUsersClient({ users, currentUserId }: Props) {
                         setExpandedId={setExpandedId}
                         resetMsg={resetMsg}
                         handleResetPassword={handleResetPassword}
+                        nameMsg={nameMsg}
+                        handleUpdateName={handleUpdateName}
                     />
                 ))}
             </div>
@@ -147,7 +161,7 @@ function ActionButtons({ user, currentUserId, isExpanded, setExpandedId }: {
 }
 
 // DESKTOP ROW COMPONENT
-function UserRow({ user, currentUserId, isExpanded, setExpandedId, resetMsg, handleResetPassword }: any) {
+function UserRow({ user, currentUserId, isExpanded, setExpandedId, resetMsg, handleResetPassword, nameMsg, handleUpdateName }: any) {
     const isSelf = user.id === currentUserId
     const isAdmin = user.role === "ADMIN"
     const isActive = user.status === "ACTIVE"
@@ -173,7 +187,7 @@ function UserRow({ user, currentUserId, isExpanded, setExpandedId, resetMsg, han
             {isExpanded && (
                 <tr className="bg-muted/20">
                     <td colSpan={5} className="px-6 py-4 border-b border-border">
-                        <EditSection user={user} resetMsg={resetMsg} handleResetPassword={handleResetPassword} />
+                        <EditSection user={user} resetMsg={resetMsg} handleResetPassword={handleResetPassword} nameMsg={nameMsg} handleUpdateName={handleUpdateName} />
                     </td>
                 </tr>
             )}
@@ -182,7 +196,7 @@ function UserRow({ user, currentUserId, isExpanded, setExpandedId, resetMsg, han
 }
 
 // MOBILE CARD COMPONENT
-function UserCard({ user, currentUserId, isExpanded, setExpandedId, resetMsg, handleResetPassword }: any) {
+function UserCard({ user, currentUserId, isExpanded, setExpandedId, resetMsg, handleResetPassword, nameMsg, handleUpdateName }: any) {
     const isSelf = user.id === currentUserId
     const isAdmin = user.role === "ADMIN"
     const isActive = user.status === "ACTIVE"
@@ -207,7 +221,7 @@ function UserCard({ user, currentUserId, isExpanded, setExpandedId, resetMsg, ha
 
             {isExpanded && (
                 <div className="mt-4 pt-4 border-t border-border bg-muted/20 -mx-4 px-4 pb-4 rounded-xl">
-                    <EditSection user={user} resetMsg={resetMsg} handleResetPassword={handleResetPassword} />
+                    <EditSection user={user} resetMsg={resetMsg} handleResetPassword={handleResetPassword} nameMsg={nameMsg} handleUpdateName={handleUpdateName} />
                 </div>
             )}
         </div>
@@ -229,16 +243,22 @@ function Badge({ children, variant }: { children: React.ReactNode, variant: "blu
     )
 }
 
-function EditSection({ user, resetMsg, handleResetPassword }: any) {
+function EditSection({ user, resetMsg, handleResetPassword, nameMsg, handleUpdateName }: any) {
     return (
         <div className="flex flex-wrap gap-6">
-            <form action={(formData) => adminUpdateName(user.id, formData)} className="flex items-end gap-2">
+            <form onSubmit={(e) => { e.preventDefault(); handleUpdateName(user.id, new FormData(e.currentTarget)) }} className="flex items-end gap-2">
                 <div className="space-y-1">
                     <label className="text-[10px] uppercase font-bold text-muted-foreground">Display Name</label>
-                    <input name="name" defaultValue={user.name ?? ""} className="border border-input rounded-xl px-3 py-1.5 text-sm bg-background text-foreground w-full sm:w-48 focus:ring-1 focus:ring-ring focus:outline-none" />
+                    <input name="name" defaultValue={user.name ?? ""} required className="border border-input rounded-xl px-3 py-1.5 text-sm bg-background text-foreground w-full sm:w-48 focus:ring-1 focus:ring-ring focus:outline-none" />
                 </div>
                 <button type="submit" className="rounded-xl bg-primary text-primary-foreground px-3 py-1.5 text-xs font-medium hover:opacity-90">Save</button>
             </form>
+
+            {nameMsg[user.id] && (
+                <p className={`text-xs self-center font-medium ${nameMsg[user.id].includes("updated") ? "text-green-500" : "text-destructive"}`}>
+                    {nameMsg[user.id]}
+                </p>
+            )}
 
             {user.password ? (
                 <form onSubmit={(e) => { e.preventDefault(); handleResetPassword(user.id, new FormData(e.currentTarget)) }} className="flex items-end gap-2">
