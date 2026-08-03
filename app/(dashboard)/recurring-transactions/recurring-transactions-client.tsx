@@ -5,6 +5,7 @@ import { RefreshCw, StopCircle } from "lucide-react"
 import { toggleRecurring } from "@/app/(dashboard)/monthly-sheet/actions"
 import { useRouter } from "next/navigation"
 import { formatCurrency } from "@/lib/utils"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 const MONTH_NAMES = [
     "January","February","March","April","May","June",
@@ -91,14 +92,12 @@ function Section({ title, type, transactions }: {
 
 function RecurringRow({ transaction: t }: { transaction: RecurringTransaction }) {
     const [isPending, setIsPending] = useState(false)
+    const [showConfirm, setShowConfirm] = useState(false)
     const router = useRouter()
 
-    const handleStop = async () => {
-        if (isPending) return
-        if (!confirm(
-            `Stop recurring "${t.category.name}${t.description ? ` - ${t.description}` : ""}"?\n\nThis month's entry stays, but it won't repeat next month.`
-        )) return
+    const confirmStop = async () => {
         setIsPending(true)
+        setShowConfirm(false)
         await toggleRecurring(t.id)
         router.refresh()
         setIsPending(false)
@@ -126,13 +125,24 @@ function RecurringRow({ transaction: t }: { transaction: RecurringTransaction })
                 {t.type === "INCOME" ? "+" : "-"}{formatCurrency(t.amount)}
             </span>
             <button
-                onClick={handleStop}
+                onClick={() => setShowConfirm(true)}
                 disabled={isPending}
                 title="Stop recurring"
                 className="shrink-0 text-muted-foreground/40 hover:text-destructive disabled:opacity-30 transition-colors"
             >
                 <StopCircle className="size-5" />
             </button>
+            <ConfirmDialog
+                open={showConfirm}
+                title="Stop recurring"
+                message={`Stop recurring "${t.category.name}${t.description ? ` - ${t.description}` : ""}"? This month's entry stays, but it won't repeat next month.`}
+                confirmLabel="Stop recurring"
+                pendingLabel="Stopping..."
+                icon={StopCircle}
+                onConfirm={confirmStop}
+                onCancel={() => setShowConfirm(false)}
+                isPending={isPending}
+            />
         </li>
     )
 }

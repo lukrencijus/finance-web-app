@@ -20,6 +20,7 @@ import { CapitalCategoryManager } from "@/components/capital-category-manager"
 import { type CapitalCategory } from "@/components/capital-category-manager-content"
 import { MonthPicker } from "@/components/month-picker"
 import { formatCurrency } from "@/lib/utils"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 type Capital = {
     id: string
@@ -684,8 +685,9 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
 function DeleteButton({ transaction }: { transaction: Transaction }) {
     const [isPending, setIsPending] = useState(false)
     const [showSplitDialog, setShowSplitDialog] = useState(false)
+    const [showConfirm, setShowConfirm] = useState(false)
 
-    const handleDelete = async () => {
+    const handleDelete = () => {
         if (isPending) return
 
         // If it is a split, show choice dialog
@@ -694,8 +696,12 @@ function DeleteButton({ transaction }: { transaction: Transaction }) {
             return
         }
 
-        if (!confirm("Delete this transaction?")) return
+        setShowConfirm(true)
+    }
+
+    const confirmDelete = async () => {
         setIsPending(true)
+        setShowConfirm(false)
         await deleteTransaction(transaction.id)
     }
 
@@ -743,6 +749,15 @@ function DeleteButton({ transaction }: { transaction: Transaction }) {
                     </div>
                 </div>
             )}
+
+            <ConfirmDialog
+                open={showConfirm}
+                title="Delete transaction"
+                message="Are you sure you want to delete this transaction? This cannot be undone."
+                onConfirm={confirmDelete}
+                onCancel={() => setShowConfirm(false)}
+                isPending={isPending}
+            />
         </>
     )
 }
@@ -1059,18 +1074,28 @@ function EditCapitalRow({ capital, onDone }: { capital: Capital; onDone: () => v
 
 function DeleteCapitalButton({ capitalId }: { capitalId: string }) {
     const [isPending, setIsPending] = useState(false)
+    const [showConfirm, setShowConfirm] = useState(false)
 
-    const handleDelete = async () => {
-        if (isPending) return
-        if (!confirm("Delete this capital entry?")) return
+    const confirmDelete = async () => {
         setIsPending(true)
+        setShowConfirm(false)
         await deleteCapital(capitalId)
     }
 
     return (
-        <button onClick={handleDelete} disabled={isPending}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 disabled:opacity-30 transition-colors">
-            <Trash2 className="size-3.5" /> Delete
-        </button>
+        <>
+            <button onClick={() => setShowConfirm(true)} disabled={isPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 disabled:opacity-30 transition-colors">
+                <Trash2 className="size-3.5" /> Delete
+            </button>
+            <ConfirmDialog
+                open={showConfirm}
+                title="Delete capital entry"
+                message="Are you sure you want to delete this capital entry? This cannot be undone."
+                onConfirm={confirmDelete}
+                onCancel={() => setShowConfirm(false)}
+                isPending={isPending}
+            />
+        </>
     )
 }

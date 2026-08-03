@@ -1,14 +1,15 @@
 "use client"
 import { useState, Fragment } from "react"
-import { 
-    approveUser, 
-    revokeUser, 
-    makeAdmin, 
-    revokeAdmin, 
-    deleteUser, 
-    adminUpdateName, 
-    adminResetPassword 
+import {
+    approveUser,
+    revokeUser,
+    makeAdmin,
+    revokeAdmin,
+    deleteUser,
+    adminUpdateName,
+    adminResetPassword
 } from "./actions"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 type User = {
     id: string
@@ -100,15 +101,22 @@ export function AdminUsersClient({ users, currentUserId }: Props) {
 }
 
 // SHARED ACTION BUTTONS COMPONENT
-function ActionButtons({ user, currentUserId, isExpanded, setExpandedId }: { 
-    user: User, 
-    currentUserId: string, 
-    isExpanded: boolean, 
-    setExpandedId: (id: string | null) => void 
+function ActionButtons({ user, currentUserId, isExpanded, setExpandedId }: {
+    user: User,
+    currentUserId: string,
+    isExpanded: boolean,
+    setExpandedId: (id: string | null) => void
 }) {
     const isSelf = user.id === currentUserId
     const isActive = user.status === "ACTIVE"
     const isAdmin = user.role === "ADMIN"
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
+
+    const confirmDeleteUser = async () => {
+        setIsDeleting(true)
+        await deleteUser(user.id)
+    }
 
     if (isSelf) return <span className="text-xs text-muted-foreground italic">You (No actions)</span>
 
@@ -148,14 +156,21 @@ function ActionButtons({ user, currentUserId, isExpanded, setExpandedId }: {
             >
                 {isExpanded ? "Close" : "Edit"}
             </button>
-            <form 
-                action={deleteUser.bind(null, user.id)}
-                onSubmit={(e) => !window.confirm(`Delete ${user.email}?`) && e.preventDefault()}
+            <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="rounded-xl border border-destructive/30 px-3 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
             >
-                <button type="submit" className="rounded-xl border border-destructive/30 px-3 py-1 text-xs font-medium text-destructive hover:bg-destructive/10">
-                    Delete
-                </button>
-            </form>
+                Delete
+            </button>
+            <ConfirmDialog
+                open={showDeleteConfirm}
+                title="Delete user"
+                message={`Are you sure you want to delete ${user.email}? This cannot be undone.`}
+                onConfirm={confirmDeleteUser}
+                onCancel={() => setShowDeleteConfirm(false)}
+                isPending={isDeleting}
+            />
         </div>
     )
 }

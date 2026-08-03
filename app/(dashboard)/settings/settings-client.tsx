@@ -4,6 +4,7 @@ import { updateProfile, changePassword, deleteAccount, shareProfile, revokeShare
 import { useTheme } from "next-themes"
 import { Sun, Moon, Check, XCircle, Share2, UserMinus, ExternalLink } from "lucide-react"
 import Link from "next/link"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
@@ -70,6 +71,7 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
     const [deleteConfirm, setDeleteConfirm] = useState(false)
 
     const [revokingId, setRevokingId] = useState<string | null>(null)
+    const [revokeTarget, setRevokeTarget] = useState<{ id: string; label: string } | null>(null)
     const [shareMsg, setShareMsg] = useState<{ error?: string; success?: boolean } | null>(null)
     const [shareEmail, setShareEmail] = useState("")
     const [sharePermission, setSharePermission] = useState<"VIEW" | "EDIT">("VIEW")
@@ -89,6 +91,7 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
     }
 
     async function handleRevoke(id: string) {
+        setRevokeTarget(null)
         setRevokingId(id)
         await revokeShare(id)
         setRevokingId(null)
@@ -189,7 +192,11 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                                             <option value="VIEW">View</option>
                                             <option value="EDIT">Edit</option>
                                         </select>
-                                        <button onClick={() => handleRevoke(s.sharedWith.id)} disabled={revokingId === s.sharedWith.id} className="text-destructive p-2 hover:bg-destructive/10 rounded-xl transition-colors disabled:opacity-40">
+                                        <button
+                                            onClick={() => setRevokeTarget({ id: s.sharedWith.id, label: s.sharedWith.name || s.sharedWith.email })}
+                                            disabled={revokingId === s.sharedWith.id}
+                                            className="text-destructive p-2 hover:bg-destructive/10 rounded-xl transition-colors disabled:opacity-40"
+                                        >
                                             <UserMinus className="size-4" />
                                         </button>
                                     </div>
@@ -197,6 +204,17 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                             ))}
                         </div>
                     )}
+                    <ConfirmDialog
+                        open={revokeTarget !== null}
+                        title="Revoke access"
+                        message={`Stop sharing your profile with ${revokeTarget?.label}? They will lose access immediately.`}
+                        confirmLabel="Revoke"
+                        pendingLabel="Revoking..."
+                        icon={UserMinus}
+                        onConfirm={() => revokeTarget && handleRevoke(revokeTarget.id)}
+                        onCancel={() => setRevokeTarget(null)}
+                        isPending={revokingId === revokeTarget?.id}
+                    />
                 </div>
 
                 {/* Profiles shared with me */}
