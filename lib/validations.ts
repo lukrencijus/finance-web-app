@@ -52,12 +52,15 @@ export const capitalSchema = z.object({
   monthlySheetId: z.string().min(1),
 })
 
+// A user's display name: optional (falls back to null), but if given must be 2-30 characters.
+const personNameSchema = z.string()
+  .trim()
+  .min(2, "Name must be at least 2 characters")
+  .max(30, "Name must be at most 30 characters")
+  .optional()
+
 export const registerSchema = z.object({
-  name: z.string()
-    .trim()
-    .min(2, "Name must be at least 2 characters")
-    .max(30, "Name must be at most 30 characters")
-    .optional(),
+  name: personNameSchema,
   email: z.string()
     .trim()
     .toLowerCase()
@@ -68,4 +71,8 @@ export const registerSchema = z.object({
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
+})
+
+export const updateProfileSchema = z.object({
+  name: personNameSchema,
 })

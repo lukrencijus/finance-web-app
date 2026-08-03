@@ -98,7 +98,9 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
         e.preventDefault()
         const formData = new FormData(e.currentTarget)
         const result = await updateProfile(formData)
-        if (result.success) {
+        if ("error" in result && result.error) {
+            setProfileMsg(result.error)
+        } else {
             setProfileMsg("Name updated successfully.")
         }
     }
@@ -250,7 +252,11 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                             className="w-full border border-input rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
                         />
                     </div>
-                    {profileMsg && <p className="text-sm font-medium text-green-600 dark:text-green-400">{profileMsg}</p>}
+                    {profileMsg && (
+                        <p className={`text-sm font-medium ${profileMsg.includes("successfully") ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
+                            {profileMsg}
+                        </p>
+                    )}
                     <button
                         type="submit"
                         className="flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors"

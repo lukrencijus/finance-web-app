@@ -4,18 +4,24 @@ import { getCurrentDbUser } from "@/lib/current-user"
 import { revalidatePath } from "next/cache"
 import { signOut } from "@/auth"
 import bcrypt from "bcryptjs"
+import { updateProfileSchema } from "@/lib/validations"
 
 export async function updateProfile(formData: FormData) {
     const user = await getCurrentDbUser()
-    const name = String(formData.get("name") ?? "").trim()
+    const rawName = String(formData.get("name") ?? "").trim()
+
+    const parsed = updateProfileSchema.safeParse({ name: rawName || undefined })
+    if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+    const name = parsed.data.name ?? null
 
     await prisma.user.update({
         where: { id: user.id },
-        data: { name: name || null },
+        data: { name },
     })
 
     revalidatePath("/settings")
-    return { success: true, name: name || null }
+    return { success: true, name }
 }
 
 export async function changePassword(formData: FormData) {
