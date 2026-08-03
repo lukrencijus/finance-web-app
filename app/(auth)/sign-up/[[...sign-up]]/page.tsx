@@ -64,6 +64,16 @@ export default function SignUpPage() {
                 required
               />
             </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-card-foreground">Confirm Password</label>
+              <input
+                name="confirmPassword"
+                type="password"
+                placeholder="Repeat your password"
+                className="w-full bg-background border border-input rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-muted-foreground"
+                required
+              />
+            </div>
             <button
               type="submit"
               disabled={isPending}

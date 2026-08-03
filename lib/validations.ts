@@ -51,3 +51,21 @@ export const capitalSchema = z.object({
   capitalCategoryId: z.string().min(1, "Please select a category"),
   monthlySheetId: z.string().min(1),
 })
+
+export const registerSchema = z.object({
+  name: z.string()
+    .trim()
+    .min(2, "Name must be at least 2 characters")
+    .max(30, "Name must be at most 30 characters")
+    .optional(),
+  email: z.string()
+    .trim()
+    .toLowerCase()
+    .email("Invalid email format"),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string(),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+})

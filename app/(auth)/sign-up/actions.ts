@@ -3,15 +3,20 @@ import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { redirect } from "next/navigation"
 import { signIn } from "@/auth"
+import { registerSchema } from "@/lib/validations"
 
 export async function registerUser(formData: FormData) {
-  const email = (formData.get("email") as string)?.trim().toLowerCase()
-  const password = formData.get("password") as string
   const name = (formData.get("name") as string)?.trim()
 
-  if (!email || !password) return { error: "All fields are required" }
-  if (password.length < 8) return { error: "Password must be at least 8 characters" }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Invalid email format" }
+  const parsed = registerSchema.safeParse({
+    name: name || undefined,
+    email: formData.get("email"),
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  })
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const { email, password } = parsed.data
 
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) return { error: "This email is already registered" }
@@ -22,7 +27,7 @@ export async function registerUser(formData: FormData) {
   await prisma.user.create({
     data: {
       email,
-      name: name || null,
+      name: parsed.data.name || null,
       password: hashed,
       role: count === 0 ? "ADMIN" : "USER",
       status: count === 0 ? "ACTIVE" : "PENDING",
