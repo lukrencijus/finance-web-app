@@ -11,6 +11,7 @@ import {
     Tooltip,
     Filler,
 } from "chart.js"
+import { MonthPicker } from "@/components/month-picker"
 
 Chart.register(LineElement, PointElement, LineController, CategoryScale, LinearScale, Tooltip, Filler)
 
@@ -60,7 +61,11 @@ export type DashboardData = {
     capitals: Capital[]
     totalCapital: number
     prevTotalCapital: number | null
+    capitalsAsOfMonth: number | null
+    capitalsAsOfYear: number | null
 }
+
+type SheetSummary = { month: number; year: number }
 
 const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 const MONTH_FULL  = ["January","February","March","April","May","June","July","August","September","October","November","December"]
@@ -240,7 +245,17 @@ const WIDGET_LABELS: Record<keyof typeof defaultSettings, string> = {
     showRecent: "Recent Transactions",
 }
 
-export function DashboardClient({ data }: { data: DashboardData }) {
+export function DashboardClient({
+    data,
+    allSheets,
+    isActualCurrentMonth,
+    basePath = "/",
+}: {
+    data: DashboardData
+    allSheets: SheetSummary[]
+    isActualCurrentMonth: boolean
+    basePath?: string
+}) {
     const chartRef = useRef<HTMLCanvasElement>(null)
     const chartInstance = useRef<Chart | null>(null)
     const netWorthChartRef = useRef<HTMLCanvasElement>(null)
@@ -405,7 +420,18 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 
     return (
         <div className="p-6 max-w-6xl mx-auto space-y-6">
-            
+
+            {/* Month picker */}
+            <div className="w-full">
+                <MonthPicker
+                    allSheets={allSheets}
+                    currentMonth={data.currentMonth}
+                    currentYear={data.currentYear}
+                    basePath={basePath}
+                    isActualCurrentMonth={isActualCurrentMonth}
+                />
+            </div>
+
             {/* Header Area with Settings Toggle */}
             <div className="flex items-center justify-between mb-2">
                 <div>
@@ -467,9 +493,16 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                     {/* Capital Breakdown */}
                     {settings.showCapital && (
                         <div className="rounded-xl border border-border bg-card p-4 flex flex-col md:col-span-2">
-                            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
-                                Capital breakdown
-                            </p>
+                            <div className="flex items-center gap-2 mb-4">
+                                <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                                    Capital breakdown
+                                </p>
+                                {data.capitalsAsOfMonth && data.capitalsAsOfYear && (
+                                    <span className="text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-xl border border-amber-500/20">
+                                        As of {MONTH_SHORT[data.capitalsAsOfMonth - 1]} {data.capitalsAsOfYear}
+                                    </span>
+                                )}
+                            </div>
                             {data.capitals.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">No capital entries.</p>
                             ) : (

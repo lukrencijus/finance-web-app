@@ -127,12 +127,15 @@ export async function getMonthSheet(userId: string, month: number, year: number)
     })
 }
 
-export async function getDashboardData(userId: string) {
+export async function getDashboardData(userId: string, selectedMonth?: number, selectedYear?: number) {
     const now = new Date()
-    const currentMonth = now.getMonth() + 1
-    const currentYear = now.getFullYear()
+    const actualCurrentMonth = now.getMonth() + 1
+    const actualCurrentYear = now.getFullYear()
 
-    // Build last 6 months (including current) in descending order
+    const currentMonth = selectedMonth ?? actualCurrentMonth
+    const currentYear = selectedYear ?? actualCurrentYear
+
+    // Build last 6 months (including the selected one) in descending order
     const monthsToFetch: { month: number; year: number }[] = []
     for (let i = 0; i < 6; i++) {
         let m = currentMonth - i
@@ -269,8 +272,9 @@ export async function getDashboardData(userId: string) {
         take: 7,
     })
 
-    // Capital breakdown (current sheet)
-    const capitals = currentSheet
+    // Capital breakdown (selected month's sheet, falling back to the most recent
+    // earlier month that has capital entries if the selected month has none yet)
+    let capitals = currentSheet
         ? currentSheet.capitals.map((c) => ({
             id: c.id,
             name: c.capitalCategory.name,
@@ -278,6 +282,42 @@ export async function getDashboardData(userId: string) {
             amount: c.amount,
         }))
         : []
+    let capitalsAsOfMonth: number | null = null
+    let capitalsAsOfYear: number | null = null
+
+    if (capitals.length === 0) {
+        const fallbackSheet = await prisma.monthlySheet.findFirst({
+            where: {
+                userId,
+                capitals: { some: {} },
+                OR: [
+                    { year: { lt: currentYear } },
+                    { year: currentYear, month: { lt: currentMonth } },
+                ],
+            },
+            include: {
+                capitals: {
+                    include: { capitalCategory: true },
+                    orderBy: [
+                        { capitalCategory: { order: "asc" } },
+                        { capitalCategory: { createdAt: "desc" } },
+                    ],
+                },
+            },
+            orderBy: [{ year: "desc" }, { month: "desc" }],
+        })
+
+        if (fallbackSheet && fallbackSheet.capitals.length > 0) {
+            capitals = fallbackSheet.capitals.map((c) => ({
+                id: c.id,
+                name: c.capitalCategory.name,
+                color: c.capitalCategory.color,
+                amount: c.amount,
+            }))
+            capitalsAsOfMonth = fallbackSheet.month
+            capitalsAsOfYear = fallbackSheet.year
+        }
+    }
     const totalCapital = capitals.reduce((sum, c) => sum + c.amount, 0)
 
     return {
@@ -303,5 +343,7 @@ export async function getDashboardData(userId: string) {
         capitals,
         totalCapital,
         prevTotalCapital,
+        capitalsAsOfMonth,
+        capitalsAsOfYear,
     }
 }
