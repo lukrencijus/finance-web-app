@@ -7,7 +7,7 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
         include: {
             transactions: {
                 include: { category: true },
-                orderBy: [{ createdAt: "desc" }, { date: "desc" }],
+                orderBy: [{ date: "desc" }, { createdAt: "desc" }],
             },
             capitals: {
                 include: { capitalCategory: true },
@@ -26,7 +26,7 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
             include: {
                 transactions: {
                     include: { category: true },
-                    orderBy: [{ createdAt: "desc" }, { date: "desc" }],
+                    orderBy: [{ date: "desc" }, { createdAt: "desc" }],
                 },
                 capitals: {
                     include: { capitalCategory: true },
@@ -88,7 +88,7 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
                 include: {
                     transactions: {
                         include: { category: true },
-                        orderBy: [{ createdAt: "desc" }, { date: "desc" }],
+                        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
                     },
                     capitals: {
                         include: { capitalCategory: true },
@@ -112,8 +112,8 @@ export async function getMonthSheet(userId: string, month: number, year: number)
             transactions: {
                 include: { category: true },
                 orderBy: [
-                    { createdAt: "desc" },
                     { date: "desc" },
+                    { createdAt: "desc" },
                 ],
             },
             capitals: {
