@@ -276,8 +276,8 @@ export async function createSplitTransaction(prevState: any, formData: FormData)
 
     if (isNaN(amount) || amount <= 0) return { error: "Amount must be greater than 0" }
     if (!date) return { error: "Date is required" }
-    if (isNaN(splitMonths) || splitMonths < 2 || splitMonths > 24) {
-        return { error: "Split must be between 2 and 24 months" }
+    if (isNaN(splitMonths) || splitMonths < 1 || splitMonths > 24) {
+        return { error: "Split must be between 1 and 24 months" }
     }
 
     // Verify the starting sheet belongs to user

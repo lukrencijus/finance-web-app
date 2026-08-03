@@ -37,7 +37,7 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · NextAuth v5 
 Three features complicate this, all in `lib/sheets.ts` and `monthly-sheet/actions.ts`:
 
 - **Recurring** transactions are copied into each newly created sheet, searching back up to 12 months so skipped months don't break the chain. Day-of-month is clamped to the target month's length.
-- **Splits** spread one amount across 2–24 months, eagerly creating future sheets; rounding remainder goes to the last part. Empty future sheets are cleaned up on delete.
+- **Splits** spread one amount across 1–24 months, eagerly creating future sheets; rounding remainder goes to the last part. Empty future sheets are cleaned up on delete.
 - **Sharing** grants another user VIEW or EDIT on your sheets, surfaced under `/shared/[userId]/`.
 
 Auth bootstrap: the first registered user becomes ADMIN/ACTIVE; everyone else is PENDING until an admin approves them.

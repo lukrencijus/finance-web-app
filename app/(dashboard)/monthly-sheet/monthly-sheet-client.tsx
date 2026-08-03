@@ -302,10 +302,10 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
             <input type="hidden" name="type" value={type} />
             <input type="hidden" name="monthlySheetId" value={sheetId} />
 
-            <div className="flex gap-1.5 p-1 bg-muted rounded-xl w-fit">
+            <div className={`grid gap-1.5 p-1 bg-muted rounded-xl ${type === "EXPENSE" ? "grid-cols-3" : "grid-cols-2"}`}>
                 {(["normal", "recurring", ...(type === "EXPENSE" ? ["split"] : [])] as FormMode[]).map(m => (
                     <button key={m} type="button" onClick={() => setMode(m)}
-                        className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-medium transition-colors capitalize
+                        className={`flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors capitalize
                             ${mode === m ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                         {m === "recurring" && <RefreshCw className="size-3" />}
                         {m === "split" && <Scissors className="size-3" />}
@@ -342,8 +342,8 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                 {mode === "split" && (
                     <div className="col-span-2 sm:col-span-1">
                         <label className="text-xs text-muted-foreground mb-1 block font-medium">Months</label>
-                        <input name="splitMonths" type="number" min="2" max="24" value={splitMonths}
-                            onChange={e => setSplitMonths(parseInt(e.target.value) || 2)}
+                        <input name="splitMonths" type="number" min="1" max="24" value={splitMonths}
+                            onChange={e => setSplitMonths(parseInt(e.target.value) || 1)}
                             className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                     </div>
                 )}
