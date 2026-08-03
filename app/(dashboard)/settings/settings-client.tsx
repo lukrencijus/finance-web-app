@@ -9,6 +9,9 @@ export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
+  // Flip to true only after mounting on the client, so the theme-dependent
+  // icon isn't rendered from a guess during server rendering (avoids hydration mismatch).
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), [])
 
   if (!mounted) {

@@ -269,6 +269,8 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
     const state = mode === "split" ? splitState : normalState
 
     useEffect(() => {
+        // Close the form once the server action reports success.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (normalState?.success || splitState?.success) setIsOpen(false)
     }, [normalState, splitState])
 
@@ -771,6 +773,8 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
     const [isOpen, setIsOpen] = useState(false)
 
     useEffect(() => {
+        // Close the form once the server action reports success.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (state?.success) setIsOpen(false)
     }, [state])
 

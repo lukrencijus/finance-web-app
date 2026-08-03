@@ -33,7 +33,10 @@ export function MonthPicker({
     const thisYear = today.getFullYear()
 
     useEffect(() => {
+        // Reset the picker back to the selected year whenever it's closed,
+        // so reopening it doesn't strand the user on a year they were just browsing.
         if (!isOpen) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setViewYear(currentYear)
         }
     }, [isOpen, currentYear])

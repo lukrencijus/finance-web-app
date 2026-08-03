@@ -276,8 +276,12 @@ export function DashboardClient({
     const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
+        // Read persisted widget settings on mount. Deliberately effect-based (not a lazy
+        // useState initializer) so the server-rendered and first client render match,
+        // avoiding a hydration mismatch - localStorage isn't available on the server.
         try {
             const saved = localStorage.getItem("dashboard-settings")
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             if (saved) setSettings({ ...defaultSettings, ...JSON.parse(saved) })
         } catch {}
         setMounted(true)

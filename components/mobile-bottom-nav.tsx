@@ -19,6 +19,9 @@ export function MobileBottomNav({ isAdmin }: MobileBottomNavProps) {
     const sharedUserId = params.userId as string | undefined
 
     useEffect(() => {
+        // Close any open menu/dialog when the route changes. This bar stays mounted
+        // across navigations, so there's no component-key trick to reset it with.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsMenuOpen(false)
         setShowLogoutConfirm(false)
     }, [pathname])
