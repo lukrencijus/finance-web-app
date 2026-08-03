@@ -27,7 +27,11 @@ export default async function MonthlySheetPage({ searchParams }: Props) {
     const isFuture = year > currentYear || (year === currentYear && month > currentMonth)
     const isCurrentMonth = month === currentMonth && year === currentYear
 
-    const [sheet, categories, capitalCategories, allSheets] = await Promise.all([
+    let prevMonth = month - 1
+    let prevYear = year
+    if (prevMonth < 1) { prevMonth = 12; prevYear -= 1 }
+
+    const [sheet, categories, capitalCategories, allSheets, prevSheet] = await Promise.all([
         isCurrentMonth
             ? getCurrentMonthSheet(user.id, currentMonth, currentYear)
             : getMonthSheet(user.id, month, year),
@@ -50,7 +54,16 @@ export default async function MonthlySheetPage({ searchParams }: Props) {
             orderBy: [{ year: "desc" }, { month: "desc" }],
             select: { month: true, year: true },
         }),
+        // Previous month's capital entries, used to show growth per category.
+        prisma.monthlySheet.findUnique({
+            where: { month_year_userId: { month: prevMonth, year: prevYear, userId: user.id } },
+            select: { capitals: { select: { capitalCategoryId: true, amount: true } } },
+        }),
     ])
+
+    const prevCapitals = Object.fromEntries(
+        (prevSheet?.capitals ?? []).map((c) => [c.capitalCategoryId, c.amount])
+    )
 
     return (
         <MonthlySheetClient
@@ -58,6 +71,7 @@ export default async function MonthlySheetPage({ searchParams }: Props) {
             categories={categories}
             capitalCategories={capitalCategories}
             allSheets={allSheets}
+            prevCapitals={prevCapitals}
             month={month}
             year={year}
             isCurrentMonth={isCurrentMonth}

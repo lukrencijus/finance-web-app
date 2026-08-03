@@ -59,6 +59,8 @@ type Props = {
     categories: Category[]
     capitalCategories: CapitalCategory[]
     allSheets: SheetSummary[]
+    /** Previous month's capital amounts, keyed by capitalCategoryId, for showing growth. */
+    prevCapitals?: Record<string, number>
     month: number
     year: number
     isCurrentMonth: boolean
@@ -83,6 +85,7 @@ export function MonthlySheetClient({
     categories,
     capitalCategories,
     allSheets,
+    prevCapitals = {},
     month,
     year,
     isCurrentMonth,
@@ -214,6 +217,7 @@ export function MonthlySheetClient({
                             <Overview
                                 capitals={sheet.capitals}
                                 capitalCategories={capitalCategories}
+                                prevCapitals={prevCapitals}
                                 sheetId={sheet.id}
                                 readOnly={readOnly}
                                 isShared={!!userId}
@@ -763,9 +767,10 @@ function DeleteButton({ transaction }: { transaction: Transaction }) {
 }
 
 // Overview (actually just capital)
-function Overview({ capitals, capitalCategories, sheetId, readOnly = false, isShared = false }: {
+function Overview({ capitals, capitalCategories, prevCapitals, sheetId, readOnly = false, isShared = false }: {
     capitals: Capital[]
     capitalCategories: CapitalCategory[]
+    prevCapitals?: Record<string, number>
     sheetId: string
     readOnly?: boolean
     isShared?: boolean
@@ -788,6 +793,7 @@ function Overview({ capitals, capitalCategories, sheetId, readOnly = false, isSh
                     capitals={capitals}
                     sheetId={sheetId}
                     totalCapital={totalCapital}
+                    prevCapitals={prevCapitals}
                     readOnly={readOnly}
                 />
             </div>
@@ -903,10 +909,11 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
     )
 }
 
-function CapitalList({ capitals, sheetId, totalCapital, readOnly = false }: {
+function CapitalList({ capitals, sheetId, totalCapital, prevCapitals = {}, readOnly = false }: {
     capitals: Capital[]
     sheetId: string
     totalCapital: number
+    prevCapitals?: Record<string, number>
     readOnly?: boolean
 }) {
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -927,6 +934,7 @@ function CapitalList({ capitals, sheetId, totalCapital, readOnly = false }: {
                         onEdit={() => setEditingId(c.id)}
                         onDone={() => setEditingId(null)}
                         totalCapital={totalCapital}
+                        prevAmount={prevCapitals[c.capitalCategoryId]}
                         readOnly={readOnly}
                         isOpen={openRowId === c.id}
                         onToggle={() => setOpenRowId(prevId => prevId === c.id ? null : c.id)}
@@ -948,16 +956,19 @@ function CapitalList({ capitals, sheetId, totalCapital, readOnly = false }: {
     )
 }
 
-function CapitalRow({ capital, isEditing, onEdit, onDone, totalCapital, readOnly = false, isOpen, onToggle }: {
+function CapitalRow({ capital, isEditing, onEdit, onDone, totalCapital, prevAmount, readOnly = false, isOpen, onToggle }: {
     capital: Capital
     isEditing: boolean
     onEdit: () => void
     onDone: () => void
     totalCapital: number
+    prevAmount?: number
     readOnly?: boolean
     isOpen: boolean
     onToggle: () => void
 }) {
+    const growth = prevAmount !== undefined ? capital.amount - prevAmount : null
+
     return (
         <li>
             {isEditing ? (
@@ -982,6 +993,11 @@ function CapitalRow({ capital, isEditing, onEdit, onDone, totalCapital, readOnly
                                 {totalCapital > 0 && (
                                     <p className="text-xs text-muted-foreground">
                                         {((capital.amount / totalCapital) * 100).toFixed(1).replace(".", ",")}% of net worth
+                                    </p>
+                                )}
+                                {growth !== null && growth !== 0 && (
+                                    <p className={`text-xs font-medium ${growth > 0 ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
+                                        {growth > 0 ? "+" : "-"}{formatCurrency(Math.abs(growth))} vs last month
                                     </p>
                                 )}
                             </div>

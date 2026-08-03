@@ -27,6 +27,10 @@ export default async function SharedMonthlySheetPage({
     const month = sMonth ? parseInt(sMonth) : now.getMonth() + 1
     const year = sYear ? parseInt(sYear) : now.getFullYear()
 
+    let prevMonth = month - 1
+    let prevYear = year
+    if (prevMonth < 1) { prevMonth = 12; prevYear -= 1 }
+
     const sheet = await getMonthSheet(targetUserId, month, year)
     const categories = await prisma.category.findMany({ where: { userId: targetUserId } })
     const capitalCategories = await prisma.capitalCategory.findMany({ where: { userId: targetUserId } })
@@ -35,6 +39,13 @@ export default async function SharedMonthlySheetPage({
         select: { month: true, year: true },
         orderBy: [{ year: "desc" }, { month: "desc" }],
     })
+    const prevSheet = await prisma.monthlySheet.findUnique({
+        where: { month_year_userId: { month: prevMonth, year: prevYear, userId: targetUserId } },
+        select: { capitals: { select: { capitalCategoryId: true, amount: true } } },
+    })
+    const prevCapitals = Object.fromEntries(
+        (prevSheet?.capitals ?? []).map((c) => [c.capitalCategoryId, c.amount])
+    )
 
     return (
         <MonthlySheetClient
@@ -42,6 +53,7 @@ export default async function SharedMonthlySheetPage({
             categories={categories}
             capitalCategories={capitalCategories}
             allSheets={allSheets}
+            prevCapitals={prevCapitals}
             month={month}
             year={year}
             isCurrentMonth={month === now.getMonth() + 1 && year === now.getFullYear()}
