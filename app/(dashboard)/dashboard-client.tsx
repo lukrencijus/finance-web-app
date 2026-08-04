@@ -6,6 +6,8 @@ import {
     LineElement,
     PointElement,
     LineController,
+    BarElement,
+    BarController,
     CategoryScale,
     LinearScale,
     Tooltip,
@@ -15,7 +17,7 @@ import { MonthPicker } from "@/components/month-picker"
 import { formatCurrency } from "@/lib/utils"
 import { ArrowUpRight, ArrowDownRight } from "lucide-react"
 
-Chart.register(LineElement, PointElement, LineController, CategoryScale, LinearScale, Tooltip, Filler)
+Chart.register(LineElement, PointElement, LineController, BarElement, BarController, CategoryScale, LinearScale, Tooltip, Filler)
 
 type MonthlyTotal = {
     month: number
@@ -278,52 +280,6 @@ function CategoryBars({
     )
 }
 
-function DayHeatmap({ days, month, year }: { days: DailyActivity[]; month: number; year: number }) {
-    const maxAbs = Math.max(...days.map((d) => Math.abs(d.income - d.expenses)), 1)
-    // Monday-first offset for the 1st of the month
-    const firstWeekday = (new Date(year, month - 1, 1).getDay() + 6) % 7
-    const today = new Date()
-    const isCurrentMonth = today.getMonth() + 1 === month && today.getFullYear() === year
-
-    return (
-        <div>
-            <div className="grid grid-cols-7 gap-1.5 mb-1.5">
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-                    <span key={d} className="text-[10px] text-muted-foreground text-center">{d}</span>
-                ))}
-            </div>
-            <div className="grid grid-cols-7 gap-1.5">
-                {Array.from({ length: firstWeekday }).map((_, i) => (
-                    <div key={`pad-${i}`} />
-                ))}
-                {days.map((d) => {
-                    const net = d.income - d.expenses
-                    const intensity = d.count === 0 ? 0 : 0.15 + Math.min(1, Math.abs(net) / maxAbs) * 0.75
-                    const bg = d.count === 0
-                        ? "rgba(120,120,120,0.08)"
-                        : net >= 0
-                            ? `rgba(34,197,94,${intensity})`
-                            : `rgba(239,68,68,${intensity})`
-                    const isToday = isCurrentMonth && d.day === today.getDate()
-                    const tooltip = d.count === 0
-                        ? `${d.day}: no transactions`
-                        : `${d.day}: +${fmt(d.income)} / -${fmt(d.expenses)} (${d.count} transaction${d.count !== 1 ? "s" : ""})`
-                    return (
-                        <div
-                            key={d.day}
-                            title={tooltip}
-                            className={`aspect-square rounded-lg flex items-center justify-center text-[10px] font-medium text-foreground transition-colors ${isToday ? "ring-2 ring-blue-500" : ""}`}
-                            style={{ backgroundColor: bg }}
-                        >
-                            {d.day}
-                        </div>
-                    )
-                })}
-            </div>
-        </div>
-    )
-}
-
 const defaultSettings = {
     showCapital: true,
     showTrend: true,
@@ -341,7 +297,7 @@ const WIDGET_LABELS: Record<keyof typeof defaultSettings, string> = {
     showExpenses: "Expenses by Category",
     showIncome: "Income by Category",
     showRecent: "Recent Transactions",
-    showHeatmap: "Transactions Heatmap",
+    showHeatmap: "Transactions",
 }
 
 export function DashboardClient({
@@ -359,6 +315,8 @@ export function DashboardClient({
     const chartInstance = useRef<Chart | null>(null)
     const netWorthChartRef = useRef<HTMLCanvasElement>(null)
     const netWorthChartInstance = useRef<Chart | null>(null)
+    const transactionsChartRef = useRef<HTMLCanvasElement>(null)
+    const transactionsChartInstance = useRef<Chart | null>(null)
     const isFirstRender = useRef(true)
 
     const incomeDelta   = calcDelta(data.currentIncome, data.prevIncome)
@@ -510,6 +468,78 @@ export function DashboardClient({
 
         return () => { netWorthChartInstance.current?.destroy() }
     }, [data.monthlyTotals, mounted, settings.showNetWorth])
+
+    useEffect(() => {
+        if (!transactionsChartRef.current) return
+
+        const labels = data.dailyActivity.map((d) => `${d.day} ${MONTH_SHORT[data.currentMonth - 1]}`)
+        const incomeData = data.dailyActivity.map((d) => d.income || null)
+        const expenseData = data.dailyActivity.map((d) => d.expenses || null)
+
+        if (transactionsChartInstance.current) transactionsChartInstance.current.destroy()
+
+        transactionsChartInstance.current = new Chart(transactionsChartRef.current, {
+            type: "bar",
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: "Income",
+                        data: incomeData,
+                        backgroundColor: "#3B82F6",
+                        borderRadius: 2,
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.8,
+                    },
+                    {
+                        label: "Expenses",
+                        data: expenseData,
+                        backgroundColor: "#E11D48",
+                        borderRadius: 2,
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.8,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.dataset.label}: ${fmt(Number(ctx.raw))}`,
+                        },
+                    },
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { size: 11 },
+                            color: "#888",
+                            autoSkip: true,
+                            maxTicksLimit: 16,
+                            maxRotation: 0,
+                        },
+                    },
+                    y: {
+                        grid: { color: "rgba(120,120,120,0.1)" },
+                        ticks: {
+                            font: { size: 11 },
+                            color: "#888",
+                            callback: (v) =>
+                                Number(v) >= 1000
+                                    ? "€" + (Number(v) / 1000).toFixed(1).replace(".", ",") + "k"
+                                    : "€" + v,
+                        },
+                    },
+                },
+            },
+        })
+
+        return () => { transactionsChartInstance.current?.destroy() }
+    }, [data.dailyActivity, data.currentMonth, mounted, settings.showHeatmap])
 
     useEffect(() => {
         if (isFirstRender.current) {
@@ -694,16 +724,18 @@ export function DashboardClient({
                         </div>
                     )}
 
-                    {/* Transactions Heatmap Widget */}
+                    {/* Transactions Widget */}
                     {settings.showHeatmap && (
-                        <div className="rounded-xl border border-border bg-card p-4">
+                        <div className="flex flex-col rounded-xl border border-border bg-card p-4 md:col-span-2">
                             <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
-                                Transactions heatmap
+                                Transactions
                             </p>
-                            <DayHeatmap days={data.dailyActivity} month={data.currentMonth} year={data.currentYear} />
+                            <div className="relative flex-1 min-h-60">
+                                <canvas ref={transactionsChartRef} />
+                            </div>
                             <div className="flex gap-4 mt-3">
-                                <Legend color="#22C55E" label="Net income day" />
-                                <Legend color="#EF4444" label="Net expense day" />
+                                <Legend color="#3B82F6" label="Income" />
+                                <Legend color="#E11D48" label="Expenses" />
                             </div>
                         </div>
                     )}
