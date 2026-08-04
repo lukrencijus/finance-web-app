@@ -26,6 +26,7 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers"
 
 export type Category = {
     id: string
@@ -368,7 +369,7 @@ function CategorySection({ type, initialCategories }: {
             </div>
 
             {/* Sortable list */}
-            <DndContext id={type} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext id={type} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis, restrictToParentElement]}>
                 <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>
                     <ul className="space-y-0.5">
                         {categories.length === 0 && !addingNew && (

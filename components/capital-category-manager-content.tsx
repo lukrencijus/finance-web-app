@@ -26,6 +26,7 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers"
 
 export type CapitalCategory = {
     id: string
@@ -362,7 +363,7 @@ export function CapitalCategoryManagerContent({ categories }: { categories: Capi
 
     return (
         <div className="space-y-3">
-            <DndContext id={"capital-categories" }sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext id={"capital-categories"} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis, restrictToParentElement]}>
                 <SortableContext items={items.map(c => c.id)} strategy={verticalListSortingStrategy}>
                     <ul className="space-y-0.5">
                         {items.length === 0 && !addingNew && (
