@@ -88,6 +88,8 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
     )
 }
 
+const DELETE_LIST_PAGE_SIZE = 10
+
 function ConfirmDeleteDialog({ category, capitals, onConfirm, onCancel, isPending }: {
     category: CapitalCategory
     capitals: CapitalEntry[]
@@ -95,6 +97,12 @@ function ConfirmDeleteDialog({ category, capitals, onConfirm, onCancel, isPendin
     onCancel: () => void
     isPending: boolean
 }) {
+    const [page, setPage] = useState(1)
+    const pageCount = Math.max(1, Math.ceil(capitals.length / DELETE_LIST_PAGE_SIZE))
+    const currentPage = Math.min(page, pageCount)
+    const start = (currentPage - 1) * DELETE_LIST_PAGE_SIZE
+    const pageItems = capitals.slice(start, start + DELETE_LIST_PAGE_SIZE)
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-card text-card-foreground border border-border rounded-xl shadow-2xl p-6 max-w-lg w-full mx-4 animate-in zoom-in-95 duration-200">
@@ -121,7 +129,7 @@ function ConfirmDeleteDialog({ category, capitals, onConfirm, onCancel, isPendin
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {capitals.map(c => (
+                                    {pageItems.map(c => (
                                         <tr key={c.id} className="border-t border-border">
                                             <td className="px-3 py-2 text-muted-foreground">
                                                 {c.monthlySheet.month}/{c.monthlySheet.year}
@@ -134,6 +142,29 @@ function ConfirmDeleteDialog({ category, capitals, onConfirm, onCancel, isPendin
                                 </tbody>
                             </table>
                         </div>
+                        {pageCount > 1 && (
+                            <div className="flex items-center justify-between mb-5 -mt-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setPage(p => p - 1)}
+                                    disabled={currentPage <= 1}
+                                    className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted transition-colors"
+                                >
+                                    Previous
+                                </button>
+                                <span className="text-xs text-muted-foreground">
+                                    Page {currentPage} of {pageCount}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setPage(p => p + 1)}
+                                    disabled={currentPage >= pageCount}
+                                    className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted transition-colors"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        )}
                     </>
                 )}
                 <div className="flex justify-end gap-2 pt-2">

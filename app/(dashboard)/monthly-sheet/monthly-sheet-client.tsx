@@ -464,6 +464,8 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
     )
 }
 
+const TRANSACTIONS_PAGE_SIZE = 10
+
 function TransactionList({ transactions, categories, emptyMessage, month, year, sheetId, readOnly, isShared }: {
     transactions: Transaction[]
     categories: Category[]
@@ -476,6 +478,14 @@ function TransactionList({ transactions, categories, emptyMessage, month, year, 
 }) {
     const [editingId, setEditingId] = useState<string | null>(null)
     const [openRowId, setOpenRowId] = useState<string | null>(null)
+    const [page, setPage] = useState(1)
+
+    // Reset back to the first page whenever the underlying list changes
+    // (e.g. navigating to a different month).
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setPage(1)
+    }, [month, year])
 
     if (transactions.length === 0) {
         return <p className="text-muted-foreground text-sm py-4">{emptyMessage}</p>
@@ -484,33 +494,73 @@ function TransactionList({ transactions, categories, emptyMessage, month, year, 
     const now = new Date()
     const isPastMonth = year < now.getFullYear() || (year === now.getFullYear() && month < now.getMonth() + 1)
 
+    const pageCount = Math.max(1, Math.ceil(transactions.length / TRANSACTIONS_PAGE_SIZE))
+    const currentPage = Math.min(page, pageCount)
+    const start = (currentPage - 1) * TRANSACTIONS_PAGE_SIZE
+    const pageItems = transactions.slice(start, start + TRANSACTIONS_PAGE_SIZE)
+
     return (
-        <ul className="divide-y divide-border">
-            {transactions.map(t => (
-                <li key={t.id}>
-                    {editingId === t.id ? (
-                        <EditTransactionRow
-                            transaction={t}
-                            categories={categories}
-                            month={month}
-                            year={year}
-                            sheetId={sheetId}
-                            onDone={() => setEditingId(null)}
-                            isShared={isShared}
-                        />
-                    ) : (
-                        <TransactionRow
-                            transaction={t}
-                            onEdit={() => setEditingId(t.id)}
-                            readOnly={readOnly}
-                            isOpen={openRowId === t.id}
-                            onToggle={() => setOpenRowId(prevId => prevId === t.id ? null : t.id)}
-                            isPastMonth={isPastMonth}
-                        />
-                    )}
-                </li>
-            ))}
-        </ul>
+        <div>
+            <ul className="divide-y divide-border">
+                {pageItems.map(t => (
+                    <li key={t.id}>
+                        {editingId === t.id ? (
+                            <EditTransactionRow
+                                transaction={t}
+                                categories={categories}
+                                month={month}
+                                year={year}
+                                sheetId={sheetId}
+                                onDone={() => setEditingId(null)}
+                                isShared={isShared}
+                            />
+                        ) : (
+                            <TransactionRow
+                                transaction={t}
+                                onEdit={() => setEditingId(t.id)}
+                                readOnly={readOnly}
+                                isOpen={openRowId === t.id}
+                                onToggle={() => setOpenRowId(prevId => prevId === t.id ? null : t.id)}
+                                isPastMonth={isPastMonth}
+                            />
+                        )}
+                    </li>
+                ))}
+            </ul>
+            {pageCount > 1 && (
+                <Pagination page={currentPage} pageCount={pageCount} onChange={setPage} />
+            )}
+        </div>
+    )
+}
+
+function Pagination({ page, pageCount, onChange }: {
+    page: number
+    pageCount: number
+    onChange: (page: number) => void
+}) {
+    return (
+        <div className="flex items-center justify-between pt-4 mt-1 border-t border-border">
+            <button
+                type="button"
+                onClick={() => onChange(page - 1)}
+                disabled={page <= 1}
+                className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted transition-colors"
+            >
+                Previous
+            </button>
+            <span className="text-xs text-muted-foreground">
+                Page {page} of {pageCount}
+            </span>
+            <button
+                type="button"
+                onClick={() => onChange(page + 1)}
+                disabled={page >= pageCount}
+                className="text-xs font-medium px-3 py-1.5 rounded-lg border border-border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted transition-colors"
+            >
+                Next
+            </button>
+        </div>
     )
 }
 
