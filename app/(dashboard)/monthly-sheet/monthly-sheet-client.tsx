@@ -12,7 +12,7 @@ import {
     createSplitTransaction,
     deleteSplitGroup,
 } from "./actions"
-import { Trash2, ChevronDown, Pencil, Check, XCircle, RefreshCw, Scissors } from "lucide-react"
+import { Trash2, ChevronDown, Pencil, Check, XCircle, RefreshCw, Scissors, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 import { CategoryManager } from "@/components/category-manager"
 import { type Category } from "@/components/category-manager-content"
@@ -97,6 +97,19 @@ export function MonthlySheetClient({
     ownerName,
 }: Props) {
     const [activeTab, setActiveTab] = useState<Tab>("Income")
+    // Whether an add-transaction/add-capital form is currently open on the active tab -
+    // used to warn before switching tabs and silently discarding it.
+    const [formOpen, setFormOpen] = useState(false)
+    const [pendingTab, setPendingTab] = useState<Tab | null>(null)
+
+    const requestTabChange = (tab: Tab) => {
+        if (tab === activeTab) return
+        if (formOpen) {
+            setPendingTab(tab)
+        } else {
+            setActiveTab(tab)
+        }
+    }
 
     const isActualCurrentMonth = month === serverCurrentMonth && year === serverCurrentYear
 
@@ -127,7 +140,7 @@ export function MonthlySheetClient({
                     {TABS.map(tab => (
                         <button
                             key={tab}
-                            onClick={() => setActiveTab(tab)}
+                            onClick={() => requestTabChange(tab)}
                             className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors
                                 ${activeTab === tab
                                     ? "bg-primary text-primary-foreground shadow-sm"
@@ -175,6 +188,7 @@ export function MonthlySheetClient({
                                         month={month}
                                         year={year}
                                         isShared={!!userId}
+                                        onOpenChange={setFormOpen}
                                     />
                                 )}
                                 <TransactionList
@@ -199,6 +213,7 @@ export function MonthlySheetClient({
                                         month={month}
                                         year={year}
                                         isShared={!!userId}
+                                        onOpenChange={setFormOpen}
                                     />
                                 )}
                                 <TransactionList
@@ -221,13 +236,29 @@ export function MonthlySheetClient({
                                 sheetId={sheet.id}
                                 readOnly={readOnly}
                                 isShared={!!userId}
+                                onFormOpenChange={setFormOpen}
                             />
                         )}
                     </div>
                 )}
 
                 {/* Mobile Tab Bar */}
-                <MobileTabBar activeTab={activeTab} onChange={setActiveTab} />
+                <MobileTabBar activeTab={activeTab} onChange={requestTabChange} />
+
+                <ConfirmDialog
+                    open={pendingTab !== null}
+                    title="Unsaved changes"
+                    message="You have a form open with unsaved input. Switch tabs anyway and discard it?"
+                    confirmLabel="Switch anyway"
+                    pendingLabel="Switching..."
+                    icon={AlertTriangle}
+                    onConfirm={() => {
+                        if (pendingTab) setActiveTab(pendingTab)
+                        setFormOpen(false)
+                        setPendingTab(null)
+                    }}
+                    onCancel={() => setPendingTab(null)}
+                />
             </div>
     )
 }
@@ -257,13 +288,14 @@ function MobileTabBar({ activeTab, onChange }: { activeTab: Tab; onChange: (t: T
 
 type FormMode = "normal" | "recurring" | "split"
 
-function AddTransactionForm({ type, sheetId, categories, month, year, isShared = false }: {
+function AddTransactionForm({ type, sheetId, categories, month, year, isShared = false, onOpenChange }: {
     type: "INCOME" | "EXPENSE"
     sheetId: string
     categories: Category[]
     month: number
     year: number
     isShared?: boolean
+    onOpenChange?: (open: boolean) => void
 }) {
     const [normalState, normalAction, normalPending] = useActionState(createTransaction, null)
     const [splitState, splitAction, splitPending] = useActionState(createSplitTransaction, null)
@@ -287,6 +319,10 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
             setErrorKey(k => k + 1)
         }
     }, [normalState, splitState])
+
+    useEffect(() => {
+        onOpenChange?.(isOpen)
+    }, [isOpen, onOpenChange])
 
     // Date limits locked to this sheet's month
     const minDate = `${year}-${String(month).padStart(2, "0")}-01`
@@ -767,13 +803,14 @@ function DeleteButton({ transaction }: { transaction: Transaction }) {
 }
 
 // Overview (actually just capital)
-function Overview({ capitals, capitalCategories, prevCapitals, sheetId, readOnly = false, isShared = false }: {
+function Overview({ capitals, capitalCategories, prevCapitals, sheetId, readOnly = false, isShared = false, onFormOpenChange }: {
     capitals: Capital[]
     capitalCategories: CapitalCategory[]
     prevCapitals?: Record<string, number>
     sheetId: string
     readOnly?: boolean
     isShared?: boolean
+    onFormOpenChange?: (open: boolean) => void
 }) {
 
     const totalCapital = capitals.reduce((sum, c) => sum + c.amount, 0)
@@ -787,6 +824,7 @@ function Overview({ capitals, capitalCategories, prevCapitals, sheetId, readOnly
                         capitalCategories={capitalCategories}
                         existingCategoryIds={capitals.map(c => c.capitalCategoryId)}
                         isShared={isShared}
+                        onOpenChange={onFormOpenChange}
                     />
                 )}
                 <CapitalList
@@ -802,11 +840,12 @@ function Overview({ capitals, capitalCategories, prevCapitals, sheetId, readOnly
 }
 
 
-function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isShared = false }: {
+function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isShared = false, onOpenChange }: {
     sheetId: string
     capitalCategories: CapitalCategory[]
     existingCategoryIds: string[]
     isShared?: boolean
+    onOpenChange?: (open: boolean) => void
 }) {
     const [state, formAction, isPending] = useActionState(createCapital, null)
     const [isOpen, setIsOpen] = useState(false)
@@ -824,6 +863,10 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
             setErrorKey(k => k + 1)
         }
     }, [state])
+
+    useEffect(() => {
+        onOpenChange?.(isOpen)
+    }, [isOpen, onOpenChange])
 
     const available = capitalCategories.filter(c => !existingCategoryIds.includes(c.id))
 
