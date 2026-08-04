@@ -320,6 +320,25 @@ export async function getDashboardData(userId: string, selectedMonth?: number, s
     }
     const totalCapital = capitals.reduce((sum, c) => sum + c.amount, 0)
 
+    // Daily activity for the selected month, used by the transactions heatmap.
+    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate()
+    const dailyActivity = Array.from({ length: daysInMonth }, (_, i) => ({
+        day: i + 1,
+        income: 0,
+        expenses: 0,
+        count: 0,
+    }))
+    if (currentSheet) {
+        for (const t of currentSheet.transactions) {
+            const day = new Date(t.date).getDate()
+            const entry = dailyActivity[day - 1]
+            if (!entry) continue
+            if (t.type === "INCOME") entry.income += t.amount
+            else entry.expenses += t.amount
+            entry.count += 1
+        }
+    }
+
     return {
         currentMonth,
         currentYear,
@@ -345,5 +364,6 @@ export async function getDashboardData(userId: string, selectedMonth?: number, s
         prevTotalCapital,
         capitalsAsOfMonth,
         capitalsAsOfYear,
+        dailyActivity,
     }
 }

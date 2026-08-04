@@ -47,6 +47,13 @@ type Capital = {
     amount: number
 }
 
+type DailyActivity = {
+    day: number
+    income: number
+    expenses: number
+    count: number
+}
+
 export type DashboardData = {
     currentMonth: number
     currentYear: number
@@ -65,6 +72,7 @@ export type DashboardData = {
     prevTotalCapital: number | null
     capitalsAsOfMonth: number | null
     capitalsAsOfYear: number | null
+    dailyActivity: DailyActivity[]
 }
 
 type SheetSummary = { month: number; year: number }
@@ -270,6 +278,52 @@ function CategoryBars({
     )
 }
 
+function DayHeatmap({ days, month, year }: { days: DailyActivity[]; month: number; year: number }) {
+    const maxAbs = Math.max(...days.map((d) => Math.abs(d.income - d.expenses)), 1)
+    // Monday-first offset for the 1st of the month
+    const firstWeekday = (new Date(year, month - 1, 1).getDay() + 6) % 7
+    const today = new Date()
+    const isCurrentMonth = today.getMonth() + 1 === month && today.getFullYear() === year
+
+    return (
+        <div>
+            <div className="grid grid-cols-7 gap-1.5 mb-1.5">
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+                    <span key={d} className="text-[10px] text-muted-foreground text-center">{d}</span>
+                ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1.5">
+                {Array.from({ length: firstWeekday }).map((_, i) => (
+                    <div key={`pad-${i}`} />
+                ))}
+                {days.map((d) => {
+                    const net = d.income - d.expenses
+                    const intensity = d.count === 0 ? 0 : 0.15 + Math.min(1, Math.abs(net) / maxAbs) * 0.75
+                    const bg = d.count === 0
+                        ? "rgba(120,120,120,0.08)"
+                        : net >= 0
+                            ? `rgba(34,197,94,${intensity})`
+                            : `rgba(239,68,68,${intensity})`
+                    const isToday = isCurrentMonth && d.day === today.getDate()
+                    const tooltip = d.count === 0
+                        ? `${d.day}: no transactions`
+                        : `${d.day}: +${fmt(d.income)} / -${fmt(d.expenses)} (${d.count} transaction${d.count !== 1 ? "s" : ""})`
+                    return (
+                        <div
+                            key={d.day}
+                            title={tooltip}
+                            className={`aspect-square rounded-lg flex items-center justify-center text-[10px] font-medium text-foreground transition-colors ${isToday ? "ring-2 ring-blue-500" : ""}`}
+                            style={{ backgroundColor: bg }}
+                        >
+                            {d.day}
+                        </div>
+                    )
+                })}
+            </div>
+        </div>
+    )
+}
+
 const defaultSettings = {
     showCapital: true,
     showTrend: true,
@@ -277,6 +331,7 @@ const defaultSettings = {
     showExpenses: true,
     showIncome: true,
     showRecent: true,
+    showHeatmap: true,
 }
 
 const WIDGET_LABELS: Record<keyof typeof defaultSettings, string> = {
@@ -286,6 +341,7 @@ const WIDGET_LABELS: Record<keyof typeof defaultSettings, string> = {
     showExpenses: "Expenses by Category",
     showIncome: "Income by Category",
     showRecent: "Recent Transactions",
+    showHeatmap: "Transactions Heatmap",
 }
 
 export function DashboardClient({
@@ -634,6 +690,20 @@ export function DashboardClient({
                             </div>
                             <div className="flex gap-4 mt-3">
                                 <Legend color="#6366F1" label="Net worth" />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Transactions Heatmap Widget */}
+                    {settings.showHeatmap && (
+                        <div className="rounded-xl border border-border bg-card p-4">
+                            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
+                                Transactions heatmap
+                            </p>
+                            <DayHeatmap days={data.dailyActivity} month={data.currentMonth} year={data.currentYear} />
+                            <div className="flex gap-4 mt-3">
+                                <Legend color="#22C55E" label="Net income day" />
+                                <Legend color="#EF4444" label="Net expense day" />
                             </div>
                         </div>
                     )}
