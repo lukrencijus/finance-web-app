@@ -320,6 +320,14 @@ export async function getDashboardData(userId: string, selectedMonth?: number, s
     }
     const totalCapital = capitals.reduce((sum, c) => sum + c.amount, 0)
 
+    // Expected vs actual capital: if last month's capital is known and this month's
+    // capital was actually entered (not a fallback from an earlier month), flag any
+    // gap between what the numbers say you should have and what you actually logged.
+    const expectedCapital = capitalsAsOfMonth === null && prevTotalCapital !== null
+        ? prevTotalCapital + currentIncome - currentExpenses
+        : null
+    const capitalDiscrepancy = expectedCapital !== null ? totalCapital - expectedCapital : null
+
     // Daily activity for the selected month, used by the transactions heatmap.
     const daysInMonth = new Date(currentYear, currentMonth, 0).getDate()
     const dailyActivity = Array.from({ length: daysInMonth }, (_, i) => ({
@@ -364,6 +372,8 @@ export async function getDashboardData(userId: string, selectedMonth?: number, s
         prevTotalCapital,
         capitalsAsOfMonth,
         capitalsAsOfYear,
+        expectedCapital,
+        capitalDiscrepancy,
         dailyActivity,
     }
 }

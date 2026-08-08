@@ -74,6 +74,8 @@ export type DashboardData = {
     prevTotalCapital: number | null
     capitalsAsOfMonth: number | null
     capitalsAsOfYear: number | null
+    expectedCapital: number | null
+    capitalDiscrepancy: number | null
     dailyActivity: DailyActivity[]
 }
 
@@ -687,6 +689,11 @@ export function DashboardClient({
                                             </div>
                                             <span className="text-sm font-semibold text-foreground shrink-0 tabular-nums">{fmt(data.totalCapital)}</span>
                                         </div>
+                                        {data.capitalDiscrepancy !== null && Math.abs(data.capitalDiscrepancy) >= 0.01 && (
+                                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                                                Based on last month plus this month&apos;s income/expenses, you were expected to have {fmt(data.expectedCapital!)} - that&apos;s {fmt(Math.abs(data.capitalDiscrepancy))} {data.capitalDiscrepancy > 0 ? "more" : "less"} than what you entered.
+                                            </p>
+                                        )}
                                     </div>
                                 </>
                             )}
