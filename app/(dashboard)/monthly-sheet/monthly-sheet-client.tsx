@@ -21,6 +21,7 @@ import { type CapitalCategory } from "@/components/capital-category-manager-cont
 import { MonthPicker } from "@/components/month-picker"
 import { formatCurrency } from "@/lib/utils"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { useHaptics } from "@/lib/use-haptics"
 
 type Capital = {
     id: string
@@ -188,6 +189,7 @@ export function MonthlySheetClient({
                                         month={month}
                                         year={year}
                                         isShared={!!userId}
+                                        isCurrentMonth={isActualCurrentMonth}
                                         onOpenChange={setFormOpen}
                                     />
                                 )}
@@ -213,6 +215,7 @@ export function MonthlySheetClient({
                                         month={month}
                                         year={year}
                                         isShared={!!userId}
+                                        isCurrentMonth={isActualCurrentMonth}
                                         onOpenChange={setFormOpen}
                                     />
                                 )}
@@ -288,13 +291,14 @@ function MobileTabBar({ activeTab, onChange }: { activeTab: Tab; onChange: (t: T
 
 type FormMode = "normal" | "recurring" | "split"
 
-function AddTransactionForm({ type, sheetId, categories, month, year, isShared = false, onOpenChange }: {
+function AddTransactionForm({ type, sheetId, categories, month, year, isShared = false, isCurrentMonth = true, onOpenChange }: {
     type: "INCOME" | "EXPENSE"
     sheetId: string
     categories: Category[]
     month: number
     year: number
     isShared?: boolean
+    isCurrentMonth?: boolean
     onOpenChange?: (open: boolean) => void
 }) {
     const [normalState, normalAction, normalPending] = useActionState(createTransaction, null)
@@ -309,16 +313,17 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
 
     const isPending = normalPending || splitPending
     const state = mode === "split" ? splitState : normalState
+    const { trigger } = useHaptics()
 
     useEffect(() => {
         // Close the form once the server action reports success.
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        if (normalState?.success || splitState?.success) setIsOpen(false)
+        if (normalState?.success || splitState?.success) { setIsOpen(false); trigger("success") }
         if (normalState?.error || splitState?.error) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setErrorKey(k => k + 1)
+            trigger("error")
         }
-    }, [normalState, splitState])
+    }, [normalState, splitState, trigger])
 
     useEffect(() => {
         onOpenChange?.(isOpen)
@@ -353,15 +358,21 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
             <input type="hidden" name="monthlySheetId" value={sheetId} />
 
             <div className={`grid gap-1.5 p-1 bg-muted rounded-xl ${type === "EXPENSE" ? "grid-cols-3" : "grid-cols-2"}`}>
-                {(["normal", "recurring", ...(type === "EXPENSE" ? ["split"] : [])] as FormMode[]).map(m => (
-                    <button key={m} type="button" onClick={() => setMode(m)}
-                        className={`flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors capitalize
-                            ${mode === m ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                        {m === "recurring" && <RefreshCw className="size-3" />}
-                        {m === "split" && <Scissors className="size-3" />}
-                        {m}
-                    </button>
-                ))}
+                {(["normal", "recurring", ...(type === "EXPENSE" ? ["split"] : [])] as FormMode[]).map(m => {
+                    const disabled = m === "recurring" && !isCurrentMonth
+                    return (
+                        <button key={m} type="button" onClick={() => !disabled && setMode(m)}
+                            disabled={disabled}
+                            title={disabled ? "Recurring can only be set up from the current month" : undefined}
+                            className={`flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors capitalize
+                                ${mode === m ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}
+                                ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}>
+                            {m === "recurring" && <RefreshCw className="size-3" />}
+                            {m === "split" && <Scissors className="size-3" />}
+                            {m}
+                        </button>
+                    )
+                })}
             </div>
 
             {/* Mode description hints */}
@@ -903,16 +914,17 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
     // values as defaultValue - React clears uncontrolled fields after any form
     // action call, even ones that return an error instead of succeeding.
     const [errorKey, setErrorKey] = useState(0)
+    const { trigger } = useHaptics()
 
     useEffect(() => {
         // Close the form once the server action reports success.
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        if (state?.success) setIsOpen(false)
+        if (state?.success) { setIsOpen(false); trigger("success") }
         if (state?.error) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
             setErrorKey(k => k + 1)
+            trigger("error")
         }
-    }, [state])
+    }, [state, trigger])
 
     useEffect(() => {
         onOpenChange?.(isOpen)

@@ -27,6 +27,7 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers"
+import { useHaptics } from "@/lib/use-haptics"
 
 export type CapitalCategory = {
     id: string
@@ -342,6 +343,7 @@ export function CapitalCategoryManagerContent({ categories }: { categories: Capi
     const [items, setItems] = useState(categories)
     const [addingNew, setAddingNew] = useState(false)
     const [, startTransition] = useTransition()
+    const { trigger } = useHaptics()
 
     useEffect(() => {
         setItems(categories)
@@ -352,6 +354,8 @@ export function CapitalCategoryManagerContent({ categories }: { categories: Capi
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event
         if (!over || active.id === over.id) return
+
+        trigger("nudge")
         const oldIndex = items.findIndex(c => c.id === active.id)
         const newIndex = items.findIndex(c => c.id === over.id)
         const reordered = arrayMove(items, oldIndex, newIndex)

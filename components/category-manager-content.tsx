@@ -27,6 +27,7 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers"
+import { useHaptics } from "@/lib/use-haptics"
 
 export type Category = {
     id: string
@@ -334,6 +335,7 @@ function CategorySection({ type, initialCategories }: {
     const [addingNew, setAddingNew] = useState(false)
     const [, startTransition] = useTransition()
     const router = useRouter()
+    const { trigger } = useHaptics()
 
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: { distance: 5 }, // prevents accidental drags on click
@@ -343,6 +345,7 @@ function CategorySection({ type, initialCategories }: {
         const { active, over } = event
         if (!over || active.id === over.id) return
 
+        trigger("nudge")
         const oldIndex = categories.findIndex(c => c.id === active.id)
         const newIndex = categories.findIndex(c => c.id === over.id)
         const reordered = arrayMove(categories, oldIndex, newIndex)
