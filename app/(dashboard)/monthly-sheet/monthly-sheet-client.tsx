@@ -13,6 +13,7 @@ import {
     deleteSplitGroup,
 } from "./actions"
 import { Trash2, ChevronDown, Pencil, Check, XCircle, RefreshCw, Scissors, AlertTriangle } from "lucide-react"
+import { Select as SelectPrimitive } from "radix-ui"
 import Link from "next/link"
 import { CategoryManager } from "@/components/category-manager"
 import { type Category } from "@/components/category-manager-content"
@@ -952,6 +953,52 @@ function Overview({ capitals, capitalCategories, prevCapitals, sheetId, readOnly
 }
 
 
+// Native <option> elements can't show a color swatch, so this is a Radix
+// Select instead - same visual language as the transaction category select's
+// emoji icons, but a color dot since capital categories don't have icons
+// (they have both an icon and a color, but the color is the more distinctive
+// visual per-category, matching the dot used on the Capital page rows).
+function CapitalCategorySelect({ categories, defaultValue, required }: {
+    categories: CapitalCategory[]
+    defaultValue?: string
+    required?: boolean
+}) {
+    return (
+        <SelectPrimitive.Root name="capitalCategoryId" required={required} defaultValue={defaultValue}>
+            <SelectPrimitive.Trigger
+                className="w-full flex items-center justify-between gap-2 border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring data-placeholder:text-muted-foreground">
+                <span className="flex items-center gap-2 truncate">
+                    <SelectPrimitive.Value placeholder="Select a category..." />
+                </span>
+                <SelectPrimitive.Icon>
+                    <ChevronDown className="size-3.5 text-muted-foreground shrink-0" />
+                </SelectPrimitive.Icon>
+            </SelectPrimitive.Trigger>
+            <SelectPrimitive.Portal>
+                <SelectPrimitive.Content
+                    position="popper"
+                    sideOffset={4}
+                    className="z-[110] overflow-hidden bg-card border border-border rounded-xl shadow-lg w-[var(--radix-select-trigger-width)]">
+                    <SelectPrimitive.Viewport className="p-1">
+                        {categories.map(c => (
+                            <SelectPrimitive.Item
+                                key={c.id}
+                                value={c.id}
+                                className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm text-foreground cursor-pointer select-none outline-none data-highlighted:bg-muted">
+                                <span
+                                    className="size-2.5 rounded-full shrink-0"
+                                    style={{ backgroundColor: c.color }}
+                                />
+                                <SelectPrimitive.ItemText>{c.name}</SelectPrimitive.ItemText>
+                            </SelectPrimitive.Item>
+                        ))}
+                    </SelectPrimitive.Viewport>
+                </SelectPrimitive.Content>
+            </SelectPrimitive.Portal>
+        </SelectPrimitive.Root>
+    )
+}
+
 function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isShared = false, onOpenChange }: {
     sheetId: string
     capitalCategories: CapitalCategory[]
@@ -1005,13 +1052,11 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
                     <label className="text-xs text-muted-foreground font-medium">Category</label>
                     {!isShared && <CapitalCategoryManager categories={capitalCategories} />}
                 </div>
-                <select name="capitalCategoryId" required defaultValue={state?.values?.capitalCategoryId ?? ""}
-                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                    <option value="">Select a category...</option>
-                    {available.map(c => (
-                        <option key={c.id} value={c.id} className="bg-background">{c.name}</option>
-                    ))}
-                </select>
+                <CapitalCategorySelect
+                    categories={available}
+                    defaultValue={state?.values?.capitalCategoryId || undefined}
+                    required
+                />
                 {available.length === 0 && (
                     <p className="text-xs mt-1 text-yellow-600 dark:text-yellow-400">
                         All categories already have an entry this month.
