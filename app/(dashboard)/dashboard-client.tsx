@@ -247,10 +247,12 @@ function CategoryBars({
     items,
     max,
     colors,
+    isIncome,
 }: {
     items: CategoryBreakdown[]
     max: number
     colors: string[]
+    isIncome: boolean
 }) {
     const [mounted, setMounted] = useState(false)
     useEffect(() => {
@@ -263,7 +265,7 @@ function CategoryBars({
             {items.map((cat, i) => (
                 <div key={cat.name} className="flex items-center gap-2">
                     <span className="text-xs text-gray-500 w-20 shrink-0 truncate">
-                        {cat.icon && <span className="mr-1">{cat.icon}</span>}{cat.name}
+                        <span className="mr-1">{cat.icon || (isIncome ? "↑" : "↓")}</span>{cat.name}
                     </span>
                     <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden">
                         <div
@@ -756,7 +758,7 @@ export function DashboardClient({
                             {data.categoryBreakdown.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">No expenses this month.</p>
                             ) : (
-                                <CategoryBars items={data.categoryBreakdown} max={maxExpenseCat} colors={CAT_COLORS} />
+                                <CategoryBars items={data.categoryBreakdown} max={maxExpenseCat} colors={CAT_COLORS} isIncome={false} />
                             )}
                         </div>
                     )}
@@ -769,7 +771,7 @@ export function DashboardClient({
                             {!data.incomeCategoryBreakdown || data.incomeCategoryBreakdown.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">No income entries this month.</p>
                             ) : (
-                                <CategoryBars items={data.incomeCategoryBreakdown} max={maxIncomeCat} colors={INCOME_COLORS} />
+                                <CategoryBars items={data.incomeCategoryBreakdown} max={maxIncomeCat} colors={INCOME_COLORS} isIncome={true} />
                             )}
                         </div>
                     )}
