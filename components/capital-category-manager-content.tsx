@@ -34,7 +34,10 @@ export type CapitalCategory = {
     name: string
     icon: string | null
     color: string
-    moneyType: "CASH" | "BANK" | null
+    // Prisma models this as a plain String? column (SQLite has no enum
+    // support), so the type coming off the DB is a bare string - narrow it
+    // to "CASH" | "BANK" | null at the point of use instead of here.
+    moneyType: string | null
     order: number | null
 }
 
@@ -208,7 +211,9 @@ function EditCategoryRow({ category, onDone }: { category: CapitalCategory; onDo
     const [error, setError] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
     const [color, setColor] = useState(category.color)
-    const [moneyType, setMoneyType] = useState<"CASH" | "BANK" | null>(category.moneyType)
+    const [moneyType, setMoneyType] = useState<"CASH" | "BANK" | null>(
+        category.moneyType === "CASH" ? "CASH" : category.moneyType === "BANK" ? "BANK" : null
+    )
     const nameRef = useRef<HTMLInputElement>(null)
     const router = useRouter()
 
