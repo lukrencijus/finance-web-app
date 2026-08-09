@@ -462,7 +462,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                     className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
                     <option value="">Select a category...</option>
                     {categories.map(c => (
-                        <option key={c.id} value={c.id} className="bg-background">{c.icon} {c.name}</option>
+                        <option key={c.id} value={c.id} className="bg-background">{c.icon || (type === "INCOME" ? "↑" : "↓")} {c.name}</option>
                     ))}
                 </select>
             </div>
@@ -805,7 +805,7 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
                 <select name="categoryId" defaultValue={t.categoryId} required
                     className="w-full border border-input bg-background text-foreground rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
                     {categories.map(c => (
-                        <option key={c.id} value={c.id} className="bg-background">{c.icon} {c.name}</option>
+                        <option key={c.id} value={c.id} className="bg-background">{c.icon || (t.type === "INCOME" ? "↑" : "↓")} {c.name}</option>
                     ))}
                 </select>
             </div>

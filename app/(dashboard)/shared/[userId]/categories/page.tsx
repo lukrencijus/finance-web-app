@@ -30,7 +30,7 @@ export default async function SharedCategoriesPage({
                     <ul className="divide-y divide-border border border-border rounded-xl overflow-hidden">
                         {income.map(c => (
                             <li key={c.id} className="flex items-center gap-3 px-4 py-3 bg-card">
-                                <span>{c.icon}</span>
+                                <span>{c.icon || "↑"}</span>
                                 <span className="text-sm font-medium text-foreground">{c.name}</span>
                             </li>
                         ))}
@@ -46,7 +46,7 @@ export default async function SharedCategoriesPage({
                     <ul className="divide-y divide-border border border-border rounded-xl overflow-hidden">
                         {expense.map(c => (
                             <li key={c.id} className="flex items-center gap-3 px-4 py-3 bg-card">
-                                <span>{c.icon}</span>
+                                <span>{c.icon || "↓"}</span>
                                 <span className="text-sm font-medium text-foreground">{c.name}</span>
                             </li>
                         ))}
