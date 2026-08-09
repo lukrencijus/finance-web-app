@@ -155,10 +155,6 @@ Things on the roadmap, roughly in order of how settled the idea is:
   they show up alongside cash/bank capital instead of being tracked
   manually.
 - **Coinbase integration** - same idea, for crypto holdings.
-- Other ideas floated but not committed to yet: a proper PWA manifest and
-  web push notifications (as a native alternative to the current ntfy.sh
-  setup), and receipt scanning/OCR to auto-fill transaction amounts from a
-  photo.
 
 ## Development notes
 

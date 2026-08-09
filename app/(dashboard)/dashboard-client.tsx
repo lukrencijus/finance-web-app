@@ -292,10 +292,10 @@ const defaultSettings = {
     showCapital: true,
     showTrend: true,
     showNetWorth: true,
+    showHeatmap: true,
     showExpenses: true,
     showIncome: true,
     showRecent: true,
-    showHeatmap: true,
 }
 
 const WIDGET_LABELS: Record<keyof typeof defaultSettings, string> = {
