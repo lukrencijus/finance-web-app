@@ -54,14 +54,16 @@ async function checkAndNotify(userId: string, email: string, topic: string) {
 
     // Published as JSON (not the topic-in-URL + header form) because HTTP header
     // values must be Latin-1 - a literal emoji in a header throws at runtime.
-    // The JSON body has no such restriction.
+    // ntfy also only renders tags as emoji when they're a gemoji shortcode
+    // (e.g. "money_mouth_face") - a literal emoji character in the tag isn't
+    // recognized and shows as plain text instead.
     const res = await fetch("https://ntfy.sh", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             topic,
             title: "Money tracker reminder",
-            tags: ["🤑"],
+            tags: ["money_mouth_face"],
             message: reasons.join("\n"),
         }),
     })
