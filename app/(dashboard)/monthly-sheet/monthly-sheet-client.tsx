@@ -409,9 +409,9 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                 {mode === "split" && (
                     <div className="col-span-2 sm:col-span-1">
                         <label className="text-xs text-muted-foreground mb-1 block font-medium">Months</label>
-                        <input name="splitMonths" type="number" min="1" max="24" value={splitMonths}
+                        <input name="splitMonths" type="number" min="2" max="24" value={splitMonths}
                             onChange={e => setSplitMonths(e.target.value === "" ? "" : parseInt(e.target.value) || "")}
-                            onBlur={() => setSplitMonths(v => v === "" ? 3 : Math.min(24, Math.max(1, v)))}
+                            onBlur={() => setSplitMonths(v => v === "" ? 3 : Math.min(24, Math.max(2, v)))}
                             className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                     </div>
                 )}
