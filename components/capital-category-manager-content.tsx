@@ -392,6 +392,9 @@ export function CapitalCategoryManagerContent({ categories }: { categories: Capi
     const { trigger } = useHaptics()
 
     useEffect(() => {
+        // Keep the locally-reorderable copy in sync whenever the server-fetched
+        // categories prop changes (e.g. after router.refresh()).
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setItems(categories)
     }, [categories])
 
