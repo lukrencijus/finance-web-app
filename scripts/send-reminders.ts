@@ -14,7 +14,7 @@
  */
 import { prisma } from "@/lib/prisma"
 
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+const INACTIVITY_THRESHOLD_MS = 5 * 24 * 60 * 60 * 1000
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"]
 
 async function checkAndNotify(userId: string, email: string, topic: string) {
@@ -27,15 +27,15 @@ async function checkAndNotify(userId: string, email: string, topic: string) {
 
     const reasons: string[] = []
 
-    // Criterion A: no transaction logged in the current month's sheet for 7+ days
+    // Criterion A: no transaction logged in the current month's sheet for 5+ days
     // (or the sheet doesn't exist / has no transactions at all yet).
     const currentSheet = await prisma.monthlySheet.findUnique({
         where: { month_year_userId: { month: currentMonth, year: currentYear, userId } },
         include: { transactions: { orderBy: { createdAt: "desc" }, take: 1 } },
     })
     const lastEntry = currentSheet?.transactions[0]?.createdAt ?? null
-    if (!lastEntry || now.getTime() - lastEntry.getTime() >= WEEK_MS) {
-        reasons.push("No transactions logged in the last 7 days.")
+    if (!lastEntry || now.getTime() - lastEntry.getTime() >= INACTIVITY_THRESHOLD_MS) {
+        reasons.push("No transactions logged in the last 5 days.")
     }
 
     // Criterion B: previous month's sheet has no capital entries yet.
