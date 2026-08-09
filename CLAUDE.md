@@ -8,7 +8,7 @@ Personal finance tracker. University coursework — `doc/Galutinis_Planas.md` is
 npm run dev              # dev server on :3000
 npm run build            # full typecheck + build; the real verification step
 npm run lint
-npx prisma migrate dev   # create/migrate dev.db, then regenerate the client
+npx prisma migrate dev && npx prisma generate   # create/migrate dev.db, then regenerate the client
 ```
 
 ## Stack
@@ -18,7 +18,8 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · NextAuth v5 
 ## Gotchas
 
 - **`proxy.ts` is the middleware.** Next.js 16 renamed `middleware.ts`. There is no `middleware.ts`; don't create one.
-- **The Prisma client generates to `app/generated/prisma/`, not `node_modules`.** That path is gitignored, so a fresh clone must run `npx prisma migrate dev` (or `prisma generate`) before anything typechecks. Import from `@/app/generated/prisma/client`, and only via the singleton in `lib/prisma.ts`.
+- **The Prisma client generates to `app/generated/prisma/`, not `node_modules`.** That path is gitignored, so a fresh clone must run `npx prisma generate` before anything typechecks. Import from `@/app/generated/prisma/client`, and only via the singleton in `lib/prisma.ts`.
+- **Prisma 7: `migrate dev` no longer auto-runs `generate`.** (This changed from Prisma 6 and earlier, where it did.) After any `schema.prisma` change, run `npx prisma migrate dev` *then* `npx prisma generate` — skipping the second step leaves the generated client stale and every field/model touched by the change fails to typecheck with "does not exist on type" errors, even though the migration itself applied fine.
 - **Never commit `dev.db`.** It is gitignored and rebuilt from migrations.
 - **No API layer.** The only route handler is NextAuth's catch-all. All mutations are server actions.
 
