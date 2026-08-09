@@ -58,14 +58,16 @@ type SharingData = {
 
 type Props = {
     initialName: string
+    initialNtfyTopic: string
     email: string
     hasPassword: boolean
     isAdmin: boolean
     sharing: SharingData
 }
 
-export default function SettingsClient({ initialName, email, hasPassword, isAdmin, sharing }: Props) {
+export default function SettingsClient({ initialName, initialNtfyTopic, email, hasPassword, isAdmin, sharing }: Props) {
     const [name, setName] = useState(initialName)
+    const [ntfyTopic, setNtfyTopic] = useState(initialNtfyTopic)
     const [profileMsg, setProfileMsg] = useState<string | null>(null)
     const [passwordMsg, setPasswordMsg] = useState<string | null>(null)
     const [deleteConfirm, setDeleteConfirm] = useState(false)
@@ -104,7 +106,7 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
         if ("error" in result && result.error) {
             setProfileMsg(result.error)
         } else {
-            setProfileMsg("Name updated successfully.")
+            setProfileMsg("Profile updated successfully.")
         }
     }
 
@@ -270,6 +272,20 @@ export default function SettingsClient({ initialName, email, hasPassword, isAdmi
                             required
                             className="w-full border border-input rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
                         />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium">Reminder notifications</label>
+                        <input
+                            name="ntfyTopic"
+                            value={ntfyTopic}
+                            onChange={(e) => setNtfyTopic(e.target.value)}
+                            placeholder="e.g. lukas-money-x7k2p"
+                            className="w-full border border-input rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:ring-2 focus:ring-ring focus:outline-none"
+                        />
+                        <p className="text-[11px] text-muted-foreground">
+                            Get the <a href="https://ntfy.sh/" target="_blank" rel="noreferrer" className="underline hover:text-foreground">ntfy</a> app,
+                            subscribe to a topic name of your choice, and paste it here to get money-tracker reminders on your phone. Leave empty to opt out.
+                        </p>
                     </div>
                     {profileMsg && (
                         <p className={`text-sm font-medium ${profileMsg.includes("successfully") ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>

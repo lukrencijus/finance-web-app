@@ -72,6 +72,14 @@ export const registerSchema = z.object({
   path: ["confirmPassword"],
 })
 
+// ntfy.sh topic names: letters, numbers, underscore, dash - same charset ntfy
+// itself expects in a URL path segment.
+const ntfyTopicSchema = z.string()
+  .trim()
+  .max(64, "Topic is too long")
+  .regex(/^[a-zA-Z0-9_-]*$/, "Only letters, numbers, - and _ are allowed")
+
 export const updateProfileSchema = z.object({
   name: personNameSchema,
+  ntfyTopic: ntfyTopicSchema.optional(),
 })

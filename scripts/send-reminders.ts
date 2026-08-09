@@ -4,12 +4,9 @@
  * (e.g. weekly via cron) on the server the app is deployed on - it is not
  * wired into the Next.js app itself, no route handler needed.
  *
- * Supports multiple people, each checked against their own account and
- * notified on their own ntfy topic only.
- *
- * Env var required (add to .env):
- *   REMINDER_RECIPIENTS - comma-separated "email:ntfyTopic" pairs, e.g.
- *     REMINDER_RECIPIENTS=lukas@example.com:lukas-money-x7k2p,girlfriend@example.com:gf-money-q9d3f
+ * Recipients are self-service: each user sets their own ntfy topic on the
+ * Settings page (User.ntfyTopic). Every ACTIVE user with a topic set gets
+ * checked against their own account and notified on their own topic only.
  *
  * Run manually with: npm run reminders
  * Example crontab entry (Mondays at 9am server time):
@@ -20,25 +17,7 @@ import { prisma } from "@/lib/prisma"
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"]
 
-type Recipient = { email: string; topic: string }
-
-function parseRecipients(raw: string): Recipient[] {
-    return raw.split(",").map(entry => entry.trim()).filter(Boolean).map(entry => {
-        const idx = entry.indexOf(":")
-        if (idx === -1) {
-            throw new Error(`Malformed REMINDER_RECIPIENTS entry (expected "email:topic"): "${entry}"`)
-        }
-        return { email: entry.slice(0, idx).trim(), topic: entry.slice(idx + 1).trim() }
-    })
-}
-
-async function checkAndNotify({ email, topic }: Recipient) {
-    const user = await prisma.user.findUnique({ where: { email } })
-    if (!user) {
-        console.error(`No user found for email=${email} - skipping.`)
-        return
-    }
-
+async function checkAndNotify(userId: string, email: string, topic: string) {
     const now = new Date()
     const currentMonth = now.getMonth() + 1
     const currentYear = now.getFullYear()
@@ -51,7 +30,7 @@ async function checkAndNotify({ email, topic }: Recipient) {
     // Criterion A: no transaction logged in the current month's sheet for 7+ days
     // (or the sheet doesn't exist / has no transactions at all yet).
     const currentSheet = await prisma.monthlySheet.findUnique({
-        where: { month_year_userId: { month: currentMonth, year: currentYear, userId: user.id } },
+        where: { month_year_userId: { month: currentMonth, year: currentYear, userId } },
         include: { transactions: { orderBy: { createdAt: "desc" }, take: 1 } },
     })
     const lastEntry = currentSheet?.transactions[0]?.createdAt ?? null
@@ -61,7 +40,7 @@ async function checkAndNotify({ email, topic }: Recipient) {
 
     // Criterion B: previous month's sheet has no capital entries yet.
     const prevSheet = await prisma.monthlySheet.findUnique({
-        where: { month_year_userId: { month: prevMonth, year: prevYear, userId: user.id } },
+        where: { month_year_userId: { month: prevMonth, year: prevYear, userId } },
         include: { capitals: { take: 1 } },
     })
     if (!prevSheet || prevSheet.capitals.length === 0) {
@@ -90,15 +69,19 @@ async function checkAndNotify({ email, topic }: Recipient) {
 }
 
 async function main() {
-    const raw = process.env.REMINDER_RECIPIENTS
-    if (!raw) {
-        console.error("REMINDER_RECIPIENTS is not set - see scripts/send-reminders.ts for setup.")
-        process.exit(1)
+    const recipients = await prisma.user.findMany({
+        where: { status: "ACTIVE", ntfyTopic: { not: null } },
+        select: { id: true, email: true, ntfyTopic: true },
+    })
+
+    if (recipients.length === 0) {
+        console.log("No users have a reminder topic set (Settings > Reminder notifications).")
+        return
     }
 
-    const recipients = parseRecipients(raw)
-    for (const recipient of recipients) {
-        await checkAndNotify(recipient)
+    for (const { id, email, ntfyTopic } of recipients) {
+        if (!ntfyTopic) continue // narrows the type; filtered out by the query already
+        await checkAndNotify(id, email, ntfyTopic)
     }
 }
 

@@ -9,19 +9,20 @@ import { updateProfileSchema } from "@/lib/validations"
 export async function updateProfile(formData: FormData) {
     const user = await getCurrentDbUser()
     const rawName = String(formData.get("name") ?? "").trim()
+    const rawNtfyTopic = String(formData.get("ntfyTopic") ?? "").trim()
 
-    const parsed = updateProfileSchema.safeParse({ name: rawName })
+    const parsed = updateProfileSchema.safeParse({ name: rawName, ntfyTopic: rawNtfyTopic })
     if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-    const name = parsed.data.name
+    const { name, ntfyTopic } = parsed.data
 
     await prisma.user.update({
         where: { id: user.id },
-        data: { name },
+        data: { name, ntfyTopic: ntfyTopic || null },
     })
 
     revalidatePath("/settings")
-    return { success: true, name }
+    return { success: true, name, ntfyTopic: ntfyTopic || null }
 }
 
 export async function changePassword(formData: FormData) {

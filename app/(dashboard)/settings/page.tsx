@@ -9,6 +9,7 @@ export default async function SettingsPage() {
     return (
         <SettingsClient
             initialName={user.name ?? ""}
+            initialNtfyTopic={user.ntfyTopic ?? ""}
             email={user.email}
             hasPassword={!!user.password}
             isAdmin={user.role === "ADMIN"}
