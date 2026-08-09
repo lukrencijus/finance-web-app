@@ -306,8 +306,11 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
     const [splitState, splitAction, splitPending] = useActionState(createSplitTransaction, null)
     const [isOpen, setIsOpen] = useState(false)
     const [mode, setMode] = useState<FormMode>("normal")
-    const [splitMonths, setSplitMonths] = useState(3)
-    const [recurringInterval, setRecurringInterval] = useState(1)
+    // "" is a valid transient state while the user is clearing the field to
+    // type a new number - only clamped back to a real value on blur, so
+    // deleting the digit doesn't immediately snap back to the old value.
+    const [splitMonths, setSplitMonths] = useState<number | "">(3)
+    const [recurringInterval, setRecurringInterval] = useState<number | "">(1)
     // Bumped on every failed submit so the form below can be remounted with the
     // returned values as defaultValue - React clears uncontrolled fields after
     // any form action call, even ones that return an error instead of succeeding.
@@ -407,7 +410,8 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                     <div className="col-span-2 sm:col-span-1">
                         <label className="text-xs text-muted-foreground mb-1 block font-medium">Months</label>
                         <input name="splitMonths" type="number" min="1" max="24" value={splitMonths}
-                            onChange={e => setSplitMonths(parseInt(e.target.value) || 1)}
+                            onChange={e => setSplitMonths(e.target.value === "" ? "" : parseInt(e.target.value) || "")}
+                            onBlur={() => setSplitMonths(v => v === "" ? 3 : Math.min(24, Math.max(1, v)))}
                             className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                     </div>
                 )}
@@ -415,7 +419,8 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                     <div className="col-span-2 sm:col-span-1">
                         <label className="text-xs text-muted-foreground mb-1 block font-medium">Repeat every (months)</label>
                         <input name="recurringIntervalMonths" type="number" min="1" max="24" value={recurringInterval}
-                            onChange={e => setRecurringInterval(parseInt(e.target.value) || 1)}
+                            onChange={e => setRecurringInterval(e.target.value === "" ? "" : parseInt(e.target.value) || "")}
+                            onBlur={() => setRecurringInterval(v => v === "" ? 1 : Math.min(24, Math.max(1, v)))}
                             className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                     </div>
                 )}
