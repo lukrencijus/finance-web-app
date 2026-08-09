@@ -40,6 +40,7 @@ type Transaction = {
     category: { name: string; icon: string | null }
     categoryId: string
     isRecurring: boolean
+    recurringIntervalMonths: number | null
     splitMonths: number | null
     splitIndex: number | null
     splitGroupId: string | null
@@ -306,6 +307,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
     const [isOpen, setIsOpen] = useState(false)
     const [mode, setMode] = useState<FormMode>("normal")
     const [splitMonths, setSplitMonths] = useState(3)
+    const [recurringInterval, setRecurringInterval] = useState(1)
     // Bumped on every failed submit so the form below can be remounted with the
     // returned values as defaultValue - React clears uncontrolled fields after
     // any form action call, even ones that return an error instead of succeeding.
@@ -378,7 +380,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
             {/* Mode description hints */}
             {mode === "recurring" && (
                 <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-1.5">
-                    🔄 This transaction will auto-repeat every month.
+                    🔄 This transaction will auto-repeat every {recurringInterval === 1 ? "month" : `${recurringInterval} months`}.
                 </p>
             )}
             {mode === "split" && (
@@ -387,7 +389,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                 </p>
             )}
 
-            <div className={`grid gap-3 ${mode === "split" ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}>
+            <div className={`grid gap-3 ${mode === "split" || mode === "recurring" ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}>
                 <div>
                     <label className="text-xs text-muted-foreground mb-1 block font-medium">
                         {mode === "split" ? "Total Amount (€)" : "Amount (€)"}
@@ -406,6 +408,14 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                         <label className="text-xs text-muted-foreground mb-1 block font-medium">Months</label>
                         <input name="splitMonths" type="number" min="1" max="24" value={splitMonths}
                             onChange={e => setSplitMonths(parseInt(e.target.value) || 1)}
+                            className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    </div>
+                )}
+                {mode === "recurring" && (
+                    <div className="col-span-2 sm:col-span-1">
+                        <label className="text-xs text-muted-foreground mb-1 block font-medium">Repeat every (months)</label>
+                        <input name="recurringIntervalMonths" type="number" min="1" max="24" value={recurringInterval}
+                            onChange={e => setRecurringInterval(parseInt(e.target.value) || 1)}
                             className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                     </div>
                 )}
@@ -630,7 +640,10 @@ function TransactionRow({
                             </p>
                             {t.isRecurring && (
                                 <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                                    <RefreshCw className="size-2.5" /> recurring
+                                    <RefreshCw className="size-2.5" />
+                                    {t.recurringIntervalMonths && t.recurringIntervalMonths > 1
+                                        ? `every ${t.recurringIntervalMonths}mo`
+                                        : "recurring"}
                                 </span>
                             )}
                             {isSplit && t.splitIndex && t.splitMonths && (

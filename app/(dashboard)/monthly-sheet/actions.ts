@@ -75,6 +75,15 @@ export async function createTransaction(prevState: any, formData: FormData) {
 
     const isRecurring = formData.get("isRecurring") === "true"
 
+    // Only meaningful when isRecurring - "repeat every N months". Clamped to
+    // 1-24, same range as splitMonths. Anything unparseable falls back to 1
+    // (monthly), matching the pre-interval behavior.
+    let recurringIntervalMonths: number | null = null
+    if (isRecurring) {
+        const n = parseInt(String(formData.get("recurringIntervalMonths") ?? "1"))
+        recurringIntervalMonths = Number.isFinite(n) && n >= 1 && n <= 24 ? n : 1
+    }
+
     // make sure the sheet belongs to this user
     const sheet = await prisma.monthlySheet.findUnique({
         where: { id: monthlySheetId },
@@ -109,6 +118,7 @@ export async function createTransaction(prevState: any, formData: FormData) {
                 categoryId,
                 monthlySheetId,
                 isRecurring,
+                recurringIntervalMonths,
             },
         })
         revalidatePath("/monthly-sheet")

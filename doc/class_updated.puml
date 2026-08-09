@@ -12,6 +12,7 @@ class User {
   +status: StatusType
   +name: string
   +image: string
+  +ntfyTopic: string
   +createdAt: DateTime
   +login(): boolean
   +register(): void
@@ -42,6 +43,7 @@ class Transaction {
   +description: string
   +date: DateTime
   +isRecurring: boolean
+  +recurringIntervalMonths: int
   +splitMonths: int
   +splitIndex: int
   +splitGroupId: string

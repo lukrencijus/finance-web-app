@@ -9,6 +9,7 @@ entity "User" as user {
   password : TEXT
   role : TEXT (ADMIN, USER)
   status : TEXT (PENDING, ACTIVE)
+  ntfyTopic : TEXT
   name, image, createdAt
 }
  
@@ -66,6 +67,7 @@ entity "Transaction" as trans {
   description : TEXT
   date : DATETIME
   isRecurring : BOOLEAN
+  recurringIntervalMonths : INT
   splitMonths : INT
   splitIndex : INT
   splitGroupId : TEXT

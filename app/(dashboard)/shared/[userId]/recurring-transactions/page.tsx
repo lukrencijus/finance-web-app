@@ -123,7 +123,7 @@ export default async function SharedRecurringTransactionsPage({ params }: Props)
 function Section({ title, type, transactions }: {
     title: string
     type: "INCOME" | "EXPENSE"
-    transactions: { id: string; amount: number; description: string | null; type: string; category: { name: string; icon: string | null }; monthlySheet: { month: number; year: number } }[]
+    transactions: { id: string; amount: number; description: string | null; type: string; recurringIntervalMonths: number | null; category: { name: string; icon: string | null }; monthlySheet: { month: number; year: number } }[]
 }) {
     const badgeClass = type === "INCOME"
         ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20"
@@ -152,6 +152,9 @@ function Section({ title, type, transactions }: {
                             )}
                             <p className="text-xs text-muted-foreground/60 mt-0.5">
                                 Since {MONTH_NAMES[t.monthlySheet.month - 1]} {t.monthlySheet.year}
+                                {t.recurringIntervalMonths && t.recurringIntervalMonths > 1
+                                    ? ` · every ${t.recurringIntervalMonths} months`
+                                    : ""}
                             </p>
                         </div>
                         <span className={`font-semibold text-sm shrink-0 ${

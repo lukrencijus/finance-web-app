@@ -17,6 +17,7 @@ type RecurringTransaction = {
     amount: number
     description: string | null
     type: string
+    recurringIntervalMonths: number | null
     category: { name: string; icon: string | null }
     monthlySheet: { month: number; year: number }
 }
@@ -117,6 +118,9 @@ function RecurringRow({ transaction: t }: { transaction: RecurringTransaction })
                 )}
                 <p className="text-xs text-muted-foreground/60 mt-0.5">
                     Since {MONTH_NAMES[t.monthlySheet.month - 1]} {t.monthlySheet.year}
+                    {t.recurringIntervalMonths && t.recurringIntervalMonths > 1
+                        ? ` · every ${t.recurringIntervalMonths} months`
+                        : ""}
                 </p>
             </div>
             <span className={`font-semibold text-sm shrink-0 ${

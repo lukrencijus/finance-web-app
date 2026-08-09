@@ -108,6 +108,7 @@ model Transaction {
   monthlySheet   MonthlySheet @relation(fields: [monthlySheetId], references: [id], onDelete: Cascade)
 
   isRecurring    Boolean      @default(false)
+  recurringIntervalMonths Int? // months between repeats when isRecurring; null/1 = every month
 
   splitMonths    Int?         // total parts (null = not a split)
   splitIndex     Int?         // which part

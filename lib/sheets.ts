@@ -1,5 +1,62 @@
 import { prisma } from "@/lib/prisma"
 
+/** How far back we look for a recurring series' last occurrence. Matches the
+ *  split feature's 1-24 month range, so even a yearly-interval series is
+ *  always found within the window. */
+const RECURRING_LOOKBACK_MONTHS = 24
+
+type RecurringSourceTx = {
+    id: string
+    amount: number
+    description: string | null
+    type: string
+    categoryId: string
+    date: Date
+    recurringIntervalMonths: number | null
+    month: number
+    year: number
+}
+
+/**
+ * Given every recurring transaction found in the lookback window, decides
+ * which series are actually due in the target month.
+ *
+ * A "series" is identified by category+amount+description+type (same
+ * signature used by the shared recurring-transactions page). Only the most
+ * recent occurrence of each series matters - interval is measured from there,
+ * not from the original start. If a series' cadence was skipped over a gap
+ * (e.g. a quarterly bill during a month with no sheet at all), it simply
+ * waits for the next month that lines up with its interval rather than
+ * "catching up" - same trade-off the previous monthly-only logic made.
+ */
+export function selectDueRecurringTransactions(
+    pastTransactions: RecurringSourceTx[],
+    targetMonth: number,
+    targetYear: number
+): RecurringSourceTx[] {
+    const latestBySignature = new Map<string, RecurringSourceTx>()
+    for (const t of pastTransactions) {
+        const key = `${t.categoryId}|${t.amount}|${t.description ?? ""}|${t.type}`
+        const existing = latestBySignature.get(key)
+        const rank = t.year * 12 + t.month
+        if (!existing || rank > existing.year * 12 + existing.month) {
+            latestBySignature.set(key, t)
+        }
+    }
+
+    const targetRank = targetYear * 12 + targetMonth
+    const due: RecurringSourceTx[] = []
+    for (const t of latestBySignature.values()) {
+        const interval = t.recurringIntervalMonths ?? 1
+        const occRank = t.year * 12 + t.month
+        const monthsElapsed = targetRank - occRank
+        if (monthsElapsed > 0 && monthsElapsed % interval === 0) {
+            due.push(t)
+        }
+    }
+    return due
+}
+
 export async function getCurrentMonthSheet(userId: string, month: number, year: number) {
     // receives month/year from caller
     let sheet = await prisma.monthlySheet.findUnique({
@@ -38,35 +95,52 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
             },
         })
 
-        // Auto-insert recurring transactions from the most recent past month that has any
-        // We walk back up to 12 months so recurring transactions survive skipped months
+        // Auto-insert recurring transactions that are due this month. Looks back
+        // up to RECURRING_LOOKBACK_MONTHS so each series survives skipped months,
+        // and evaluates each series against its own interval independently -
+        // see selectDueRecurringTransactions.
+        const lookbackMonths: { month: number; year: number }[] = []
         let searchMonth = month
         let searchYear = year
-        let prevSheet = null
-
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < RECURRING_LOOKBACK_MONTHS; i++) {
             searchMonth = searchMonth === 1 ? 12 : searchMonth - 1
             searchYear = searchMonth === 12 ? searchYear - 1 : searchYear
-
-            prevSheet = await prisma.monthlySheet.findUnique({
-                where: { month_year_userId: { month: searchMonth, year: searchYear, userId } },
-                include: {
-                    transactions: {
-                        where: { isRecurring: true },
-                        include: { category: true },
-                    },
-                },
-            })
-
-            if (prevSheet && prevSheet.transactions.length > 0) break
+            lookbackMonths.push({ month: searchMonth, year: searchYear })
         }
 
-        if (prevSheet && prevSheet.transactions.length > 0) {
+        const pastRecurring = await prisma.transaction.findMany({
+            where: {
+                isRecurring: true,
+                monthlySheet: {
+                    userId,
+                    OR: lookbackMonths.map(({ month, year }) => ({ month, year })),
+                },
+            },
+            include: { monthlySheet: { select: { month: true, year: true } } },
+        })
+
+        const dueTransactions = selectDueRecurringTransactions(
+            pastRecurring.map((t) => ({
+                id: t.id,
+                amount: t.amount,
+                description: t.description,
+                type: t.type,
+                categoryId: t.categoryId,
+                date: t.date,
+                recurringIntervalMonths: t.recurringIntervalMonths,
+                month: t.monthlySheet.month,
+                year: t.monthlySheet.year,
+            })),
+            month,
+            year
+        )
+
+        if (dueTransactions.length > 0) {
             // Clamp day to last day of new month (e.g. Feb 28/29)
             const lastDayOfMonth = new Date(year, month, 0).getDate()
 
             await prisma.transaction.createMany({
-                data: prevSheet.transactions.map((t) => {
+                data: dueTransactions.map((t) => {
                     const originalDay = new Date(t.date).getDate()
                     const day = Math.min(originalDay, lastDayOfMonth)
                     return {
@@ -77,6 +151,7 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
                         categoryId: t.categoryId,
                         monthlySheetId: sheet!.id,
                         isRecurring: true,
+                        recurringIntervalMonths: t.recurringIntervalMonths,
                         // Do not copy splitGroupId/splitIndex - recurring copies are fresh
                     }
                 }),
