@@ -52,13 +52,18 @@ async function checkAndNotify(userId: string, email: string, topic: string) {
         return
     }
 
-    const res = await fetch(`https://ntfy.sh/${topic}`, {
+    // Published as JSON (not the topic-in-URL + header form) because HTTP header
+    // values must be Latin-1 - a literal emoji in a header throws at runtime.
+    // The JSON body has no such restriction.
+    const res = await fetch("https://ntfy.sh", {
         method: "POST",
-        headers: {
-            Title: "Money tracker reminder",
-            Tags: "money_with_wings",
-        },
-        body: reasons.join("\n"),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            topic,
+            title: "Money tracker reminder",
+            tags: ["🤑"],
+            message: reasons.join("\n"),
+        }),
     })
 
     if (!res.ok) {
