@@ -110,6 +110,8 @@ model Transaction {
   isRecurring    Boolean      @default(false)
   recurringIntervalMonths Int? // months between repeats when isRecurring; null/1 = every month
 
+  paymentMethod  String       @default("BANK") // CASH or BANK - drives the cash/bank expected-vs-actual breakdown
+
   splitMonths    Int?         // total parts (null = not a split)
   splitIndex     Int?         // which part
   splitGroupId   String?      // links all parts of one split together
@@ -130,6 +132,7 @@ model CapitalCategory {
   name      String
   icon      String?
   color     String    @default("#64748B")
+  moneyType String?   // CASH or BANK - which cash/bank bucket this category counts toward, if any
   order     Int?      @default(0)
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)

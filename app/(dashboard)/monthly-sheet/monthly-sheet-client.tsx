@@ -41,6 +41,7 @@ type Transaction = {
     categoryId: string
     isRecurring: boolean
     recurringIntervalMonths: number | null
+    paymentMethod: string
     splitMonths: number | null
     splitIndex: number | null
     splitGroupId: string | null
@@ -292,6 +293,20 @@ function MobileTabBar({ activeTab, onChange }: { activeTab: Tab; onChange: (t: T
 
 type FormMode = "normal" | "recurring" | "split"
 
+function PaymentMethodToggle({ value, onChange }: { value: "CASH" | "BANK"; onChange: (v: "CASH" | "BANK") => void }) {
+    return (
+        <div className="grid grid-cols-2 gap-1.5 p-1 bg-muted rounded-xl">
+            {(["BANK", "CASH"] as const).map(m => (
+                <button key={m} type="button" onClick={() => onChange(m)}
+                    className={`px-2.5 py-1.5 rounded-xl text-xs font-medium transition-colors
+                        ${value === m ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                    {m === "CASH" ? "💵 Cash" : "💳 Bank"}
+                </button>
+            ))}
+        </div>
+    )
+}
+
 function AddTransactionForm({ type, sheetId, categories, month, year, isShared = false, isCurrentMonth = true, onOpenChange }: {
     type: "INCOME" | "EXPENSE"
     sheetId: string
@@ -311,6 +326,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
     // deleting the digit doesn't immediately snap back to the old value.
     const [splitMonths, setSplitMonths] = useState<number | "">(3)
     const [recurringInterval, setRecurringInterval] = useState<number | "">(1)
+    const [paymentMethod, setPaymentMethod] = useState<"CASH" | "BANK">("BANK")
     // Bumped on every failed submit so the form below can be remounted with the
     // returned values as defaultValue - React clears uncontrolled fields after
     // any form action call, even ones that return an error instead of succeeding.
@@ -427,6 +443,12 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
             </div>
 
             {mode === "recurring" && <input type="hidden" name="isRecurring" value="true" />}
+            <input type="hidden" name="paymentMethod" value={paymentMethod} />
+
+            <div>
+                <label className="text-xs text-muted-foreground mb-1 block font-medium">Paid with</label>
+                <PaymentMethodToggle value={paymentMethod} onChange={setPaymentMethod} />
+            </div>
 
             <div>
                 <div className="flex items-center justify-between mb-1">
@@ -729,6 +751,7 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
 }) {
     const [error, setError] = useState<string | null>(null)
     const [isPending, setIsPending] = useState(false)
+    const [paymentMethod, setPaymentMethod] = useState<"CASH" | "BANK">(t.paymentMethod === "CASH" ? "CASH" : "BANK")
 
     const minDate = `${year}-${String(month).padStart(2, "0")}-01`
     const lastDay = new Date(year, month, 0).getDate()
@@ -741,6 +764,7 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
                 setIsPending(true)
                 fd.append("monthlySheetId", sheetId)
                 fd.append("type", t.type)
+                fd.append("paymentMethod", paymentMethod)
                 const result = await updateTransaction(t.id, fd)
                 setIsPending(false)
                 if (result?.success) onDone()
@@ -761,6 +785,11 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
                         defaultValue={new Date(t.date).toISOString().split("T")[0]} required
                         className="w-full border border-input bg-background text-foreground rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                 </div>
+            </div>
+
+            <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Paid with</label>
+                <PaymentMethodToggle value={paymentMethod} onChange={setPaymentMethod} />
             </div>
 
             <div>

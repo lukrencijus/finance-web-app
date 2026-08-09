@@ -8,14 +8,17 @@ import { capitalCategorySchema } from "@/lib/validations"
 export async function createCapitalCategory(prevState: any, formData: FormData) {
     const user = await getCurrentDbUser()
 
+    const rawMoneyType = String(formData.get("moneyType") ?? "").trim()
+
     const parsed = capitalCategorySchema.safeParse({
         name: String(formData.get("name") ?? "").trim(),
         icon: String(formData.get("icon") ?? "").trim() || undefined,
         color: String(formData.get("color") ?? "#64748B").trim(),
+        moneyType: rawMoneyType === "CASH" || rawMoneyType === "BANK" ? rawMoneyType : null,
     })
     if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-    const { name, icon, color } = parsed.data
+    const { name, icon, color, moneyType } = parsed.data
 
     const existing = await prisma.capitalCategory.findUnique({
         where: { userId_name: { userId: user.id, name } },
@@ -24,7 +27,7 @@ export async function createCapitalCategory(prevState: any, formData: FormData) 
 
     try {
         await prisma.capitalCategory.create({
-            data: { name, icon: icon || null, color, userId: user.id },
+            data: { name, icon: icon || null, color, moneyType: moneyType ?? null, userId: user.id },
         })
         revalidatePath("/capitals")
         revalidatePath("/monthly-sheet")
@@ -37,21 +40,24 @@ export async function createCapitalCategory(prevState: any, formData: FormData) 
 export async function updateCapitalCategory(categoryId: string, formData: FormData) {
     const user = await getCurrentDbUser()
 
+    const rawMoneyType = String(formData.get("moneyType") ?? "").trim()
+
     const parsed = capitalCategorySchema.safeParse({
         name: String(formData.get("name") ?? "").trim(),
         icon: String(formData.get("icon") ?? "").trim() || undefined,
         color: String(formData.get("color") ?? "#64748B").trim(),
+        moneyType: rawMoneyType === "CASH" || rawMoneyType === "BANK" ? rawMoneyType : null,
     })
     if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-    const { name, icon, color } = parsed.data
+    const { name, icon, color, moneyType } = parsed.data
 
     const category = await prisma.capitalCategory.findUnique({ where: { id: categoryId } })
     if (!category || category.userId !== user.id) return { error: "Not found or unauthorized" }
 
     await prisma.capitalCategory.update({
         where: { id: categoryId },
-        data: { name, icon: icon || null, color },
+        data: { name, icon: icon || null, color, moneyType: moneyType ?? null },
     })
     revalidatePath("/capitals")
     revalidatePath("/monthly-sheet")

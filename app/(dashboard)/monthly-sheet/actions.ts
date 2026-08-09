@@ -84,6 +84,9 @@ export async function createTransaction(prevState: any, formData: FormData) {
         recurringIntervalMonths = Number.isFinite(n) && n >= 1 && n <= 24 ? n : 1
     }
 
+    const rawPaymentMethod = String(formData.get("paymentMethod") ?? "")
+    const paymentMethod = rawPaymentMethod === "CASH" ? "CASH" : "BANK"
+
     // make sure the sheet belongs to this user
     const sheet = await prisma.monthlySheet.findUnique({
         where: { id: monthlySheetId },
@@ -119,6 +122,7 @@ export async function createTransaction(prevState: any, formData: FormData) {
                 monthlySheetId,
                 isRecurring,
                 recurringIntervalMonths,
+                paymentMethod,
             },
         })
         revalidatePath("/monthly-sheet")
@@ -187,9 +191,12 @@ export async function updateTransaction(transactionId: string, formData: FormDat
         return { error: "Invalid category" }
     }
 
+    const rawPaymentMethod = String(formData.get("paymentMethod") ?? "")
+    const paymentMethod = rawPaymentMethod === "CASH" ? "CASH" : "BANK"
+
     await prisma.transaction.update({
         where: { id: transactionId },
-        data: { amount, description: description || null, date: new Date(date), categoryId },
+        data: { amount, description: description || null, date: new Date(date), categoryId, paymentMethod },
     })
 
     revalidatePath("/monthly-sheet")
@@ -299,6 +306,8 @@ export async function createSplitTransaction(prevState: any, formData: FormData)
     const categoryId = String(formData.get("categoryId") ?? "").trim()
     const monthlySheetId = String(formData.get("monthlySheetId") ?? "").trim()
     const splitMonths = parseInt(String(formData.get("splitMonths") ?? ""))
+    const rawPaymentMethod = String(formData.get("paymentMethod") ?? "")
+    const paymentMethod = rawPaymentMethod === "CASH" ? "CASH" : "BANK"
 
     // Echoed back on error so the form can restore what the user typed -
     // React resets uncontrolled fields after any form action call, success or not.
@@ -393,6 +402,7 @@ export async function createSplitTransaction(prevState: any, formData: FormData)
             categoryId,
             monthlySheetId: sheetIds[`${part.month}-${part.year}`],
             isRecurring: false,
+            paymentMethod,
             splitMonths,
             splitIndex: i + 1,
             splitGroupId,

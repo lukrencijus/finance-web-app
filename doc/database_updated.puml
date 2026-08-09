@@ -46,9 +46,10 @@ entity "CapitalCategory" as capcat {
   name : TEXT
   icon : TEXT
   color : TEXT
+  moneyType : TEXT (CASH, BANK)
   order : INT
 }
- 
+
 entity "MonthlySheet" as sheet {
   id : TEXT <<PK>>
   --
@@ -68,6 +69,7 @@ entity "Transaction" as trans {
   date : DATETIME
   isRecurring : BOOLEAN
   recurringIntervalMonths : INT
+  paymentMethod : TEXT (CASH, BANK)
   splitMonths : INT
   splitIndex : INT
   splitGroupId : TEXT

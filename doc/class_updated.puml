@@ -44,6 +44,7 @@ class Transaction {
   +date: DateTime
   +isRecurring: boolean
   +recurringIntervalMonths: int
+  +paymentMethod: PaymentMethodType
   +splitMonths: int
   +splitIndex: int
   +splitGroupId: string
@@ -76,6 +77,7 @@ class CapitalCategory {
   +name: string
   +icon: string
   +color: string
+  +moneyType: PaymentMethodType
   +order: int
   +crud(): void
   +reorder(): void

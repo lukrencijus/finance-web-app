@@ -34,7 +34,27 @@ export type CapitalCategory = {
     name: string
     icon: string | null
     color: string
+    moneyType: "CASH" | "BANK" | null
     order: number | null
+}
+
+function MoneyTypeSelector({ value, onChange }: { value: "CASH" | "BANK" | null; onChange: (v: "CASH" | "BANK" | null) => void }) {
+    const options: { value: "CASH" | "BANK" | null; label: string }[] = [
+        { value: null, label: "Not tracked" },
+        { value: "CASH", label: "💵 Cash" },
+        { value: "BANK", label: "💳 Bank" },
+    ]
+    return (
+        <div className="grid grid-cols-3 gap-1.5 p-1 bg-muted rounded-xl">
+            {options.map(opt => (
+                <button key={opt.label} type="button" onClick={() => onChange(opt.value)}
+                    className={`px-2 py-1.5 rounded-xl text-xs font-medium transition-colors
+                        ${value === opt.value ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                    {opt.label}
+                </button>
+            ))}
+        </div>
+    )
 }
 
 type CapitalEntry = {
@@ -188,6 +208,7 @@ function EditCategoryRow({ category, onDone }: { category: CapitalCategory; onDo
     const [error, setError] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
     const [color, setColor] = useState(category.color)
+    const [moneyType, setMoneyType] = useState<"CASH" | "BANK" | null>(category.moneyType)
     const nameRef = useRef<HTMLInputElement>(null)
     const router = useRouter()
 
@@ -196,6 +217,7 @@ function EditCategoryRow({ category, onDone }: { category: CapitalCategory; onDo
         const fd = new FormData()
         fd.append("name", nameRef.current?.value ?? "")
         fd.append("color", color)
+        if (moneyType) fd.append("moneyType", moneyType)
         startTransition(async () => {
             const result = await updateCapitalCategory(category.id, fd)
             if (result?.success) { router.refresh(); onDone() }
@@ -223,6 +245,11 @@ function EditCategoryRow({ category, onDone }: { category: CapitalCategory; onDo
             <div className="pl-6">
                 <p className="text-xs text-muted-foreground mb-1.5">Color</p>
                 <ColorPicker value={color} onChange={setColor} />
+            </div>
+            {/* Cash/bank tracking */}
+            <div className="pl-6">
+                <p className="text-xs text-muted-foreground mb-1.5">Counts toward</p>
+                <MoneyTypeSelector value={moneyType} onChange={setMoneyType} />
             </div>
             {error && <p className="text-xs text-destructive pl-6">{error}</p>}
         </div>
@@ -273,7 +300,14 @@ function SortableCategoryRow({ category }: { category: CapitalCategory }) {
                     <GripVertical className="size-4" />
                 </button>
                 <span className="w-3 h-3 rounded-xl shrink-0" style={{ backgroundColor: category.color }} />
-                <span className="flex-1 text-sm text-foreground">{category.name}</span>
+                <span className="flex-1 text-sm text-foreground truncate">
+                    {category.name}
+                    {category.moneyType && (
+                        <span className="ml-1.5 text-[10px] font-medium text-muted-foreground align-middle">
+                            {category.moneyType === "CASH" ? "💵" : "💳"}
+                        </span>
+                    )}
+                </span>
                 <button onClick={() => setEditing(true)}
                     className="text-muted-foreground/40 hover:text-blue-500 p-1 transition-colors shrink-0">
                     <Pencil className="size-3.5" />
@@ -300,6 +334,7 @@ function AddCategoryRow({ onClose }: { onClose: () => void }) {
     const [error, setError] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
     const [color, setColor] = useState("#64748B")
+    const [moneyType, setMoneyType] = useState<"CASH" | "BANK" | null>(null)
     const nameRef = useRef<HTMLInputElement>(null)
     const router = useRouter()
 
@@ -308,6 +343,7 @@ function AddCategoryRow({ onClose }: { onClose: () => void }) {
         const fd = new FormData()
         fd.append("name", nameRef.current?.value ?? "")
         fd.append("color", color)
+        if (moneyType) fd.append("moneyType", moneyType)
         startTransition(async () => {
             const result = await createCapitalCategory(null, fd)
             if (result?.success) { router.refresh(); onClose() }
@@ -333,6 +369,11 @@ function AddCategoryRow({ onClose }: { onClose: () => void }) {
             <div>
                 <p className="text-xs text-muted-foreground mb-1.5">Color</p>
                 <ColorPicker value={color} onChange={setColor} />
+            </div>
+            {/* Cash/bank tracking */}
+            <div>
+                <p className="text-xs text-muted-foreground mb-1.5">Counts toward</p>
+                <MoneyTypeSelector value={moneyType} onChange={setMoneyType} />
             </div>
             {error && <p className="text-xs text-destructive font-medium">{error}</p>}
         </div>

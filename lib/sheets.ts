@@ -13,6 +13,7 @@ type RecurringSourceTx = {
     categoryId: string
     date: Date
     recurringIntervalMonths: number | null
+    paymentMethod: string
     month: number
     year: number
 }
@@ -128,6 +129,7 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
                 categoryId: t.categoryId,
                 date: t.date,
                 recurringIntervalMonths: t.recurringIntervalMonths,
+                paymentMethod: t.paymentMethod,
                 month: t.monthlySheet.month,
                 year: t.monthlySheet.year,
             })),
@@ -152,6 +154,7 @@ export async function getCurrentMonthSheet(userId: string, month: number, year: 
                         monthlySheetId: sheet!.id,
                         isRecurring: true,
                         recurringIntervalMonths: t.recurringIntervalMonths,
+                        paymentMethod: t.paymentMethod,
                         // Do not copy splitGroupId/splitIndex - recurring copies are fresh
                     }
                 }),
@@ -403,6 +406,45 @@ export async function getDashboardData(userId: string, selectedMonth?: number, s
         : null
     const capitalDiscrepancy = expectedCapital !== null ? totalCapital - expectedCapital : null
 
+    // Cash/bank breakdown: same idea as the aggregate expected/actual above,
+    // but bucketed by CapitalCategory.moneyType and Transaction.paymentMethod.
+    // Only computed once the user has tagged at least one capital category as
+    // Cash or Bank - otherwise there's nothing meaningful to compare against.
+    const userCapitalCategories = await prisma.capitalCategory.findMany({
+        where: { userId },
+        select: { moneyType: true },
+    })
+    const hasCategoryOfType = (moneyType: "CASH" | "BANK") =>
+        userCapitalCategories.some((c) => c.moneyType === moneyType)
+
+    function computeMoneyTypeBreakdown(moneyType: "CASH" | "BANK") {
+        if (!hasCategoryOfType(moneyType)) return { expected: null, actual: null, discrepancy: null }
+        // Same guard as the aggregate version: only meaningful with real
+        // (non-fallback) current-month capital data and a known previous month.
+        if (capitalsAsOfMonth !== null || !prevSheet || !currentSheet) {
+            return { expected: null, actual: null, discrepancy: null }
+        }
+
+        const prevAmount = prevSheet.capitals
+            .filter((c) => c.capitalCategory.moneyType === moneyType)
+            .reduce((sum, c) => sum + c.amount, 0)
+        const income = currentSheet.transactions
+            .filter((t) => t.type === "INCOME" && t.paymentMethod === moneyType)
+            .reduce((sum, t) => sum + t.amount, 0)
+        const expenses = currentSheet.transactions
+            .filter((t) => t.type === "EXPENSE" && t.paymentMethod === moneyType)
+            .reduce((sum, t) => sum + t.amount, 0)
+        const actual = currentSheet.capitals
+            .filter((c) => c.capitalCategory.moneyType === moneyType)
+            .reduce((sum, c) => sum + c.amount, 0)
+
+        const expected = prevAmount + income - expenses
+        return { expected, actual, discrepancy: actual - expected }
+    }
+
+    const cashBreakdown = computeMoneyTypeBreakdown("CASH")
+    const bankBreakdown = computeMoneyTypeBreakdown("BANK")
+
     // Daily activity for the selected month, used by the transactions heatmap.
     const daysInMonth = new Date(currentYear, currentMonth, 0).getDate()
     const dailyActivity = Array.from({ length: daysInMonth }, (_, i) => ({
@@ -449,6 +491,8 @@ export async function getDashboardData(userId: string, selectedMonth?: number, s
         capitalsAsOfYear,
         expectedCapital,
         capitalDiscrepancy,
+        cashBreakdown,
+        bankBreakdown,
         dailyActivity,
     }
 }

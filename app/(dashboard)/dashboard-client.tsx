@@ -76,6 +76,8 @@ export type DashboardData = {
     capitalsAsOfYear: number | null
     expectedCapital: number | null
     capitalDiscrepancy: number | null
+    cashBreakdown: { expected: number | null; actual: number | null; discrepancy: number | null }
+    bankBreakdown: { expected: number | null; actual: number | null; discrepancy: number | null }
     dailyActivity: DailyActivity[]
 }
 
@@ -694,6 +696,16 @@ export function DashboardClient({
                                         {data.capitalDiscrepancy !== null && Math.abs(data.capitalDiscrepancy) >= 0.01 && (
                                             <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
                                                 Based on last month plus this month&apos;s income/expenses, you were expected to have {fmt(data.expectedCapital!)} - that&apos;s {fmt(Math.abs(data.capitalDiscrepancy))} {data.capitalDiscrepancy > 0 ? "more" : "less"} than what you entered.
+                                            </p>
+                                        )}
+                                        {data.cashBreakdown.discrepancy !== null && Math.abs(data.cashBreakdown.discrepancy) >= 0.01 && (
+                                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5">
+                                                💵 Cash: expected {fmt(data.cashBreakdown.expected!)}, you entered {fmt(data.cashBreakdown.actual!)} ({fmt(Math.abs(data.cashBreakdown.discrepancy))} {data.cashBreakdown.discrepancy > 0 ? "more" : "less"}).
+                                            </p>
+                                        )}
+                                        {data.bankBreakdown.discrepancy !== null && Math.abs(data.bankBreakdown.discrepancy) >= 0.01 && (
+                                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5">
+                                                💳 Bank: expected {fmt(data.bankBreakdown.expected!)}, you entered {fmt(data.bankBreakdown.actual!)} ({fmt(Math.abs(data.bankBreakdown.discrepancy))} {data.bankBreakdown.discrepancy > 0 ? "more" : "less"}).
                                             </p>
                                         )}
                                     </div>
