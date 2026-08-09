@@ -355,6 +355,7 @@ export async function getDashboardData(userId: string, selectedMonth?: number, s
     let capitals = currentSheet
         ? currentSheet.capitals.map((c) => ({
             id: c.id,
+            capitalCategoryId: c.capitalCategoryId,
             name: c.capitalCategory.name,
             color: c.capitalCategory.color,
             amount: c.amount,
@@ -388,6 +389,7 @@ export async function getDashboardData(userId: string, selectedMonth?: number, s
         if (fallbackSheet && fallbackSheet.capitals.length > 0) {
             capitals = fallbackSheet.capitals.map((c) => ({
                 id: c.id,
+                capitalCategoryId: c.capitalCategoryId,
                 name: c.capitalCategory.name,
                 color: c.capitalCategory.color,
                 amount: c.amount,
@@ -397,6 +399,13 @@ export async function getDashboardData(userId: string, selectedMonth?: number, s
         }
     }
     const totalCapital = capitals.reduce((sum, c) => sum + c.amount, 0)
+
+    // Previous month's amount per capital category, keyed by capitalCategoryId,
+    // so each row in the breakdown can show its own growth vs last month -
+    // same idea as CapitalRow on the monthly-sheet page.
+    const prevCapitals: Record<string, number> = Object.fromEntries(
+        (prevSheet?.capitals ?? []).map((c) => [c.capitalCategoryId, c.amount])
+    )
 
     // Expected vs actual capital: if last month's capital is known and this month's
     // capital was actually entered (not a fallback from an earlier month), flag any
@@ -485,6 +494,7 @@ export async function getDashboardData(userId: string, selectedMonth?: number, s
             category: { name: t.category.name, icon: t.category.icon ?? null },
         })),
         capitals,
+        prevCapitals,
         totalCapital,
         prevTotalCapital,
         capitalsAsOfMonth,

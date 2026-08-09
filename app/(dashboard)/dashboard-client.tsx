@@ -44,6 +44,7 @@ type RecentTransaction = {
 
 type Capital = {
     id: string
+    capitalCategoryId: string
     name: string
     color: string
     amount: number
@@ -70,6 +71,7 @@ export type DashboardData = {
     incomeCategoryBreakdown?: CategoryBreakdown[]
     recentTransactions: RecentTransaction[]
     capitals: Capital[]
+    prevCapitals: Record<string, number>
     totalCapital: number
     prevTotalCapital: number | null
     capitalsAsOfMonth: number | null
@@ -331,12 +333,17 @@ export function DashboardClient({
         ? data.prevIncome - data.prevExpenses : null
     const netDelta = calcDelta(data.netSaved, prevNet)
     const capitalDelta = calcDelta(data.totalCapital, data.prevTotalCapital)
+    const hasDiscrepancy =
+        (data.capitalDiscrepancy !== null && Math.abs(data.capitalDiscrepancy) >= 0.01) ||
+        (data.cashBreakdown.discrepancy !== null && Math.abs(data.cashBreakdown.discrepancy) >= 0.01) ||
+        (data.bankBreakdown.discrepancy !== null && Math.abs(data.bankBreakdown.discrepancy) >= 0.01)
 
     const maxExpenseCat = Math.max(...(data.categoryBreakdown?.map(c => c.amount) ?? []), 1)
     const maxIncomeCat  = Math.max(...(data.incomeCategoryBreakdown?.map(c => c.amount) ?? []), 1)
 
     const [settings, setSettings] = useState<typeof defaultSettings>(defaultSettings)
     const [mounted, setMounted] = useState(false)
+    const [showDiscrepancy, setShowDiscrepancy] = useState(false)
 
     useEffect(() => {
         // Read persisted widget settings on mount. Deliberately effect-based (not a lazy
@@ -398,7 +405,14 @@ export function DashboardClient({
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.dataset.label}: ${fmt(Number(ctx.raw))}`,
+                        },
+                    },
+                },
                 scales: {
                     x: {
                         grid: { display: false },
@@ -451,7 +465,14 @@ export function DashboardClient({
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.dataset.label}: ${fmt(Number(ctx.raw))}`,
+                        },
+                    },
+                },
                 scales: {
                     x: {
                         grid: { display: false },
@@ -667,11 +688,21 @@ export function DashboardClient({
                                     {/* List */}
                                     <div className="flex-1 flex flex-col min-h-52">
                                         <div className="overflow-y-auto flex-1 max-h-44">
-                                            {data.capitals.map((c) => (
+                                            {data.capitals.map((c) => {
+                                                const prevAmount = data.prevCapitals[c.capitalCategoryId]
+                                                const growth = prevAmount !== undefined ? c.amount - prevAmount : null
+                                                return (
                                                 <div key={c.id} className="flex items-center justify-between gap-2 py-2 border-b border-border last:border-0">
                                                     <div className="flex items-center gap-2 min-w-0 flex-1">
                                                         <span className="w-2 h-2 rounded-xl shrink-0" style={{ backgroundColor: c.color }} />
-                                                        <span className="text-sm text-foreground truncate">{c.name}</span>
+                                                        <div className="min-w-0">
+                                                            <span className="text-sm text-foreground truncate block">{c.name}</span>
+                                                            {growth !== null && growth !== 0 && (
+                                                                <span className={`text-[11px] font-medium ${growth > 0 ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
+                                                                    {growth > 0 ? "+" : "-"}{fmt(Math.abs(growth))} vs last month
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                     <div className="flex items-center gap-3 shrink-0">
                                                         <span className="text-xs text-muted-foreground">
@@ -680,7 +711,7 @@ export function DashboardClient({
                                                         <span className="text-sm font-medium text-foreground">{fmt(c.amount)}</span>
                                                     </div>
                                                 </div>
-                                            ))}
+                                            )})}
                                         </div>
                                         <div className="flex justify-between items-end gap-2 pt-3 mt-auto border-t border-border">
                                             <div className="min-w-0">
@@ -693,20 +724,35 @@ export function DashboardClient({
                                             </div>
                                             <span className="text-sm font-semibold text-foreground shrink-0 tabular-nums">{fmt(data.totalCapital)}</span>
                                         </div>
-                                        {data.capitalDiscrepancy !== null && Math.abs(data.capitalDiscrepancy) >= 0.01 && (
-                                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-                                                Based on last month plus this month&apos;s income/expenses, you were expected to have {fmt(data.expectedCapital!)} - that&apos;s {fmt(Math.abs(data.capitalDiscrepancy))} {data.capitalDiscrepancy > 0 ? "more" : "less"} than what you entered.
-                                            </p>
-                                        )}
-                                        {data.cashBreakdown.discrepancy !== null && Math.abs(data.cashBreakdown.discrepancy) >= 0.01 && (
-                                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5">
-                                                💵 Cash: expected {fmt(data.cashBreakdown.expected!)}, you entered {fmt(data.cashBreakdown.actual!)} ({fmt(Math.abs(data.cashBreakdown.discrepancy))} {data.cashBreakdown.discrepancy > 0 ? "more" : "less"}).
-                                            </p>
-                                        )}
-                                        {data.bankBreakdown.discrepancy !== null && Math.abs(data.bankBreakdown.discrepancy) >= 0.01 && (
-                                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5">
-                                                💳 Bank: expected {fmt(data.bankBreakdown.expected!)}, you entered {fmt(data.bankBreakdown.actual!)} ({fmt(Math.abs(data.bankBreakdown.discrepancy))} {data.bankBreakdown.discrepancy > 0 ? "more" : "less"}).
-                                            </p>
+                                        {hasDiscrepancy && (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowDiscrepancy(v => !v)}
+                                                    className="text-xs font-medium text-muted-foreground hover:text-foreground mt-2 transition-colors"
+                                                >
+                                                    {showDiscrepancy ? "Hide" : "Show"} expected vs actual {showDiscrepancy ? "▲" : "▼"}
+                                                </button>
+                                                {showDiscrepancy && (
+                                                    <>
+                                                        {data.capitalDiscrepancy !== null && Math.abs(data.capitalDiscrepancy) >= 0.01 && (
+                                                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                                                                Based on last month plus this month&apos;s income/expenses, you were expected to have {fmt(data.expectedCapital!)} - that&apos;s {fmt(Math.abs(data.capitalDiscrepancy))} {data.capitalDiscrepancy > 0 ? "more" : "less"} than what you entered.
+                                                            </p>
+                                                        )}
+                                                        {data.cashBreakdown.discrepancy !== null && Math.abs(data.cashBreakdown.discrepancy) >= 0.01 && (
+                                                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5">
+                                                                💵 Cash: expected {fmt(data.cashBreakdown.expected!)}, you entered {fmt(data.cashBreakdown.actual!)} ({fmt(Math.abs(data.cashBreakdown.discrepancy))} {data.cashBreakdown.discrepancy > 0 ? "more" : "less"}).
+                                                            </p>
+                                                        )}
+                                                        {data.bankBreakdown.discrepancy !== null && Math.abs(data.bankBreakdown.discrepancy) >= 0.01 && (
+                                                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5">
+                                                                💳 Bank: expected {fmt(data.bankBreakdown.expected!)}, you entered {fmt(data.bankBreakdown.actual!)} ({fmt(Math.abs(data.bankBreakdown.discrepancy))} {data.bankBreakdown.discrepancy > 0 ? "more" : "less"}).
+                                                            </p>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </>
                                         )}
                                     </div>
                                 </>
