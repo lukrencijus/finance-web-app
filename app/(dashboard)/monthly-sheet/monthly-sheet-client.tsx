@@ -446,7 +446,9 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
             <input type="hidden" name="paymentMethod" value={paymentMethod} />
 
             <div>
-                <label className="text-xs text-muted-foreground mb-1 block font-medium">Paid with</label>
+                <label className="text-xs text-muted-foreground mb-1 block font-medium">
+                    {type === "INCOME" ? "Received to" : "Paid with"}
+                </label>
                 <PaymentMethodToggle value={paymentMethod} onChange={setPaymentMethod} />
             </div>
 
@@ -788,7 +790,9 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
             </div>
 
             <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Paid with</label>
+                <label className="text-xs text-muted-foreground mb-1 block">
+                    {t.type === "INCOME" ? "Received to" : "Paid with"}
+                </label>
                 <PaymentMethodToggle value={paymentMethod} onChange={setPaymentMethod} />
             </div>
 
