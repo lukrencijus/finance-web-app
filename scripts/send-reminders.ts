@@ -4,9 +4,12 @@
  * (e.g. weekly via cron) on the server the app is deployed on - it is not
  * wired into the Next.js app itself, no route handler needed.
  *
- * Env vars required (add to .env):
- *   NTFY_TOPIC          - the topic name you subscribed to in the ntfy app
- *   REMINDER_USER_EMAIL - which user's sheets to check (your account's email)
+ * Supports multiple people, each checked against their own account and
+ * notified on their own ntfy topic only.
+ *
+ * Env var required (add to .env):
+ *   REMINDER_RECIPIENTS - comma-separated "email:ntfyTopic" pairs, e.g.
+ *     REMINDER_RECIPIENTS=lukas@example.com:lukas-money-x7k2p,girlfriend@example.com:gf-money-q9d3f
  *
  * Run manually with: npm run reminders
  * Example crontab entry (Mondays at 9am server time):
@@ -15,24 +18,25 @@
 import { prisma } from "@/lib/prisma"
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"]
 
-async function main() {
-    const topic = process.env.NTFY_TOPIC
-    const email = process.env.REMINDER_USER_EMAIL
+type Recipient = { email: string; topic: string }
 
-    if (!topic) {
-        console.error("NTFY_TOPIC is not set - see scripts/send-reminders.ts for setup.")
-        process.exit(1)
-    }
-    if (!email) {
-        console.error("REMINDER_USER_EMAIL is not set - see scripts/send-reminders.ts for setup.")
-        process.exit(1)
-    }
+function parseRecipients(raw: string): Recipient[] {
+    return raw.split(",").map(entry => entry.trim()).filter(Boolean).map(entry => {
+        const idx = entry.indexOf(":")
+        if (idx === -1) {
+            throw new Error(`Malformed REMINDER_RECIPIENTS entry (expected "email:topic"): "${entry}"`)
+        }
+        return { email: entry.slice(0, idx).trim(), topic: entry.slice(idx + 1).trim() }
+    })
+}
 
+async function checkAndNotify({ email, topic }: Recipient) {
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) {
-        console.error(`No user found for REMINDER_USER_EMAIL=${email}`)
-        process.exit(1)
+        console.error(`No user found for email=${email} - skipping.`)
+        return
     }
 
     const now = new Date()
@@ -61,12 +65,11 @@ async function main() {
         include: { capitals: { take: 1 } },
     })
     if (!prevSheet || prevSheet.capitals.length === 0) {
-        const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"]
         reasons.push(`Capital for ${MONTH_NAMES[prevMonth - 1]} ${prevYear} hasn't been entered yet.`)
     }
 
     if (reasons.length === 0) {
-        console.log("All caught up - nothing to remind about.")
+        console.log(`[${email}] All caught up - nothing to remind about.`)
         return
     }
 
@@ -80,10 +83,23 @@ async function main() {
     })
 
     if (!res.ok) {
-        console.error(`ntfy request failed: ${res.status} ${await res.text()}`)
+        console.error(`[${email}] ntfy request failed: ${res.status} ${await res.text()}`)
+        return
+    }
+    console.log(`[${email}] Reminder sent:`, reasons)
+}
+
+async function main() {
+    const raw = process.env.REMINDER_RECIPIENTS
+    if (!raw) {
+        console.error("REMINDER_RECIPIENTS is not set - see scripts/send-reminders.ts for setup.")
         process.exit(1)
     }
-    console.log("Reminder sent:", reasons)
+
+    const recipients = parseRecipients(raw)
+    for (const recipient of recipients) {
+        await checkAndNotify(recipient)
+    }
 }
 
 main()
