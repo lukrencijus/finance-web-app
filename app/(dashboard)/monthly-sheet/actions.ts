@@ -45,6 +45,55 @@ async function hasEditAccess(sheetOwnerId: string, currentUserId: string): Promi
     return access?.permission === "EDIT"
 }
 
+/**
+ * Create an empty sheet for a month that has already passed.
+ *
+ * Sheets are normally created lazily by getCurrentMonthSheet() on dashboard
+ * render, which means a user who starts self-hosting mid-year has no way to
+ * back-fill earlier months even though the capital reminders keep nagging them.
+ *
+ * Deliberately does NOT copy recurring transactions the way getCurrentMonthSheet
+ * does: that logic scans backwards for the most recent occurrence of each series
+ * and would inject duplicates into a month whose successor already has them.
+ * A back-filled month is for entering what actually happened, by hand.
+ */
+export async function createPastMonthSheet(month: number, year: number) {
+    const user = await getCurrentDbUser()
+
+    if (!Number.isInteger(month) || !Number.isInteger(year) || month < 1 || month > 12) {
+        return { error: "Invalid month" }
+    }
+
+    const now = new Date()
+    const currentMonth = now.getMonth() + 1
+    const currentYear = now.getFullYear()
+
+    const isPast = year < currentYear || (year === currentYear && month < currentMonth)
+    if (!isPast) return { error: "This month is not in the past" }
+
+    // Guard against a typo or a crafted request creating sheets decades back.
+    if (year < currentYear - 10) return { error: "That month is too far in the past" }
+
+    const existing = await prisma.monthlySheet.findUnique({
+        where: { month_year_userId: { month, year, userId: user.id } },
+        select: { id: true },
+    })
+    if (existing) return { success: true }
+
+    try {
+        await prisma.monthlySheet.create({
+            data: { month, year, userId: user.id },
+        })
+    } catch {
+        // Unique constraint - another request created it first, which is fine.
+        return { success: true }
+    }
+
+    revalidatePath("/monthly-sheet")
+    revalidatePath("/")
+    return { success: true }
+}
+
 export async function createTransaction(prevState: any, formData: FormData) {
     const user = await getCurrentDbUser()
 

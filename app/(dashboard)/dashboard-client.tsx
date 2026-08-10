@@ -14,7 +14,7 @@ import {
     Filler,
 } from "chart.js"
 import { MonthPicker } from "@/components/month-picker"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, formatDateShort } from "@/lib/utils"
 import { ArrowUpRight, ArrowDownRight } from "lucide-react"
 
 Chart.register(LineElement, PointElement, LineController, BarElement, BarController, CategoryScale, LinearScale, Tooltip, Filler)
@@ -31,6 +31,8 @@ type CategoryBreakdown = {
     name: string
     icon: string | null
     amount: number
+    /** Same category's total last month. null = no previous sheet to compare against. */
+    prevAmount?: number | null
 }
 
 type RecentTransaction = {
@@ -247,6 +249,32 @@ function Legend({ color, label, dashed }: { color: string; label: string; dashed
     )
 }
 
+/**
+ * Month-over-month change for a single category bar, as an absolute amount.
+ *
+ * Colour follows meaning rather than sign: spending more is bad (red), earning
+ * more is good (green). Returns null when there is nothing worth showing.
+ */
+function categoryDelta(cat: CategoryBreakdown, isIncome: boolean) {
+    const prev = cat.prevAmount
+    if (prev === null || prev === undefined) return null
+
+    // Absent last month entirely - a percentage would be meaningless here.
+    if (prev === 0) {
+        return { label: "new", className: "text-gray-400", title: "No activity in this category last month" }
+    }
+
+    const diff = cat.amount - prev
+    if (Math.abs(diff) < 0.01) return null
+
+    const good = isIncome ? diff > 0 : diff < 0
+    return {
+        label: `${diff > 0 ? "+" : "−"}${fmt(Math.abs(diff))}`,
+        className: good ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400",
+        title: `${fmt(prev)} last month`,
+    }
+}
+
 function CategoryBars({
     items,
     max,
@@ -266,24 +294,34 @@ function CategoryBars({
 
     return (
         <div className="space-y-2">
-            {items.map((cat, i) => (
-                <div key={cat.name} className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 w-20 shrink-0 truncate">
-                        <span className="mr-1">{cat.icon || (isIncome ? "↑" : "↓")}</span>{cat.name}
-                    </span>
-                    <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden">
-                        <div
-                            className="h-full rounded-xl"
-                            style={{
-                                width: mounted ? `max(6px, ${(cat.amount / max) * 100}%)` : "0px",
-                                backgroundColor: colors[i % colors.length],
-                                transition: `width 0.45s ease ${i * 50}ms`,
-                            }}
-                        />
+            {items.map((cat, i) => {
+                const delta = categoryDelta(cat, isIncome)
+                return (
+                    <div key={cat.name} className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500 w-20 shrink-0 truncate">
+                            <span className="mr-1">{cat.icon || (isIncome ? "↑" : "↓")}</span>{cat.name}
+                        </span>
+                        <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden">
+                            <div
+                                className="h-full rounded-xl"
+                                style={{
+                                    width: mounted ? `max(6px, ${(cat.amount / max) * 100}%)` : "0px",
+                                    backgroundColor: colors[i % colors.length],
+                                    transition: `width 0.45s ease ${i * 50}ms`,
+                                }}
+                            />
+                        </div>
+                        <span className="w-20 shrink-0 text-right leading-tight">
+                            <span className="block text-xs text-gray-500">{fmt(cat.amount)}</span>
+                            {delta && (
+                                <span className={`block text-[10px] ${delta.className}`} title={delta.title}>
+                                    {delta.label}
+                                </span>
+                            )}
+                        </span>
                     </div>
-                    <span className="text-xs text-gray-500 w-14 text-right shrink-0">{fmt(cat.amount)}</span>
-                </div>
-            ))}
+                )
+            })}
         </div>
     )
 }
@@ -869,7 +907,7 @@ export function DashboardClient({
                                                         </p>
                                                         <p className="text-xs text-muted-foreground">
                                                             {hasUniqueDesc ? `${t.category.name} · ` : ""}
-                                                            {txDate.toLocaleDateString("en-IE", { day: "numeric", month: "short" })}
+                                                            {formatDateShort(txDate)}
                                                         </p>
                                                     </div>
                                                 </div>

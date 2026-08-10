@@ -3,7 +3,7 @@
 import { useState, useTransition, useRef } from "react"
 import { Trash2, Pencil, Check, XCircle, Plus, X, GripVertical } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, formatDate } from "@/lib/utils"
 import {
     createCategory,
     deleteCategory,
@@ -92,7 +92,7 @@ function ConfirmDeleteDialog({ category, transactions, onConfirm, onCancel, isPe
                                     {pageItems.map(t => (
                                         <tr key={t.id} className="border-t border-border">
                                             <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
-                                                {new Date(t.date).toLocaleDateString()}
+                                                {formatDate(t.date)}
                                             </td>
                                             <td className="px-3 py-2">
                                                 <span className={`px-1.5 py-0.5 rounded-xl text-[10px] font-bold uppercase tracking-wider ${

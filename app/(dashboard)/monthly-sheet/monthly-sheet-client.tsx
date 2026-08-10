@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useActionState } from "react"
+import { useState, useEffect, useActionState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import {
     createTransaction,
     deleteTransaction,
@@ -11,16 +12,18 @@ import {
     toggleRecurring,
     createSplitTransaction,
     deleteSplitGroup,
+    createPastMonthSheet,
 } from "./actions"
-import { Trash2, ChevronDown, Pencil, Check, XCircle, RefreshCw, Scissors, AlertTriangle } from "lucide-react"
-import { Select as SelectPrimitive } from "radix-ui"
+import { Trash2, ChevronDown, Pencil, Check, XCircle, RefreshCw, Scissors, AlertTriangle, Plus } from "lucide-react"
 import Link from "next/link"
 import { CategoryManager } from "@/components/category-manager"
 import { type Category } from "@/components/category-manager-content"
 import { CapitalCategoryManager } from "@/components/capital-category-manager"
 import { type CapitalCategory } from "@/components/capital-category-manager-content"
 import { MonthPicker } from "@/components/month-picker"
-import { formatCurrency } from "@/lib/utils"
+import { CategoryCombobox } from "@/components/category-combobox"
+import { MonthDatePicker } from "@/components/month-date-picker"
+import { formatCurrency, formatDateShort, toISODate } from "@/lib/utils"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useHaptics } from "@/lib/use-haptics"
 
@@ -175,8 +178,12 @@ export function MonthlySheetClient({
                         <p className="text-sm">
                             {userId ? "This user did not have" : "You did not have"} an active sheet in {MONTH_NAMES[month - 1]} {year}.
                         </p>
+                        {/* Only the owner can back-fill, and only for months that have passed. */}
+                        {!userId && !readOnly && (
+                            <CreatePastSheetButton month={month} year={year} />
+                        )}
                         <Link href={userId ? `/shared/${userId}/monthly-sheet` : "/monthly-sheet"}
-                            className="inline-block mt-4 text-sm text-blue-500 hover:text-blue-400 hover:underline transition-colors">
+                            className="block mt-4 text-sm text-blue-500 hover:text-blue-400 hover:underline transition-colors">
                             Go to current month
                         </Link>
                     </div>
@@ -355,7 +362,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
     const minDate = `${year}-${String(month).padStart(2, "0")}-01`
     const lastDay = new Date(year, month, 0).getDate()
     const maxDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
-    const today = new Date().toISOString().split("T")[0]
+    const today = toISODate(new Date())
     const defaultDate = today >= minDate && today <= maxDate ? today : maxDate
     const handleClose = () => { setIsOpen(false); setMode("normal") }
     const formAction = mode === "split" ? splitAction : normalAction
@@ -420,8 +427,13 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                 </div>
                 <div>
                     <label className="text-xs text-muted-foreground mb-1 block font-medium">Date</label>
-                    <input name="date" type="date" min={minDate} max={maxDate} defaultValue={state?.values?.date || defaultDate} required
-                        className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <MonthDatePicker
+                        month={month}
+                        year={year}
+                        min={minDate}
+                        max={maxDate}
+                        defaultValue={state?.values?.date || defaultDate}
+                    />
                 </div>
                 {mode === "split" && (
                     <div className="col-span-2 sm:col-span-1">
@@ -458,13 +470,13 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                     <label className="text-xs text-muted-foreground font-medium">Category</label>
                     {!isShared && <CategoryManager type={type} categories={categories} />}
                 </div>
-                <select name="categoryId" required defaultValue={state?.values?.categoryId ?? ""}
-                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                    <option value="">Select a category...</option>
-                    {categories.map(c => (
-                        <option key={c.id} value={c.id} className="bg-background">{c.icon || (type === "INCOME" ? "↑" : "↓")} {c.name}</option>
-                    ))}
-                </select>
+                <CategoryCombobox
+                    categories={categories}
+                    defaultValue={state?.values?.categoryId ?? ""}
+                    fallbackIcon={type === "INCOME" ? "↑" : "↓"}
+                    placeholder="Search categories..."
+                    required
+                />
             </div>
 
             <div>
@@ -512,6 +524,42 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                 {fields}
             </form>
         </>
+    )
+}
+
+/**
+ * Back-fills a past month that never got a sheet - the case where someone
+ * starts using the app mid-month and cannot record what came before, while
+ * the capital reminders still fire for it.
+ */
+function CreatePastSheetButton({ month, year }: { month: number; year: number }) {
+    const [isPending, startTransition] = useTransition()
+    const [error, setError] = useState<string | null>(null)
+    const router = useRouter()
+
+    return (
+        <div className="mt-5">
+            <button
+                type="button"
+                disabled={isPending}
+                onClick={() => {
+                    setError(null)
+                    startTransition(async () => {
+                        const result = await createPastMonthSheet(month, year)
+                        if (result?.error) setError(result.error)
+                        else router.refresh()
+                    })
+                }}
+                className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+            >
+                <Plus className="size-3.5" />
+                {isPending ? "Creating..." : `Create sheet for ${MONTH_NAMES[month - 1]} ${year}`}
+            </button>
+            <p className="text-xs text-muted-foreground mt-2">
+                Starts empty - recurring transactions are not copied into back-filled months.
+            </p>
+            {error && <p className="text-xs text-destructive mt-2">{error}</p>}
+        </div>
     )
 }
 
@@ -684,7 +732,7 @@ function TransactionRow({
                         </div>
                         <p className="text-xs text-muted-foreground">
                             {hasUniqueDesc ? `${t.category.name} · ` : ""}
-                            {txDate.toLocaleDateString("en-IE", { day: "numeric", month: "short" })}
+                            {formatDateShort(txDate)}
                         </p>
                     </div>
                 </div>
@@ -784,9 +832,14 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
                 </div>
                 <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Date</label>
-                    <input name="date" type="date" min={minDate} max={maxDate}
-                        defaultValue={new Date(t.date).toISOString().split("T")[0]} required
-                        className="w-full border border-input bg-background text-foreground rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <MonthDatePicker
+                        month={month}
+                        year={year}
+                        min={minDate}
+                        max={maxDate}
+                        defaultValue={toISODate(new Date(t.date))}
+                        compact
+                    />
                 </div>
             </div>
 
@@ -802,12 +855,13 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
                     <label className="text-xs text-muted-foreground font-medium">Category</label>
                     {!isShared && <CategoryManager type={t.type as "INCOME" | "EXPENSE"} categories={categories} />}
                 </div>
-                <select name="categoryId" defaultValue={t.categoryId} required
-                    className="w-full border border-input bg-background text-foreground rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                    {categories.map(c => (
-                        <option key={c.id} value={c.id} className="bg-background">{c.icon || (t.type === "INCOME" ? "↑" : "↓")} {c.name}</option>
-                    ))}
-                </select>
+                <CategoryCombobox
+                    categories={categories}
+                    defaultValue={t.categoryId}
+                    fallbackIcon={t.type === "INCOME" ? "↑" : "↓"}
+                    required
+                    compact
+                />
             </div>
 
             <div>
@@ -953,52 +1007,6 @@ function Overview({ capitals, capitalCategories, prevCapitals, sheetId, readOnly
 }
 
 
-// Native <option> elements can't show a color swatch, so this is a Radix
-// Select instead - same visual language as the transaction category select's
-// emoji icons, but a color dot since capital categories don't have icons
-// (they have both an icon and a color, but the color is the more distinctive
-// visual per-category, matching the dot used on the Capital page rows).
-function CapitalCategorySelect({ categories, defaultValue, required }: {
-    categories: CapitalCategory[]
-    defaultValue?: string
-    required?: boolean
-}) {
-    return (
-        <SelectPrimitive.Root name="capitalCategoryId" required={required} defaultValue={defaultValue}>
-            <SelectPrimitive.Trigger
-                className="w-full flex items-center justify-between gap-2 border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring data-placeholder:text-muted-foreground">
-                <span className="flex items-center gap-2 truncate">
-                    <SelectPrimitive.Value placeholder="Select a category..." />
-                </span>
-                <SelectPrimitive.Icon>
-                    <ChevronDown className="size-3.5 text-muted-foreground shrink-0" />
-                </SelectPrimitive.Icon>
-            </SelectPrimitive.Trigger>
-            <SelectPrimitive.Portal>
-                <SelectPrimitive.Content
-                    position="popper"
-                    sideOffset={4}
-                    className="z-[110] overflow-hidden bg-card border border-border rounded-xl shadow-lg w-[var(--radix-select-trigger-width)]">
-                    <SelectPrimitive.Viewport className="p-1">
-                        {categories.map(c => (
-                            <SelectPrimitive.Item
-                                key={c.id}
-                                value={c.id}
-                                className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm text-foreground cursor-pointer select-none outline-none data-highlighted:bg-muted">
-                                <span
-                                    className="size-2.5 rounded-full shrink-0"
-                                    style={{ backgroundColor: c.color }}
-                                />
-                                <SelectPrimitive.ItemText>{c.name}</SelectPrimitive.ItemText>
-                            </SelectPrimitive.Item>
-                        ))}
-                    </SelectPrimitive.Viewport>
-                </SelectPrimitive.Content>
-            </SelectPrimitive.Portal>
-        </SelectPrimitive.Root>
-    )
-}
-
 function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isShared = false, onOpenChange }: {
     sheetId: string
     capitalCategories: CapitalCategory[]
@@ -1052,9 +1060,11 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
                     <label className="text-xs text-muted-foreground font-medium">Category</label>
                     {!isShared && <CapitalCategoryManager categories={capitalCategories} />}
                 </div>
-                <CapitalCategorySelect
+                <CategoryCombobox
+                    name="capitalCategoryId"
                     categories={available}
-                    defaultValue={state?.values?.capitalCategoryId || undefined}
+                    defaultValue={state?.values?.capitalCategoryId || ""}
+                    emptyMessage="All categories already have an entry this month."
                     required
                 />
                 {available.length === 0 && (

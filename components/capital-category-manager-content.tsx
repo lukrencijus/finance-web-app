@@ -255,6 +255,10 @@ function EditCategoryRow({ category, onDone }: { category: CapitalCategory; onDo
             <div className="pl-6">
                 <p className="text-xs text-muted-foreground mb-1.5">Counts toward</p>
                 <MoneyTypeSelector value={moneyType} onChange={setMoneyType} />
+                <p className="text-[10px] text-muted-foreground mt-1.5">
+                    Only one category can count toward cash, and one toward bank. Picking one here
+                    clears it from whichever category held it before.
+                </p>
             </div>
             {error && <p className="text-xs text-destructive pl-6">{error}</p>}
         </div>
@@ -379,6 +383,10 @@ function AddCategoryRow({ onClose }: { onClose: () => void }) {
             <div>
                 <p className="text-xs text-muted-foreground mb-1.5">Counts toward</p>
                 <MoneyTypeSelector value={moneyType} onChange={setMoneyType} />
+                <p className="text-[10px] text-muted-foreground mt-1.5">
+                    Only one category can count toward cash, and one toward bank. Picking one here
+                    clears it from whichever category held it before.
+                </p>
             </div>
             {error && <p className="text-xs text-destructive font-medium">{error}</p>}
         </div>

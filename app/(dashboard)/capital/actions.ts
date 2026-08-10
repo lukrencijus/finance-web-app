@@ -5,6 +5,34 @@ import { getCurrentDbUser } from "@/lib/current-user"
 import { revalidatePath } from "next/cache"
 import { capitalCategorySchema } from "@/lib/validations"
 
+/**
+ * At most one capital category per user may carry each moneyType, so assigning
+ * CASH or BANK moves the flag off whichever category held it before.
+ *
+ * The cash/bank expected-vs-actual breakdown in lib/sheets.ts sums every
+ * category of a given type, so allowing several would silently double-count a
+ * user's cash against a single stream of CASH transactions.
+ *
+ * Pass `exceptId` when updating, so a category keeping its own flag is not
+ * cleared out from under itself.
+ */
+async function releaseMoneyType(
+    client: Pick<typeof prisma, "capitalCategory">,
+    userId: string,
+    moneyType: "CASH" | "BANK" | null | undefined,
+    exceptId?: string,
+) {
+    if (!moneyType) return
+    await client.capitalCategory.updateMany({
+        where: {
+            userId,
+            moneyType,
+            ...(exceptId ? { id: { not: exceptId } } : {}),
+        },
+        data: { moneyType: null },
+    })
+}
+
 export async function createCapitalCategory(prevState: any, formData: FormData) {
     const user = await getCurrentDbUser()
 
@@ -26,8 +54,11 @@ export async function createCapitalCategory(prevState: any, formData: FormData) 
     if (existing) return { error: `A capital category named "${name}" already exists.` }
 
     try {
-        await prisma.capitalCategory.create({
-            data: { name, icon: icon || null, color, moneyType: moneyType ?? null, userId: user.id },
+        await prisma.$transaction(async (tx) => {
+            await releaseMoneyType(tx, user.id, moneyType)
+            await tx.capitalCategory.create({
+                data: { name, icon: icon || null, color, moneyType: moneyType ?? null, userId: user.id },
+            })
         })
         revalidatePath("/capitals")
         revalidatePath("/monthly-sheet")
@@ -55,9 +86,12 @@ export async function updateCapitalCategory(categoryId: string, formData: FormDa
     const category = await prisma.capitalCategory.findUnique({ where: { id: categoryId } })
     if (!category || category.userId !== user.id) return { error: "Not found or unauthorized" }
 
-    await prisma.capitalCategory.update({
-        where: { id: categoryId },
-        data: { name, icon: icon || null, color, moneyType: moneyType ?? null },
+    await prisma.$transaction(async (tx) => {
+        await releaseMoneyType(tx, user.id, moneyType, categoryId)
+        await tx.capitalCategory.update({
+            where: { id: categoryId },
+            data: { name, icon: icon || null, color, moneyType: moneyType ?? null },
+        })
     })
     revalidatePath("/capitals")
     revalidatePath("/monthly-sheet")

@@ -298,47 +298,53 @@ export async function getDashboardData(userId: string, selectedMonth?: number, s
               .reduce((sum, t) => sum + t.amount, 0)
         : null
 
-    // Spending by category (current month expenses)
-    const categoryMap = new Map<string, { name: string; icon: string | null; amount: number }>()
-    if (currentSheet) {
-        for (const t of currentSheet.transactions) {
-            if (t.type !== "EXPENSE") continue
-            const existing = categoryMap.get(t.categoryId)
+    // Per-category totals for one transaction type, keyed by categoryId.
+    type SheetWithTransactions = { transactions: (typeof sheets)[number]["transactions"] } | null
+    function sumByCategory(sheet: SheetWithTransactions, type: "INCOME" | "EXPENSE") {
+        const map = new Map<string, { name: string; icon: string | null; amount: number }>()
+        for (const t of sheet?.transactions ?? []) {
+            if (t.type !== type) continue
+            const existing = map.get(t.categoryId)
             if (existing) {
                 existing.amount += t.amount
             } else {
-                categoryMap.set(t.categoryId, {
+                map.set(t.categoryId, {
                     name: t.category.name,
                     icon: t.category.icon ?? null,
                     amount: t.amount,
                 })
             }
         }
+        return map
     }
-    const categoryBreakdown = Array.from(categoryMap.values())
-        .sort((a, b) => b.amount - a.amount)
-        .slice(0, 7)
+
+    /**
+     * Top categories for the selected month, each carrying the same category's
+     * total from the previous month so the dashboard can show a delta.
+     *
+     * `prevAmount` is null when there is no previous sheet at all (nothing to
+     * compare against) but 0 when the sheet exists and the category simply had
+     * no activity - the widget renders those differently ("new" vs "+X €").
+     * Note this only covers categories active *this* month: one that was used
+     * last month and dropped to zero has no bar to hang a delta on.
+     */
+    function breakdownWithDelta(type: "INCOME" | "EXPENSE") {
+        const current = sumByCategory(currentSheet, type)
+        const previous = prevSheet ? sumByCategory(prevSheet, type) : null
+        return Array.from(current.entries())
+            .map(([categoryId, entry]) => ({
+                ...entry,
+                prevAmount: previous ? (previous.get(categoryId)?.amount ?? 0) : null,
+            }))
+            .sort((a, b) => b.amount - a.amount)
+            .slice(0, 7)
+    }
+
+    // Spending by category (current month expenses)
+    const categoryBreakdown = breakdownWithDelta("EXPENSE")
 
     // Income by category (current month)
-    const incomeCategoryMap = new Map<string, { name: string; icon: string | null; amount: number }>()
-    if (currentSheet) {
-        for (const t of currentSheet.transactions) {
-            if (t.type !== "INCOME") continue
-            const existing = incomeCategoryMap.get(t.categoryId)
-            if (existing) {
-                existing.amount += t.amount
-            } else {
-                incomeCategoryMap.set(t.categoryId, {
-                    name: t.category.name,
-                    icon: t.category.icon ?? null,
-                    amount: t.amount,
-                })
-            }
-        }
-    }
-    const incomeCategoryBreakdown = Array.from(incomeCategoryMap.values())
-        .sort((a, b) => b.amount - a.amount)
-        .slice(0, 7)
+    const incomeCategoryBreakdown = breakdownWithDelta("INCOME")
 
     // Recent transactions (all sheets, last 5)
     const recentTransactions = await prisma.transaction.findMany({
