@@ -6,6 +6,7 @@ import { Home, CalendarDays, Settings, LayoutGrid, Wallet, RefreshCw, LogOut, Me
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { signOut } from "next-auth/react"
+import { LinkPendingIndicator } from "@/components/link-pending-indicator"
 
 interface MobileBottomNavProps {
     isAdmin: boolean
@@ -66,7 +67,13 @@ export function MobileBottomNav({ isAdmin }: MobileBottomNavProps) {
                                         isActive ? "text-primary bg-primary/10" : "text-muted-foreground active:scale-90"
                                     )}
                                 >
-                                    <Icon className={cn("size-6 transition-transform", isActive && "stroke-[2.5px] scale-110")} />
+                                    {/* Spinner takes the icon's place while the
+                                        route loads. Primary colour so it reads
+                                        as activity against the dim inactive
+                                        icons around it. */}
+                                    <LinkPendingIndicator spinnerClassName="size-6 text-primary">
+                                        <Icon className={cn("size-6 transition-transform", isActive && "stroke-[2.5px] scale-110")} />
+                                    </LinkPendingIndicator>
                                 </Link>
                             )
                         })}
@@ -99,7 +106,9 @@ export function MobileBottomNav({ isAdmin }: MobileBottomNavProps) {
                                     className="flex items-center gap-4 px-4 py-4 rounded-[1.5rem] hover:bg-primary/10 active:bg-primary/20 transition-all group"
                                 >
                                     <div className="flex items-center justify-center size-10 bg-primary/5 rounded-2xl group-hover:bg-primary/20 transition-colors">
-                                        <Icon className="size-5 text-primary" />
+                                        <LinkPendingIndicator spinnerClassName="size-5 text-primary">
+                                            <Icon className="size-5 text-primary" />
+                                        </LinkPendingIndicator>
                                     </div>
                                     <span className="text-sm font-semibold tracking-tight">{label}</span>
                                 </Link>

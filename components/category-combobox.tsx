@@ -26,6 +26,17 @@ type Props = {
     compact?: boolean
 }
 
+/**
+ * Strip diacritics and lowercase so "sviesa" matches "Šviesa" and "ISLAIDOS"
+ * matches "Išlaidos" - typing Lithuanian letters on a US layout is common.
+ */
+function normalize(value: string): string {
+    return value
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .toLowerCase()
+}
+
 /** Colour dot for capital categories, emoji for transaction categories. */
 function CategoryMarker({ category, fallbackIcon }: { category: ComboboxCategory; fallbackIcon: string }) {
     if (category.color) {
@@ -40,30 +51,24 @@ function CategoryMarker({ category, fallbackIcon }: { category: ComboboxCategory
 }
 
 /**
- * Strip diacritics and lowercase so "sviesa" matches "Šviesa" and "ISLAIDOS"
- * matches "Išlaidos" - typing Lithuanian letters on a US layout is common.
- */
-function normalize(value: string): string {
-    return value
-        .normalize("NFD")
-        .replace(/\p{Diacritic}/gu, "")
-        .toLowerCase()
-}
-
-/**
  * Searchable replacement for the native category <select>.
  *
- * The visible text input is unnamed, so it is never submitted - it only drives
- * filtering and carries the `required` constraint so the browser still blocks
- * an empty submit. The selected id travels in a hidden input under `name`,
- * which keeps every server action's FormData shape unchanged.
+ * The trigger is an input rather than a button so that `required` still blocks
+ * an empty submit - it has no `name`, so it is never submitted. The selected id
+ * travels in a hidden input under `name`, keeping every server action's
+ * FormData shape unchanged.
+ *
+ * Search is opt-in, not automatic: opening the list shows every category and,
+ * on touch devices, deliberately does not focus anything. Raising the keyboard
+ * on open would cover the very list the user wants to scroll. Typing is one
+ * extra tap away, on the search row.
  */
 export function CategoryCombobox({
     categories,
     name = "categoryId",
     defaultValue = "",
     fallbackIcon = "•",
-    placeholder = "Search categories...",
+    placeholder = "Select a category...",
     emptyMessage = "No matching categories.",
     required = false,
     compact = false,
@@ -71,18 +76,16 @@ export function CategoryCombobox({
     const selectedFromDefault = categories.find(c => c.id === defaultValue) ?? null
 
     const [selected, setSelected] = useState<ComboboxCategory | null>(selectedFromDefault)
-    const [query, setQuery] = useState(selectedFromDefault?.name ?? "")
+    const [query, setQuery] = useState("")
     const [isOpen, setIsOpen] = useState(false)
     const [highlight, setHighlight] = useState(0)
 
     const rootRef = useRef<HTMLDivElement>(null)
-    const inputRef = useRef<HTMLInputElement>(null)
+    const triggerRef = useRef<HTMLInputElement>(null)
+    const searchRef = useRef<HTMLInputElement>(null)
     const listRef = useRef<HTMLUListElement>(null)
 
-    // While the list is open the input holds the raw search text, so filter on it.
-    // While closed it holds the selected name, which would filter down to one row.
     const filtered = useMemo(() => {
-        if (!isOpen) return categories
         const q = normalize(query.trim())
         if (!q) return categories
         const matches = categories.filter(c => normalize(c.name).includes(q))
@@ -92,15 +95,14 @@ export function CategoryCombobox({
             const bPrefix = normalize(b.name).startsWith(q) ? 0 : 1
             return aPrefix - bPrefix
         })
-    }, [categories, query, isOpen])
+    }, [categories, query])
 
-    // Close on outside click, reverting any half-typed text to the selection.
     useEffect(() => {
         if (!isOpen) return
         const onPointerDown = (e: MouseEvent | TouchEvent) => {
             if (rootRef.current?.contains(e.target as Node)) return
             setIsOpen(false)
-            setQuery(selected?.name ?? "")
+            setQuery("")
         }
         document.addEventListener("mousedown", onPointerDown)
         document.addEventListener("touchstart", onPointerDown)
@@ -108,7 +110,7 @@ export function CategoryCombobox({
             document.removeEventListener("mousedown", onPointerDown)
             document.removeEventListener("touchstart", onPointerDown)
         }
-    }, [isOpen, selected])
+    }, [isOpen])
 
     // Keep the highlighted row in view when navigating with the keyboard.
     useEffect(() => {
@@ -120,42 +122,39 @@ export function CategoryCombobox({
         setIsOpen(true)
         setQuery("")
         setHighlight(Math.max(0, categories.findIndex(c => c.id === selected?.id)))
+        // Mouse users expect to start typing straight away; touch users would
+        // just get a keyboard covering the list they wanted to scroll.
+        const isTouch = typeof window !== "undefined"
+            && window.matchMedia("(pointer: coarse)").matches
+        if (!isTouch) requestAnimationFrame(() => searchRef.current?.focus())
+    }
+
+    const close = () => {
+        setIsOpen(false)
+        setQuery("")
     }
 
     const commit = (category: ComboboxCategory) => {
         setSelected(category)
-        setQuery(category.name)
-        setIsOpen(false)
-        inputRef.current?.blur()
+        close()
     }
 
-    const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const onListKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "ArrowDown" || e.key === "ArrowUp") {
             e.preventDefault()
-            if (!isOpen) { open(); return }
             if (filtered.length === 0) return
             const step = e.key === "ArrowDown" ? 1 : -1
             setHighlight(h => (h + step + filtered.length) % filtered.length)
             return
         }
         if (e.key === "Enter") {
-            // Only swallow Enter while choosing; otherwise let it submit the form.
-            if (!isOpen) return
             e.preventDefault()
             const pick = filtered[highlight]
             if (pick) commit(pick)
             return
         }
-        if (e.key === "Escape") {
-            if (!isOpen) return
-            e.preventDefault()
-            setIsOpen(false)
-            setQuery(selected?.name ?? "")
-            return
-        }
-        if (e.key === "Tab" && isOpen) {
-            setIsOpen(false)
-            setQuery(selected?.name ?? "")
+        if (e.key === "Escape" || e.key === "Tab") {
+            close()
         }
     }
 
@@ -166,31 +165,39 @@ export function CategoryCombobox({
             <input type="hidden" name={name} value={selected?.id ?? ""} />
 
             <div className="relative">
-                {isOpen && (
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-                )}
                 <input
-                    ref={inputRef}
+                    ref={triggerRef}
                     type="text"
                     role="combobox"
                     aria-expanded={isOpen}
                     aria-controls={`${name}-listbox`}
-                    aria-autocomplete="list"
                     autoComplete="off"
                     required={required}
-                    value={query}
-                    placeholder={selected ? selected.name : placeholder}
-                    onFocus={open}
-                    onClick={() => { if (!isOpen) open() }}
-                    onChange={e => {
-                        if (!isOpen) setIsOpen(true)
-                        setQuery(e.target.value)
-                        setHighlight(0)
+                    // Read-only in practice: typing happens in the search row.
+                    // Not the `readOnly` attribute though, which would exempt
+                    // this field from constraint validation and lose `required`.
+                    onKeyDown={e => {
+                        if (e.key === "Tab") return
+                        e.preventDefault()
+                        if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+                            if (!isOpen) open()
+                        }
                     }}
-                    onKeyDown={onKeyDown}
+                    // Suppress focus on tap so mobile keyboards stay down, and
+                    // tell the OS not to raise one even if focus arrives via
+                    // form validation.
+                    inputMode="none"
+                    onMouseDown={e => {
+                        e.preventDefault()
+                        if (isOpen) close()
+                        else open()
+                    }}
+                    value={selected?.name ?? ""}
+                    placeholder={placeholder}
+                    onChange={() => { /* value is driven by selection only */ }}
                     onInvalid={e => (e.target as HTMLInputElement).setCustomValidity("Please select a category")}
                     onInput={e => (e.target as HTMLInputElement).setCustomValidity("")}
-                    className={`w-full border border-input bg-background text-foreground rounded-xl ${padding} ${isOpen ? "pl-8" : ""} pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-ring`}
+                    className={`w-full border border-input bg-background text-foreground rounded-xl ${padding} pr-8 text-base lg:text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring`}
                 />
                 <ChevronDown
                     className={`absolute right-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -198,35 +205,52 @@ export function CategoryCombobox({
             </div>
 
             {isOpen && (
-                <ul
-                    ref={listRef}
-                    id={`${name}-listbox`}
-                    role="listbox"
-                    className="absolute z-50 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-border bg-card shadow-lg py-1"
-                >
-                    {filtered.length === 0 ? (
-                        <li className="px-3 py-2 text-sm text-muted-foreground">
-                            {categories.length === 0 ? emptyMessage : "No matching categories."}
-                        </li>
-                    ) : (
-                        filtered.map((c, i) => (
-                            <li
-                                key={c.id}
-                                role="option"
-                                aria-selected={c.id === selected?.id}
-                                onMouseEnter={() => setHighlight(i)}
-                                // mousedown, not click - click fires after the input's blur.
-                                onMouseDown={e => { e.preventDefault(); commit(c) }}
-                                className={`flex items-center gap-2 px-3 py-2 text-sm cursor-pointer ${
-                                    i === highlight ? "bg-muted text-foreground" : "text-foreground"
-                                }`}
-                            >
-                                <CategoryMarker category={c} fallbackIcon={fallbackIcon} />
-                                <span className="truncate">{c.name}</span>
+                <div className="absolute z-50 mt-1 w-full rounded-xl border border-border bg-card shadow-lg overflow-hidden">
+                    {/* Optional search. Only steals focus when tapped. */}
+                    <div className="relative border-b border-border">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+                        <input
+                            ref={searchRef}
+                            type="text"
+                            autoComplete="off"
+                            value={query}
+                            placeholder="Search..."
+                            onChange={e => { setQuery(e.target.value); setHighlight(0) }}
+                            onKeyDown={onListKeyDown}
+                            className="w-full bg-transparent text-foreground pl-8 pr-3 py-2 text-base lg:text-sm focus:outline-none"
+                        />
+                    </div>
+
+                    <ul
+                        ref={listRef}
+                        id={`${name}-listbox`}
+                        role="listbox"
+                        className="max-h-56 overflow-y-auto py-1 overscroll-contain"
+                    >
+                        {filtered.length === 0 ? (
+                            <li className="px-3 py-2 text-sm text-muted-foreground">
+                                {categories.length === 0 ? emptyMessage : "No matching categories."}
                             </li>
-                        ))
-                    )}
-                </ul>
+                        ) : (
+                            filtered.map((c, i) => (
+                                <li
+                                    key={c.id}
+                                    role="option"
+                                    aria-selected={c.id === selected?.id}
+                                    onMouseEnter={() => setHighlight(i)}
+                                    // mousedown, not click - click fires after blur.
+                                    onMouseDown={e => { e.preventDefault(); commit(c) }}
+                                    className={`flex items-center gap-2 px-3 py-2.5 lg:py-2 text-base lg:text-sm cursor-pointer ${
+                                        i === highlight ? "bg-muted text-foreground" : "text-foreground"
+                                    }`}
+                                >
+                                    <CategoryMarker category={c} fallbackIcon={fallbackIcon} />
+                                    <span className="truncate">{c.name}</span>
+                                </li>
+                            ))
+                        )}
+                    </ul>
+                </div>
             )}
         </div>
     )

@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Button } from "./ui/button"
 import { cn } from "@/lib/utils"
+import { LinkPendingIndicator } from "@/components/link-pending-indicator"
 
 type Props = {
     href: string
@@ -33,7 +34,11 @@ export const NavButton = ({
             )}
         >
             <Link href={href}>
-                {label}
+                {/* Label stays in place as an invisible spacer, so the button
+                    keeps its width instead of resizing mid-navigation. */}
+                <LinkPendingIndicator spinnerClassName="size-4">
+                    {label}
+                </LinkPendingIndicator>
             </Link>
         </Button>
     )

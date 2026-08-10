@@ -537,7 +537,10 @@ export function DashboardClient({
     useEffect(() => {
         if (!transactionsChartRef.current) return
 
-        const labels = data.dailyActivity.map((d) => `${d.day} ${MONTH_SHORT[data.currentMonth - 1]}`)
+        // Just the day number - the month is already fixed by the dashboard's
+        // month picker, and "1 Aug ... 31 Aug" does not fit 31 times over.
+        // The tooltip still spells the full date out.
+        const labels = data.dailyActivity.map((d) => String(d.day))
         const incomeData = data.dailyActivity.map((d) => d.income || null)
         const expenseData = data.dailyActivity.map((d) => d.expenses || null)
 
@@ -573,6 +576,8 @@ export function DashboardClient({
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
+                            title: (items) =>
+                                `${items[0]?.label} ${MONTH_SHORT[data.currentMonth - 1]}`,
                             label: (ctx) => `${ctx.dataset.label}: ${fmt(Number(ctx.raw))}`,
                         },
                     },
@@ -584,7 +589,10 @@ export function DashboardClient({
                             font: { size: 11 },
                             color: "#888",
                             autoSkip: true,
-                            maxTicksLimit: 16,
+                            // The chart scrolls horizontally on mobile, so there is
+                            // room for every day; Chart.js still drops labels by
+                            // itself when the container really is too narrow.
+                            maxTicksLimit: 31,
                             maxRotation: 0,
                         },
                     },
@@ -630,8 +638,13 @@ export function DashboardClient({
                 />
             </div>
 
-            {/* Header Area with Settings Toggle */}
-            <div className="flex items-center justify-between mb-2">
+            {/*
+             * Header. Side by side on desktop, stacked on mobile - "Customize
+             * Dashboard" is a wide button next to a two-line title, and
+             * justify-between + items-center left it floating against neither
+             * line on a narrow screen.
+             */}
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between mb-2">
                 <div>
                     <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-1">
                         {monthLabel} - overview
@@ -639,10 +652,10 @@ export function DashboardClient({
                     <h1 className="text-2xl font-semibold text-foreground">Financial Status</h1>
                 </div>
 
-                <div className="relative">
-                    <button 
+                <div className="relative shrink-0">
+                    <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="flex items-center gap-2 text-xs border border-border rounded-xl px-3 py-2 hover:bg-muted transition-colors font-medium bg-card"
+                        className="w-full lg:w-auto flex items-center justify-center gap-2 text-xs border border-border rounded-xl px-3 py-2.5 lg:py-2 hover:bg-muted transition-colors font-medium bg-card"
                     >
                         Customize Dashboard
                     </button>
@@ -672,8 +685,12 @@ export function DashboardClient({
                 </div>
             </div>
 
-            {/* Always Shown: Metric cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {/*
+             * One card per row on a phone. Two-up meant ~160px of width each,
+             * which cramped both the label and the amount; full width lets the
+             * numbers breathe. Back to 2 and then 4 across as space allows.
+             */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <MetricCard label="Total income"   value={data.currentIncome}   format={fmt} d={incomeDelta}   positiveIsGood={true} />
                 <MetricCard label="Total expenses" value={data.currentExpenses} format={fmt} d={expensesDelta} positiveIsGood={false} />
                 <MetricCard label="Net saved"      value={data.netSaved}        format={fmt} d={netDelta}      positiveIsGood={true} />
@@ -835,8 +852,17 @@ export function DashboardClient({
                             <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-3">
                                 Transactions
                             </p>
-                            <div className="relative flex-1 min-h-60">
-                                <canvas ref={transactionsChartRef} />
+                            {/*
+                             * A month is up to 31 days x 2 bars. Squeezed into a
+                             * phone-width card that is ~3px per bar with most day
+                             * labels dropped. Give each day a fixed width and let
+                             * the chart scroll sideways instead; on desktop there
+                             * is room, so it goes back to filling the card.
+                             */}
+                            <div className="flex-1 min-h-60 overflow-x-auto overflow-y-hidden overscroll-x-contain">
+                                <div className="relative h-full min-h-60 min-w-[680px] lg:min-w-0">
+                                    <canvas ref={transactionsChartRef} />
+                                </div>
                             </div>
                             <div className="flex gap-4 mt-3">
                                 <Legend color="#3B82F6" label="Income" />

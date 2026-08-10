@@ -128,3 +128,22 @@
     @apply font-sans;
   }
 }
+
+/*
+ * iOS Safari zooms the whole page in whenever a focused form control has a
+ * font-size below 16px, and never zooms back out. Most fields here are text-sm
+ * (14px), which made every tap jump the layout. Forcing 16px below the lg
+ * breakpoint is the only fix that does not involve disabling user-scalable,
+ * which would break pinch-zoom for everyone.
+ *
+ * Deliberately outside @layer base: unlayered rules outrank every cascade
+ * layer, so this beats Tailwind's own text-sm utility on the same element.
+ * Inside @layer base it would lose and the zoom would stay.
+ */
+@media (max-width: 1023px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}

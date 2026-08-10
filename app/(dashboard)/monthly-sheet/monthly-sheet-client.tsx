@@ -22,6 +22,7 @@ import { CapitalCategoryManager } from "@/components/capital-category-manager"
 import { type CapitalCategory } from "@/components/capital-category-manager-content"
 import { MonthPicker } from "@/components/month-picker"
 import { CategoryCombobox } from "@/components/category-combobox"
+import { AmountInput } from "@/components/amount-input"
 import { MonthDatePicker } from "@/components/month-date-picker"
 import { formatCurrency, formatDateShort, toISODate } from "@/lib/utils"
 import { ConfirmDialog } from "@/components/confirm-dialog"
@@ -416,14 +417,14 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                 </p>
             )}
 
-            <div className={`grid gap-3 ${mode === "split" || mode === "recurring" ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}>
+            {/* Stacked on a phone for the same reason as the edit row: 16px
+                fields need the full width to not crowd. */}
+            <div className={`grid gap-3 items-end ${mode === "split" || mode === "recurring" ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}>
                 <div>
                     <label className="text-xs text-muted-foreground mb-1 block font-medium">
                         {mode === "split" ? "Total Amount (€)" : "Amount (€)"}
                     </label>
-                    <input name="amount" type="number" step="0.01" min="0.01" placeholder="0.00" required
-                        defaultValue={state?.values?.amount ?? ""}
-                        className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <AmountInput defaultValue={state?.values?.amount ?? ""} required />
                 </div>
                 <div>
                     <label className="text-xs text-muted-foreground mb-1 block font-medium">Date</label>
@@ -436,21 +437,21 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                     />
                 </div>
                 {mode === "split" && (
-                    <div className="col-span-2 sm:col-span-1">
+                    <div className="sm:col-span-1">
                         <label className="text-xs text-muted-foreground mb-1 block font-medium">Months</label>
-                        <input name="splitMonths" type="number" min="2" max="24" value={splitMonths}
+                        <input name="splitMonths" type="number" inputMode="numeric" min="2" max="24" value={splitMonths}
                             onChange={e => setSplitMonths(e.target.value === "" ? "" : parseInt(e.target.value) || "")}
                             onBlur={() => setSplitMonths(v => v === "" ? 3 : Math.min(24, Math.max(2, v)))}
-                            className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                            className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-base lg:text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                     </div>
                 )}
                 {mode === "recurring" && (
-                    <div className="col-span-2 sm:col-span-1">
+                    <div className="sm:col-span-1">
                         <label className="text-xs text-muted-foreground mb-1 block font-medium">Repeat every (months)</label>
-                        <input name="recurringIntervalMonths" type="number" min="1" max="24" value={recurringInterval}
+                        <input name="recurringIntervalMonths" type="number" inputMode="numeric" min="1" max="24" value={recurringInterval}
                             onChange={e => setRecurringInterval(e.target.value === "" ? "" : parseInt(e.target.value) || "")}
                             onBlur={() => setRecurringInterval(v => v === "" ? 1 : Math.min(24, Math.max(1, v)))}
-                            className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                            className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-base lg:text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                     </div>
                 )}
             </div>
@@ -483,19 +484,19 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                 <label className="text-xs text-muted-foreground mb-1 block font-medium">Description (optional)</label>
                 <input name="description" type="text" placeholder="e.g. Grocery run"
                     defaultValue={state?.values?.description ?? ""}
-                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-base lg:text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
 
             {state?.error && <p className="text-destructive text-xs font-medium">{state.error}</p>}
 
-            <div className="flex gap-2 pt-1">
+            <div className="grid grid-cols-2 gap-2 pt-1 lg:flex">
                 <button type="submit" disabled={isPending}
-                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
+                    className="flex items-center justify-center lg:justify-start gap-1.5 bg-primary text-primary-foreground border border-transparent px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
                     <Check className="size-3.5" />
                     {isPending ? "Saving..." : mode === "split" ? `Split into ${splitMonths} months` : "Save"}
                 </button>
                 <button type="button" onClick={handleClose}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
+                    className="flex items-center justify-center lg:justify-start gap-1.5 border border-border px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
                     <XCircle className="size-3.5" />
                     Cancel
                 </button>
@@ -755,14 +756,17 @@ function TransactionRow({
 
             {/* Expandable action bar */}
             {!readOnly && isOpen && (
-                <div className="pb-3 flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div
+                    className={`pb-3 gap-2 animate-in fade-in slide-in-from-top-1 duration-150
+                        grid ${isSplit ? "grid-cols-2" : "grid-cols-3"} lg:flex lg:items-center`}
+                >
                     <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            onEdit(); 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit();
                             onToggle();
                         }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors"
+                        className="flex items-center justify-center lg:justify-start gap-1.5 px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors"
                     >
                         <Pencil className="size-3.5" /> Edit
                     </button>
@@ -770,18 +774,24 @@ function TransactionRow({
                         <button
                             onClick={(e) => { e.stopPropagation(); handleToggleRecurring() }}
                             disabled={recurringPending || isPastMonth}
-                            title={isPastMonth ? "Recurring status can't be changed for past months" : undefined}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                            // "Make recurring" / "Stop recurring" made this button
+                            // twice the width of its neighbours on a phone. The
+                            // colour already carries the on/off state, so the label
+                            // only has to name the thing.
+                            title={isPastMonth
+                                ? "Recurring status can't be changed for past months"
+                                : t.isRecurring ? "Stop repeating this transaction" : "Repeat this every month"}
+                            className={`flex items-center justify-center lg:justify-start gap-1.5 px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                                 t.isRecurring
                                     ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20"
                                     : "bg-muted hover:bg-muted/80 text-foreground"
                             }`}
                         >
                             <RefreshCw className="size-3.5" />
-                            {t.isRecurring ? "Stop recurring" : "Make recurring"}
+                            {t.isRecurring ? "Repeating" : "Repeat"}
                         </button>
                     )}
-                    <div onClick={(e) => e.stopPropagation()} className="ml-auto">
+                    <div onClick={(e) => e.stopPropagation()} className="lg:ml-auto">
                         <DeleteButton transaction={t} />
                     </div>
                 </div>
@@ -823,12 +833,13 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
             }}
             className="py-3 px-3 my-1 space-y-2 bg-muted/50 border border-border rounded-xl"
         >
-            <div className="grid grid-cols-2 gap-2">
+            {/* Full width each on a phone: at 16px (which iOS requires to not
+                zoom) two half-width money/date fields no longer fit side by
+                side without the contents crowding. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-end">
                 <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Amount (€)</label>
-                    <input name="amount" type="number" step="0.01" min="0.01"
-                        defaultValue={t.amount} required
-                        className="w-full border border-input bg-background text-foreground rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    <AmountInput defaultValue={t.amount} required compact />
                 </div>
                 <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Date</label>
@@ -868,19 +879,19 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
                 <label className="text-xs text-muted-foreground mb-1 block">Description (optional)</label>
                 <input name="description" type="text" defaultValue={t.description ?? ""}
                     placeholder="e.g. Grocery run"
-                    className="w-full border border-input bg-background text-foreground rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                    className="w-full border border-input bg-background text-foreground rounded-xl px-2 py-1.5 text-base lg:text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
 
             {error && <p className="text-destructive text-xs">{error}</p>}
 
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2 lg:flex">
                 <button type="submit" disabled={isPending}
-                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
+                    className="flex items-center justify-center lg:justify-start gap-1.5 bg-primary text-primary-foreground border border-transparent px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
                     <Check className="size-3.5" />
                     {isPending ? "Saving..." : "Save"}
                 </button>
                 <button type="button" onClick={onDone}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
+                    className="flex items-center justify-center lg:justify-start gap-1.5 border border-border px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
                     <XCircle className="size-3.5" />
                     Cancel
                 </button>
@@ -927,7 +938,7 @@ function DeleteButton({ transaction }: { transaction: Transaction }) {
     return (
         <>
             <button onClick={handleDelete} disabled={isPending}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 disabled:opacity-30 transition-colors">
+                className="w-full lg:w-auto flex items-center justify-center lg:justify-start gap-1.5 px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 disabled:opacity-30 transition-colors">
                 <Trash2 className="size-3.5" /> Delete
             </button>
 
@@ -1076,21 +1087,19 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
 
             <div>
                 <label className="text-xs text-muted-foreground mb-1 block font-medium">Amount (€)</label>
-                <input name="amount" type="number" step="0.01" min="0.01" placeholder="0.00" required
-                    defaultValue={state?.values?.amount ?? ""}
-                    className="w-full border border-input bg-background text-foreground rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                <AmountInput defaultValue={state?.values?.amount ?? ""} required />
             </div>
 
             {state?.error && <p className="text-destructive text-xs font-medium">{state.error}</p>}
 
-            <div className="flex gap-2 pt-1">
+            <div className="grid grid-cols-2 gap-2 pt-1 lg:flex">
                 <button type="submit" disabled={isPending}
-                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
+                    className="flex items-center justify-center lg:justify-start gap-1.5 bg-primary text-primary-foreground border border-transparent px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
                     <Check className="size-3.5" />
                     {isPending ? "Saving..." : "Save"}
                 </button>
                 <button type="button" onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
+                    className="flex items-center justify-center lg:justify-start gap-1.5 border border-border px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
                     <XCircle className="size-3.5" />
                     Cancel
                 </button>
@@ -1274,24 +1283,16 @@ function EditCapitalRow({ capital, onDone }: { capital: Capital; onDone: () => v
             </p>
             <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Amount (€)</label>
-                <input
-                    name="amount"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    defaultValue={capital.amount}
-                    required
-                    className="w-full border border-input bg-background text-foreground rounded-xl px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
+                <AmountInput defaultValue={capital.amount} required compact />
             </div>
             {error && <p className="text-destructive text-xs">{error}</p>}
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2 lg:flex">
                 <button type="submit" disabled={isPending}
-                    className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
+                    className="flex items-center justify-center lg:justify-start gap-1.5 bg-primary text-primary-foreground border border-transparent px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
                     <Check className="size-3.5" /> {isPending ? "Saving..." : "Save"}
                 </button>
                 <button type="button" onClick={onDone}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
+                    className="flex items-center justify-center lg:justify-start gap-1.5 border border-border px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
                     <XCircle className="size-3.5" /> Cancel
                 </button>
             </div>

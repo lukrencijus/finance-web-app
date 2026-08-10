@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma"
 import { getCurrentDbUser } from "@/lib/current-user"
 import { revalidatePath } from "next/cache"
-import { transactionSchema, capitalSchema } from "@/lib/validations"
+import { transactionSchema, capitalSchema, parseAmount } from "@/lib/validations"
 
 async function deleteSheetIfEmptyFuture(sheetId: string) {
     const now = new Date()
@@ -107,7 +107,7 @@ export async function createTransaction(prevState: any, formData: FormData) {
     }
 
     const parsed = transactionSchema.safeParse({
-        amount: parseFloat(String(formData.get("amount") ?? "")),
+        amount: parseAmount(formData.get("amount")),
         description: String(formData.get("description") ?? "").trim() || undefined,
         date: String(formData.get("date") ?? "").trim(),
         type: String(formData.get("type") ?? "").trim(),
@@ -203,7 +203,7 @@ export async function updateTransaction(transactionId: string, formData: FormDat
     const user = await getCurrentDbUser()
 
     const parsed = transactionSchema.safeParse({
-        amount: parseFloat(String(formData.get("amount") ?? "")),
+        amount: parseAmount(formData.get("amount")),
         description: String(formData.get("description") ?? "").trim() || undefined,
         date: String(formData.get("date") ?? "").trim(),
         type: String(formData.get("type") ?? "").trim(),
@@ -263,7 +263,7 @@ export async function createCapital(prevState: any, formData: FormData) {
     }
 
     const parsed = capitalSchema.safeParse({
-        amount: parseFloat(String(formData.get("amount") ?? "")),
+        amount: parseAmount(formData.get("amount")),
         capitalCategoryId: String(formData.get("capitalCategoryId") ?? "").trim(),
         monthlySheetId: String(formData.get("monthlySheetId") ?? "").trim(),
     })
@@ -297,7 +297,7 @@ export async function createCapital(prevState: any, formData: FormData) {
 export async function updateCapital(capitalId: string, formData: FormData) {
     const user = await getCurrentDbUser()
 
-    const amount = parseFloat(String(formData.get("amount") ?? ""))
+    const amount = parseAmount(formData.get("amount"))
     if (isNaN(amount) || amount <= 0) return { error: "Amount must be greater than 0" }
 
     const capital = await prisma.capital.findUnique({
@@ -348,7 +348,7 @@ export async function toggleRecurring(transactionId: string) {
 export async function createSplitTransaction(prevState: any, formData: FormData) {
     const user = await getCurrentDbUser()
 
-    const amount = parseFloat(String(formData.get("amount") ?? ""))
+    const amount = parseAmount(formData.get("amount"))
     const description = String(formData.get("description") ?? "").trim() || undefined
     const date = String(formData.get("date") ?? "").trim()
     const type = String(formData.get("type") ?? "").trim()

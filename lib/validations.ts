@@ -3,6 +3,19 @@ import { z } from "zod"
 // Matches a single emoji (can be multi-codepoint)
 const singleEmojiRegex = /^\p{RGI_Emoji}$/v
 
+/**
+ * Parse a money field submitted by AmountInput.
+ *
+ * The field is a text input so that a Lithuanian keyboard's comma key works,
+ * which means "12,50" and "12.50" both have to arrive here as 12.5. Returns
+ * NaN for anything unparseable and lets the zod schema produce the message.
+ */
+export function parseAmount(raw: FormDataEntryValue | null): number {
+  const normalized = String(raw ?? "").trim().replace(",", ".")
+  if (normalized === "") return NaN
+  return parseFloat(normalized)
+}
+
 export const categorySchema = z.object({
   name: z.string()
     .min(2, "Name must be at least 2 characters")
