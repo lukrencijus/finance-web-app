@@ -136,6 +136,10 @@ export function CategoryCombobox({
 
     const commit = (category: ComboboxCategory) => {
         setSelected(category)
+        // React drives the trigger's value, so no `input` event ever fires and
+        // the custom validity set by onInvalid would otherwise stick forever,
+        // keeping the field invalid even after a category is picked.
+        triggerRef.current?.setCustomValidity("")
         close()
     }
 
