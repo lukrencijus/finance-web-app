@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import { useBodyScrollLock } from "@/components/use-body-scroll-lock"
 import { ChevronDown, Search } from "lucide-react"
 
 type ComboboxCategory = {
@@ -84,6 +85,9 @@ export function CategoryCombobox({
     // clipped and nearly impossible to scroll on touch screens.
     const [isMobile, setIsMobile] = useState(false)
     const [highlight, setHighlight] = useState(0)
+
+    // Mobile: the options open as a bottom sheet - keep the page behind it still.
+    useBodyScrollLock(isOpen && isMobile)
 
     const rootRef = useRef<HTMLDivElement>(null)
     // The mobile sheet lives in a portal, outside rootRef's subtree.

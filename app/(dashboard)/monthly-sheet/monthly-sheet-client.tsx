@@ -22,6 +22,7 @@ import { CapitalCategoryManager } from "@/components/capital-category-manager"
 import { type CapitalCategory } from "@/components/capital-category-manager-content"
 import { MonthPicker } from "@/components/month-picker"
 import { CategoryCombobox } from "@/components/category-combobox"
+import { useBodyScrollLock } from "@/components/use-body-scroll-lock"
 import { AmountInput } from "@/components/amount-input"
 import { MonthDatePicker } from "@/components/month-date-picker"
 import { formatCurrency, formatDateShort, toISODate } from "@/lib/utils"
@@ -329,6 +330,8 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
     const [normalState, normalAction, normalPending] = useActionState(createTransaction, null)
     const [splitState, splitAction, splitPending] = useActionState(createSplitTransaction, null)
     const [isOpen, setIsOpen] = useState(false)
+    // Mobile: the form opens as a bottom sheet - keep the page behind it still.
+    useBodyScrollLock(isOpen)
     const [mode, setMode] = useState<FormMode>("normal")
     // "" is a valid transient state while the user is clearing the field to
     // type a new number - only clamped back to a real value on blur, so
@@ -1027,6 +1030,8 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
 }) {
     const [state, formAction, isPending] = useActionState(createCapital, null)
     const [isOpen, setIsOpen] = useState(false)
+    // Mobile: the form opens as a bottom sheet - keep the page behind it still.
+    useBodyScrollLock(isOpen)
     // Bumped on every failed submit so the form below remounts with the returned
     // values as defaultValue - React clears uncontrolled fields after any form
     // action call, even ones that return an error instead of succeeding.

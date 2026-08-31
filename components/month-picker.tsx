@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useBodyScrollLock } from "@/components/use-body-scroll-lock"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, ChevronDown, Calendar as CalendarIcon } from "lucide-react"
 
@@ -26,6 +27,8 @@ export function MonthPicker({
     isActualCurrentMonth?: boolean
 }) {
     const [isOpen, setIsOpen] = useState(false)
+    // Mobile: the picker opens as a bottom sheet - keep the page behind it still.
+    useBodyScrollLock(isOpen)
     const [viewYear, setViewYear] = useState(currentYear)
 
     const today = new Date()

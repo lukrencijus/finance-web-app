@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { CalendarDays } from "lucide-react"
 import { formatDate, toISODate } from "@/lib/utils"
+import { useBodyScrollLock } from "@/components/use-body-scroll-lock"
 
 type Props = {
     /** 1-12. The only month the picker can select from. */
@@ -46,6 +47,8 @@ export function MonthDatePicker({
 }: Props) {
     const [value, setValue] = useState(defaultValue)
     const [isOpen, setIsOpen] = useState(false)
+    // Mobile: the calendar opens as a bottom sheet - keep the page behind it still.
+    useBodyScrollLock(isOpen)
     const triggerRef = useRef<HTMLButtonElement>(null)
     // Both panels exist in the DOM at once (one hidden per breakpoint), so they
     // need separate refs - a shared one would only ever point at the last render.
