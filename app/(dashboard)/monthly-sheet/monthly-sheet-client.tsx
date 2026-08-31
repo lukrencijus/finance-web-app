@@ -489,14 +489,14 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
 
             {state?.error && <p className="text-destructive text-xs font-medium">{state.error}</p>}
 
-            <div className="grid grid-cols-2 gap-2 pt-1 lg:flex">
+            <div className="grid grid-cols-2 gap-2 pt-1">
                 <button type="submit" disabled={isPending}
-                    className="flex items-center justify-center lg:justify-start gap-1.5 bg-primary text-primary-foreground border border-transparent px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
+                    className="flex items-center justify-center gap-1.5 bg-primary text-primary-foreground border border-transparent px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
                     <Check className="size-3.5" />
                     {isPending ? "Saving..." : mode === "split" ? `Split into ${splitMonths} months` : "Save"}
                 </button>
                 <button type="button" onClick={handleClose}
-                    className="flex items-center justify-center lg:justify-start gap-1.5 border border-border px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                    className="flex items-center justify-center gap-1.5 border border-border px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
                     <XCircle className="size-3.5" />
                     Cancel
                 </button>
@@ -766,7 +766,7 @@ function TransactionRow({
                             onEdit();
                             onToggle();
                         }}
-                        className="flex items-center justify-center lg:justify-start gap-1.5 px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors"
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors"
                     >
                         <Pencil className="size-3.5" /> Edit
                     </button>
@@ -781,7 +781,7 @@ function TransactionRow({
                             title={isPastMonth
                                 ? "Recurring status can't be changed for past months"
                                 : t.isRecurring ? "Stop repeating this transaction" : "Repeat this every month"}
-                            className={`flex items-center justify-center lg:justify-start gap-1.5 px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                            className={`flex items-center justify-center gap-1.5 px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                                 t.isRecurring
                                     ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20"
                                     : "bg-muted hover:bg-muted/80 text-foreground"
@@ -884,14 +884,14 @@ function EditTransactionRow({ transaction: t, categories, month, year, sheetId, 
 
             {error && <p className="text-destructive text-xs">{error}</p>}
 
-            <div className="grid grid-cols-2 gap-2 lg:flex">
+            <div className="grid grid-cols-2 gap-2">
                 <button type="submit" disabled={isPending}
-                    className="flex items-center justify-center lg:justify-start gap-1.5 bg-primary text-primary-foreground border border-transparent px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
+                    className="flex items-center justify-center gap-1.5 bg-primary text-primary-foreground border border-transparent px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
                     <Check className="size-3.5" />
                     {isPending ? "Saving..." : "Save"}
                 </button>
                 <button type="button" onClick={onDone}
-                    className="flex items-center justify-center lg:justify-start gap-1.5 border border-border px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                    className="flex items-center justify-center gap-1.5 border border-border px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
                     <XCircle className="size-3.5" />
                     Cancel
                 </button>
@@ -938,7 +938,7 @@ function DeleteButton({ transaction }: { transaction: Transaction }) {
     return (
         <>
             <button onClick={handleDelete} disabled={isPending}
-                className="w-full lg:w-auto flex items-center justify-center lg:justify-start gap-1.5 px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 disabled:opacity-30 transition-colors">
+                className="w-full lg:w-auto flex items-center justify-center gap-1.5 px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 disabled:opacity-30 transition-colors">
                 <Trash2 className="size-3.5" /> Delete
             </button>
 
@@ -1092,14 +1092,14 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
 
             {state?.error && <p className="text-destructive text-xs font-medium">{state.error}</p>}
 
-            <div className="grid grid-cols-2 gap-2 pt-1 lg:flex">
+            <div className="grid grid-cols-2 gap-2 pt-1">
                 <button type="submit" disabled={isPending}
-                    className="flex items-center justify-center lg:justify-start gap-1.5 bg-primary text-primary-foreground border border-transparent px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
+                    className="flex items-center justify-center gap-1.5 bg-primary text-primary-foreground border border-transparent px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
                     <Check className="size-3.5" />
                     {isPending ? "Saving..." : "Save"}
                 </button>
                 <button type="button" onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-center lg:justify-start gap-1.5 border border-border px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                    className="flex items-center justify-center gap-1.5 border border-border px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
                     <XCircle className="size-3.5" />
                     Cancel
                 </button>
@@ -1286,13 +1286,13 @@ function EditCapitalRow({ capital, onDone }: { capital: Capital; onDone: () => v
                 <AmountInput defaultValue={capital.amount} required compact />
             </div>
             {error && <p className="text-destructive text-xs">{error}</p>}
-            <div className="grid grid-cols-2 gap-2 lg:flex">
+            <div className="grid grid-cols-2 gap-2">
                 <button type="submit" disabled={isPending}
-                    className="flex items-center justify-center lg:justify-start gap-1.5 bg-primary text-primary-foreground border border-transparent px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
+                    className="flex items-center justify-center gap-1.5 bg-primary text-primary-foreground border border-transparent px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium hover:opacity-90 disabled:opacity-50 transition-colors">
                     <Check className="size-3.5" /> {isPending ? "Saving..." : "Save"}
                 </button>
                 <button type="button" onClick={onDone}
-                    className="flex items-center justify-center lg:justify-start gap-1.5 border border-border px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                    className="flex items-center justify-center gap-1.5 border border-border px-3 py-2 lg:py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
                     <XCircle className="size-3.5" /> Cancel
                 </button>
             </div>
