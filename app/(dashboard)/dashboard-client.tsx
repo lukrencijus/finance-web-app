@@ -371,10 +371,13 @@ export function DashboardClient({
         ? data.prevIncome - data.prevExpenses : null
     const netDelta = calcDelta(data.netSaved, prevNet)
     const capitalDelta = calcDelta(data.totalCapital, data.prevTotalCapital)
-    const hasDiscrepancy =
-        (data.capitalDiscrepancy !== null && Math.abs(data.capitalDiscrepancy) >= 0.01) ||
-        (data.cashBreakdown.discrepancy !== null && Math.abs(data.cashBreakdown.discrepancy) >= 0.01) ||
-        (data.bankBreakdown.discrepancy !== null && Math.abs(data.bankBreakdown.discrepancy) >= 0.01)
+    // Gates the "expected vs actual" toggle. Whether there's a breakdown to
+    // show at all, not whether anything is off - a month where everything
+    // matches still gets the toggle, with checkmarks instead of deltas.
+    const hasExpectedData =
+        data.expectedCapital !== null ||
+        data.cashBreakdown.expected !== null ||
+        data.bankBreakdown.expected !== null
 
     const maxExpenseCat = Math.max(...(data.categoryBreakdown?.map(c => c.amount) ?? []), 1)
     const maxIncomeCat  = Math.max(...(data.incomeCategoryBreakdown?.map(c => c.amount) ?? []), 1)
@@ -779,7 +782,7 @@ export function DashboardClient({
                                             </div>
                                             <span className="text-sm font-semibold text-foreground shrink-0 tabular-nums">{fmt(data.totalCapital)}</span>
                                         </div>
-                                        {hasDiscrepancy && (
+                                        {hasExpectedData && (
                                             <>
                                                 <button
                                                     type="button"
@@ -789,23 +792,50 @@ export function DashboardClient({
                                                     {showDiscrepancy ? "Hide" : "Show"} expected vs actual {showDiscrepancy ? "▲" : "▼"}
                                                 </button>
                                                 {showDiscrepancy && (
-                                                    <>
-                                                        {data.capitalDiscrepancy !== null && Math.abs(data.capitalDiscrepancy) >= 0.01 && (
-                                                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-                                                                Based on last month plus this month&apos;s income/expenses, you were expected to have {fmt(data.expectedCapital!)} - that&apos;s {fmt(Math.abs(data.capitalDiscrepancy))} {data.capitalDiscrepancy > 0 ? "more" : "less"} than what you entered.
-                                                            </p>
+                                                    // expected → entered, then the gap as a signed number - a
+                                                    // positive discrepancy means you're short (red), negative
+                                                    // means you have more than expected (green), and a match
+                                                    // still gets its own row with a checkmark rather than being
+                                                    // dropped - the point is to see all three at a glance, not
+                                                    // just the ones that are off.
+                                                    <div className="mt-2 space-y-1 text-xs tabular-nums">
+                                                        {data.expectedCapital !== null && (
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <span className="text-muted-foreground">💰 Total {fmt(data.expectedCapital)} → {fmt(data.totalCapital)}</span>
+                                                                {data.capitalDiscrepancy !== null && Math.abs(data.capitalDiscrepancy) >= 0.01 ? (
+                                                                    <span className={`font-semibold ${data.capitalDiscrepancy > 0 ? "text-destructive" : "text-green-600 dark:text-green-400"}`}>
+                                                                        {data.capitalDiscrepancy > 0 ? "−" : "+"}{fmt(Math.abs(data.capitalDiscrepancy))}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-green-600 dark:text-green-400 font-semibold">✓</span>
+                                                                )}
+                                                            </div>
                                                         )}
-                                                        {data.cashBreakdown.discrepancy !== null && Math.abs(data.cashBreakdown.discrepancy) >= 0.01 && (
-                                                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5">
-                                                                💵 Cash: expected {fmt(data.cashBreakdown.expected!)}, you entered {fmt(data.cashBreakdown.actual!)} ({fmt(Math.abs(data.cashBreakdown.discrepancy))} {data.cashBreakdown.discrepancy > 0 ? "more" : "less"}).
-                                                            </p>
+                                                        {data.cashBreakdown.expected !== null && data.cashBreakdown.actual !== null && (
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <span className="text-muted-foreground">💵 Cash {fmt(data.cashBreakdown.expected)} → {fmt(data.cashBreakdown.actual)}</span>
+                                                                {data.cashBreakdown.discrepancy !== null && Math.abs(data.cashBreakdown.discrepancy) >= 0.01 ? (
+                                                                    <span className={`font-semibold ${data.cashBreakdown.discrepancy > 0 ? "text-destructive" : "text-green-600 dark:text-green-400"}`}>
+                                                                        {data.cashBreakdown.discrepancy > 0 ? "−" : "+"}{fmt(Math.abs(data.cashBreakdown.discrepancy))}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-green-600 dark:text-green-400 font-semibold">✓</span>
+                                                                )}
+                                                            </div>
                                                         )}
-                                                        {data.bankBreakdown.discrepancy !== null && Math.abs(data.bankBreakdown.discrepancy) >= 0.01 && (
-                                                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5">
-                                                                💳 Bank: expected {fmt(data.bankBreakdown.expected!)}, you entered {fmt(data.bankBreakdown.actual!)} ({fmt(Math.abs(data.bankBreakdown.discrepancy))} {data.bankBreakdown.discrepancy > 0 ? "more" : "less"}).
-                                                            </p>
+                                                        {data.bankBreakdown.expected !== null && data.bankBreakdown.actual !== null && (
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <span className="text-muted-foreground">💳 Bank {fmt(data.bankBreakdown.expected)} → {fmt(data.bankBreakdown.actual)}</span>
+                                                                {data.bankBreakdown.discrepancy !== null && Math.abs(data.bankBreakdown.discrepancy) >= 0.01 ? (
+                                                                    <span className={`font-semibold ${data.bankBreakdown.discrepancy > 0 ? "text-destructive" : "text-green-600 dark:text-green-400"}`}>
+                                                                        {data.bankBreakdown.discrepancy > 0 ? "−" : "+"}{fmt(Math.abs(data.bankBreakdown.discrepancy))}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-green-600 dark:text-green-400 font-semibold">✓</span>
+                                                                )}
+                                                            </div>
                                                         )}
-                                                    </>
+                                                    </div>
                                                 )}
                                             </>
                                         )}
