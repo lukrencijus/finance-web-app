@@ -792,9 +792,10 @@ export function DashboardClient({
                                                     {showDiscrepancy ? "Hide" : "Show"} expected vs actual {showDiscrepancy ? "▲" : "▼"}
                                                 </button>
                                                 {showDiscrepancy && (
-                                                    // expected → entered, then the gap as a signed number - a
-                                                    // positive discrepancy means you're short (red), negative
-                                                    // means you have more than expected (green), and a match
+                                                    // expected → entered, then the gap as a signed number.
+                                                    // discrepancy = actual - expected (see lib/sheets.ts), so
+                                                    // positive means you have more than expected (green) and
+                                                    // negative means you're short (red). A match
                                                     // still gets its own row with a checkmark rather than being
                                                     // dropped - the point is to see all three at a glance, not
                                                     // just the ones that are off.
@@ -803,8 +804,8 @@ export function DashboardClient({
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span className="text-muted-foreground">💰 Total {fmt(data.expectedCapital)} → {fmt(data.totalCapital)}</span>
                                                                 {data.capitalDiscrepancy !== null && Math.abs(data.capitalDiscrepancy) >= 0.01 ? (
-                                                                    <span className={`font-semibold ${data.capitalDiscrepancy > 0 ? "text-destructive" : "text-green-600 dark:text-green-400"}`}>
-                                                                        {data.capitalDiscrepancy > 0 ? "−" : "+"}{fmt(Math.abs(data.capitalDiscrepancy))}
+                                                                    <span className={`font-semibold ${data.capitalDiscrepancy > 0 ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
+                                                                        {data.capitalDiscrepancy > 0 ? "+" : "−"}{fmt(Math.abs(data.capitalDiscrepancy))}
                                                                     </span>
                                                                 ) : (
                                                                     <span className="text-green-600 dark:text-green-400 font-semibold">✓</span>
@@ -815,8 +816,8 @@ export function DashboardClient({
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span className="text-muted-foreground">💵 Cash {fmt(data.cashBreakdown.expected)} → {fmt(data.cashBreakdown.actual)}</span>
                                                                 {data.cashBreakdown.discrepancy !== null && Math.abs(data.cashBreakdown.discrepancy) >= 0.01 ? (
-                                                                    <span className={`font-semibold ${data.cashBreakdown.discrepancy > 0 ? "text-destructive" : "text-green-600 dark:text-green-400"}`}>
-                                                                        {data.cashBreakdown.discrepancy > 0 ? "−" : "+"}{fmt(Math.abs(data.cashBreakdown.discrepancy))}
+                                                                    <span className={`font-semibold ${data.cashBreakdown.discrepancy > 0 ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
+                                                                        {data.cashBreakdown.discrepancy > 0 ? "+" : "−"}{fmt(Math.abs(data.cashBreakdown.discrepancy))}
                                                                     </span>
                                                                 ) : (
                                                                     <span className="text-green-600 dark:text-green-400 font-semibold">✓</span>
@@ -827,8 +828,8 @@ export function DashboardClient({
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span className="text-muted-foreground">💳 Bank {fmt(data.bankBreakdown.expected)} → {fmt(data.bankBreakdown.actual)}</span>
                                                                 {data.bankBreakdown.discrepancy !== null && Math.abs(data.bankBreakdown.discrepancy) >= 0.01 ? (
-                                                                    <span className={`font-semibold ${data.bankBreakdown.discrepancy > 0 ? "text-destructive" : "text-green-600 dark:text-green-400"}`}>
-                                                                        {data.bankBreakdown.discrepancy > 0 ? "−" : "+"}{fmt(Math.abs(data.bankBreakdown.discrepancy))}
+                                                                    <span className={`font-semibold ${data.bankBreakdown.discrepancy > 0 ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
+                                                                        {data.bankBreakdown.discrepancy > 0 ? "+" : "−"}{fmt(Math.abs(data.bankBreakdown.discrepancy))}
                                                                     </span>
                                                                 ) : (
                                                                     <span className="text-green-600 dark:text-green-400 font-semibold">✓</span>
