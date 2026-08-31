@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { ChevronDown, Search } from "lucide-react"
 
 type ComboboxCategory = {
@@ -78,9 +79,16 @@ export function CategoryCombobox({
     const [selected, setSelected] = useState<ComboboxCategory | null>(selectedFromDefault)
     const [query, setQuery] = useState("")
     const [isOpen, setIsOpen] = useState(false)
+    // Decided at open time: below lg the list renders as a bottom sheet,
+    // because an absolute dropdown inside the (scrollable) form sheet is
+    // clipped and nearly impossible to scroll on touch screens.
+    const [isMobile, setIsMobile] = useState(false)
     const [highlight, setHighlight] = useState(0)
 
     const rootRef = useRef<HTMLDivElement>(null)
+    // The mobile sheet lives in a portal, outside rootRef's subtree.
+    const sheetRef = useRef<HTMLDivElement>(null)
+    const backdropRef = useRef<HTMLDivElement>(null)
     const triggerRef = useRef<HTMLInputElement>(null)
     const searchRef = useRef<HTMLInputElement>(null)
     const listRef = useRef<HTMLUListElement>(null)
@@ -100,7 +108,13 @@ export function CategoryCombobox({
     useEffect(() => {
         if (!isOpen) return
         const onPointerDown = (e: MouseEvent | TouchEvent) => {
-            if (rootRef.current?.contains(e.target as Node)) return
+            const t = e.target as Node
+            if (rootRef.current?.contains(t) || sheetRef.current?.contains(t)) return
+            // The mobile backdrop closes via its own onClick. Closing here on
+            // touchstart would unmount it before the tap's click fires, and
+            // the click would fall through onto the add-transaction sheet's
+            // backdrop underneath, closing the whole form too.
+            if (backdropRef.current?.contains(t)) return
             setIsOpen(false)
             setQuery("")
         }
@@ -121,6 +135,9 @@ export function CategoryCombobox({
     const open = () => {
         setIsOpen(true)
         setQuery("")
+        // Match the app-wide lg breakpoint used for the desktop/mobile split.
+        setIsMobile(typeof window !== "undefined"
+            && window.matchMedia("(max-width: 1023px)").matches)
         setHighlight(Math.max(0, categories.findIndex(c => c.id === selected?.id)))
         // Mouse users expect to start typing straight away; touch users would
         // just get a keyboard covering the list they wanted to scroll.
@@ -163,6 +180,56 @@ export function CategoryCombobox({
     }
 
     const padding = compact ? "px-2 py-1.5" : "px-3 py-2"
+
+    // Shared between the desktop dropdown and the mobile bottom sheet - only
+    // one of them is mounted at a time, so the refs stay unambiguous.
+    const searchRow = (
+        <div className="relative border-b border-border">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+            <input
+                ref={searchRef}
+                type="text"
+                autoComplete="off"
+                value={query}
+                placeholder="Search..."
+                onChange={e => { setQuery(e.target.value); setHighlight(0) }}
+                onKeyDown={onListKeyDown}
+                className="w-full bg-transparent text-foreground pl-8 pr-3 py-2 text-base lg:text-sm focus:outline-none"
+            />
+        </div>
+    )
+
+    const renderList = (heightClasses: string) => (
+        <ul
+            ref={listRef}
+            id={`${name}-listbox`}
+            role="listbox"
+            className={`${heightClasses} overflow-y-auto py-1 overscroll-contain`}
+        >
+            {filtered.length === 0 ? (
+                <li className="px-3 py-2 text-sm text-muted-foreground">
+                    {categories.length === 0 ? emptyMessage : "No matching categories."}
+                </li>
+            ) : (
+                filtered.map((c, i) => (
+                    <li
+                        key={c.id}
+                        role="option"
+                        aria-selected={c.id === selected?.id}
+                        onMouseEnter={() => setHighlight(i)}
+                        // mousedown, not click - click fires after blur.
+                        onMouseDown={e => { e.preventDefault(); commit(c) }}
+                        className={`flex items-center gap-2 px-3 py-2.5 lg:py-2 text-base lg:text-sm cursor-pointer ${
+                            i === highlight ? "bg-muted text-foreground" : "text-foreground"
+                        }`}
+                    >
+                        <CategoryMarker category={c} fallbackIcon={fallbackIcon} />
+                        <span className="truncate">{c.name}</span>
+                    </li>
+                ))
+            )}
+        </ul>
+    )
 
     return (
         <div ref={rootRef} className="relative">
@@ -208,53 +275,33 @@ export function CategoryCombobox({
                 />
             </div>
 
-            {isOpen && (
+            {isOpen && !isMobile && (
                 <div className="absolute z-50 mt-1 w-full rounded-xl border border-border bg-card shadow-lg overflow-hidden">
-                    {/* Optional search. Only steals focus when tapped. */}
-                    <div className="relative border-b border-border">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-                        <input
-                            ref={searchRef}
-                            type="text"
-                            autoComplete="off"
-                            value={query}
-                            placeholder="Search..."
-                            onChange={e => { setQuery(e.target.value); setHighlight(0) }}
-                            onKeyDown={onListKeyDown}
-                            className="w-full bg-transparent text-foreground pl-8 pr-3 py-2 text-base lg:text-sm focus:outline-none"
-                        />
-                    </div>
-
-                    <ul
-                        ref={listRef}
-                        id={`${name}-listbox`}
-                        role="listbox"
-                        className="max-h-56 overflow-y-auto py-1 overscroll-contain"
-                    >
-                        {filtered.length === 0 ? (
-                            <li className="px-3 py-2 text-sm text-muted-foreground">
-                                {categories.length === 0 ? emptyMessage : "No matching categories."}
-                            </li>
-                        ) : (
-                            filtered.map((c, i) => (
-                                <li
-                                    key={c.id}
-                                    role="option"
-                                    aria-selected={c.id === selected?.id}
-                                    onMouseEnter={() => setHighlight(i)}
-                                    // mousedown, not click - click fires after blur.
-                                    onMouseDown={e => { e.preventDefault(); commit(c) }}
-                                    className={`flex items-center gap-2 px-3 py-2.5 lg:py-2 text-base lg:text-sm cursor-pointer ${
-                                        i === highlight ? "bg-muted text-foreground" : "text-foreground"
-                                    }`}
-                                >
-                                    <CategoryMarker category={c} fallbackIcon={fallbackIcon} />
-                                    <span className="truncate">{c.name}</span>
-                                </li>
-                            ))
-                        )}
-                    </ul>
+                    {searchRow}
+                    {renderList("max-h-56")}
                 </div>
+            )}
+
+            {isOpen && isMobile && typeof document !== "undefined" && createPortal(
+                <div className="fixed inset-0 z-[120] flex flex-col justify-end">
+                    <div
+                        ref={backdropRef}
+                        className="absolute inset-0 bg-background/60 backdrop-blur-sm"
+                        onClick={close}
+                    />
+                    <div
+                        ref={sheetRef}
+                        className="relative bg-card border-t border-border rounded-t-[2rem] shadow-[0_-8px_30px_rgb(0,0,0,0.12)] flex flex-col max-h-[70%] animate-in slide-in-from-bottom duration-200"
+                    >
+                        <div className="pt-3 pb-1 flex justify-center shrink-0">
+                            <div className="h-1 w-10 rounded-full bg-border" />
+                        </div>
+                        <div className="shrink-0">{searchRow}</div>
+                        {renderList("flex-1 min-h-0")}
+                        <div className="shrink-0 pb-[env(safe-area-inset-bottom)]" />
+                    </div>
+                </div>,
+                document.body
             )}
         </div>
     )

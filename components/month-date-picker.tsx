@@ -51,6 +51,7 @@ export function MonthDatePicker({
     // need separate refs - a shared one would only ever point at the last render.
     const popoverRef = useRef<HTMLDivElement>(null)
     const sheetRef = useRef<HTMLDivElement>(null)
+    const backdropRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         if (!isOpen) return
@@ -59,6 +60,12 @@ export function MonthDatePicker({
             if (popoverRef.current?.contains(target)) return
             if (sheetRef.current?.contains(target)) return
             if (triggerRef.current?.contains(target)) return
+            // The mobile backdrop closes via its own onClick. Closing here on
+            // touchstart would unmount the backdrop before the tap's click
+            // event fires, letting that click fall through onto whatever sits
+            // beneath - e.g. the add-transaction sheet's backdrop, which would
+            // close the whole form along with the calendar.
+            if (backdropRef.current?.contains(target)) return
             setIsOpen(false)
         }
         const onKeyDown = (e: KeyboardEvent) => {
@@ -189,6 +196,7 @@ export function MonthDatePicker({
                      * will happily serve for a long time.
                      */}
                     <div
+                        ref={backdropRef}
                         style={{ zIndex: 300 }}
                         className="fixed inset-0 bg-background/60 backdrop-blur-sm"
                         onClick={() => setIsOpen(false)}
