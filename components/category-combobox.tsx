@@ -267,6 +267,16 @@ export function CategoryCombobox({
                         if (isOpen) close()
                         else open()
                     }}
+                    // The iOS keyboard's next/prev arrows focus this trigger
+                    // like any text field, which pops the paste/autofill bar
+                    // over it. On touch, treat that focus as intent to pick a
+                    // category: drop it and open the sheet instead. Desktop
+                    // keeps normal Tab focus for keyboard accessibility.
+                    onFocus={() => {
+                        if (!window.matchMedia("(pointer: coarse)").matches) return
+                        triggerRef.current?.blur()
+                        if (!isOpen) open()
+                    }}
                     value={selected?.name ?? ""}
                     placeholder={placeholder}
                     onChange={() => { /* value is driven by selection only */ }}
