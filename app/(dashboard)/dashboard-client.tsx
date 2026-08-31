@@ -78,8 +78,6 @@ export type DashboardData = {
     prevTotalCapital: number | null
     capitalsAsOfMonth: number | null
     capitalsAsOfYear: number | null
-    expectedCapital: number | null
-    capitalDiscrepancy: number | null
     cashBreakdown: { expected: number | null; actual: number | null; discrepancy: number | null }
     bankBreakdown: { expected: number | null; actual: number | null; discrepancy: number | null }
     dailyActivity: DailyActivity[]
@@ -375,7 +373,6 @@ export function DashboardClient({
     // show at all, not whether anything is off - a month where everything
     // matches still gets the toggle, with checkmarks instead of deltas.
     const hasExpectedData =
-        data.expectedCapital !== null ||
         data.cashBreakdown.expected !== null ||
         data.bankBreakdown.expected !== null
 
@@ -795,23 +792,11 @@ export function DashboardClient({
                                                     // expected → entered, then the gap as a signed number.
                                                     // discrepancy = actual - expected (see lib/sheets.ts), so
                                                     // positive means you have more than expected (green) and
-                                                    // negative means you're short (red). A match
-                                                    // still gets its own row with a checkmark rather than being
-                                                    // dropped - the point is to see all three at a glance, not
-                                                    // just the ones that are off.
+                                                    // negative means you're short (red). A match still gets its
+                                                    // own row with a checkmark rather than being dropped - the
+                                                    // point is to see both at a glance, not just the one that's
+                                                    // off.
                                                     <div className="mt-2 space-y-1 text-xs tabular-nums">
-                                                        {data.expectedCapital !== null && (
-                                                            <div className="flex items-center justify-between gap-2">
-                                                                <span className="text-muted-foreground">💰 Total {fmt(data.expectedCapital)} → {fmt(data.totalCapital)}</span>
-                                                                {data.capitalDiscrepancy !== null && Math.abs(data.capitalDiscrepancy) >= 0.01 ? (
-                                                                    <span className={`font-semibold ${data.capitalDiscrepancy > 0 ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
-                                                                        {data.capitalDiscrepancy > 0 ? "+" : "−"}{fmt(Math.abs(data.capitalDiscrepancy))}
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="text-green-600 dark:text-green-400 font-semibold">✓</span>
-                                                                )}
-                                                            </div>
-                                                        )}
                                                         {data.cashBreakdown.expected !== null && data.cashBreakdown.actual !== null && (
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span className="text-muted-foreground">💵 Cash {fmt(data.cashBreakdown.expected)} → {fmt(data.cashBreakdown.actual)}</span>

@@ -413,18 +413,15 @@ export async function getDashboardData(userId: string, selectedMonth?: number, s
         (prevSheet?.capitals ?? []).map((c) => [c.capitalCategoryId, c.amount])
     )
 
-    // Expected vs actual capital: if last month's capital is known and this month's
-    // capital was actually entered (not a fallback from an earlier month), flag any
-    // gap between what the numbers say you should have and what you actually logged.
-    const expectedCapital = capitalsAsOfMonth === null && prevTotalCapital !== null
-        ? prevTotalCapital + currentIncome - currentExpenses
-        : null
-    const capitalDiscrepancy = expectedCapital !== null ? totalCapital - expectedCapital : null
-
-    // Cash/bank breakdown: same idea as the aggregate expected/actual above,
-    // but bucketed by CapitalCategory.moneyType and Transaction.paymentMethod.
-    // Only computed once the user has tagged at least one capital category as
-    // Cash or Bank - otherwise there's nothing meaningful to compare against.
+    // Expected vs actual capital, bucketed by CapitalCategory.moneyType and
+    // Transaction.paymentMethod. Only computed once the user has tagged at
+    // least one capital category as Cash or Bank - otherwise there's nothing
+    // meaningful to compare against. Deliberately not also rolled up into a
+    // single "Total" figure: a category with no moneyType (e.g. investments,
+    // property - offered in the UI as "Not tracked") can change value
+    // without ever producing an income/expense transaction, so folding it
+    // into an aggregate would flag a "discrepancy" for something that isn't
+    // a data-entry problem - it just means the investment moved.
     const userCapitalCategories = await prisma.capitalCategory.findMany({
         where: { userId },
         select: { moneyType: true },
@@ -505,8 +502,6 @@ export async function getDashboardData(userId: string, selectedMonth?: number, s
         prevTotalCapital,
         capitalsAsOfMonth,
         capitalsAsOfYear,
-        expectedCapital,
-        capitalDiscrepancy,
         cashBreakdown,
         bankBreakdown,
         dailyActivity,
