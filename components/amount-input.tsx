@@ -1,12 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 
 type Props = {
     name?: string
     defaultValue?: string | number
     placeholder?: string
     required?: boolean
+    /** Lets a caller grab the input node to call `.focus()` itself. Not the
+        `autoFocus` attribute: to raise the keyboard on iOS, focus() has to
+        run synchronously inside the same click handler that opened the
+        form, which only the caller is in a position to do. */
+    inputRef?: React.RefObject<HTMLInputElement | null>
     /** Tightens padding to match the inline edit form. */
     compact?: boolean
 }
@@ -29,11 +34,15 @@ export function AmountInput({
     defaultValue = "",
     placeholder = "0,00",
     required = false,
+    inputRef,
     compact = false,
 }: Props) {
     // Show a comma, matching formatCurrency everywhere else. A number coming
     // straight out of the DB stringifies with a dot.
     const [value, setValue] = useState(String(defaultValue ?? "").replace(".", ","))
+
+    const localRef = useRef<HTMLInputElement>(null)
+    const ref = inputRef ?? localRef
 
     const sanitize = (raw: string) => {
         // Drop anything that is not a digit or a separator.
@@ -54,6 +63,7 @@ export function AmountInput({
 
     return (
         <input
+            ref={ref}
             name={name}
             type="text"
             inputMode="decimal"

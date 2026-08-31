@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useActionState, useTransition } from "react"
+import { useState, useEffect, useRef, useActionState, useTransition } from "react"
+import { flushSync } from "react-dom"
 import { useRouter } from "next/navigation"
 import {
     createTransaction,
@@ -332,6 +333,11 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
     const [isOpen, setIsOpen] = useState(false)
     // Mobile: the form opens as a bottom sheet - keep the page behind it still.
     useBodyScrollLock(isOpen)
+    // The mobile sheet and the desktop card render two separate AmountInput
+    // instances (see `fields` below), only one of which is visible at a
+    // time - hence two refs rather than one.
+    const mobileAmountRef = useRef<HTMLInputElement>(null)
+    const desktopAmountRef = useRef<HTMLInputElement>(null)
     const [mode, setMode] = useState<FormMode>("normal")
     // "" is a valid transient state while the user is clearing the field to
     // type a new number - only clamped back to a real value on blur, so
@@ -375,7 +381,19 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
         return (
             <div className="lg:static fixed bottom-[152px] left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-[400px] lg:w-full lg:max-w-none lg:px-0 lg:bottom-auto lg:z-auto lg:translate-x-0">
                 <button
-                    onClick={() => setIsOpen(true)}
+                    onClick={() => {
+                        // flushSync forces the sheet's DOM to commit before this
+                        // handler returns, so the focus() call below still runs
+                        // inside the click's own call stack - required for iOS
+                        // Safari to treat it as user-initiated and raise the
+                        // keyboard. A plain setState + effect runs a tick too
+                        // late for that.
+                        flushSync(() => setIsOpen(true))
+                        const visible = mobileAmountRef.current?.offsetParent
+                            ? mobileAmountRef.current
+                            : desktopAmountRef.current
+                        visible?.focus()
+                    }}
                     className="w-full bg-primary text-primary-foreground lg:bg-transparent lg:text-muted-foreground border-2 border-dashed border-border lg:hover:border-muted-foreground/50 lg:hover:text-foreground rounded-2xl lg:rounded-xl py-3 text-xs font-semibold lg:font-medium transition-all shadow-lg lg:shadow-none active:scale-95 lg:active:scale-100"
                 >
                     + Add {type === "INCOME" ? "Income" : "Expense"}
@@ -384,8 +402,10 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
         )
     }
 
-    // Shared fields rendered in both shells
-    const fields = (
+    // Rendered once per shell (mobile sheet, desktop card) - each needs its
+    // own AmountInput ref, so this takes the ref as a parameter rather than
+    // being a plain shared JSX value.
+    const renderFields = (amountRef: typeof mobileAmountRef) => (
         <>
             <input type="hidden" name="type" value={type} />
             <input type="hidden" name="monthlySheetId" value={sheetId} />
@@ -427,7 +447,7 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
                     <label className="text-xs text-muted-foreground mb-1 block font-medium">
                         {mode === "split" ? "Total Amount (€)" : "Amount (€)"}
                     </label>
-                    <AmountInput defaultValue={state?.values?.amount ?? ""} required />
+                    <AmountInput defaultValue={state?.values?.amount ?? ""} required inputRef={amountRef} />
                 </div>
                 <div>
                     <label className="text-xs text-muted-foreground mb-1 block font-medium">Date</label>
@@ -512,20 +532,28 @@ function AddTransactionForm({ type, sheetId, categories, month, year, isShared =
             {/* MOBILE: bottom sheet */}
             <div className="lg:hidden">
                 <div className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm" onClick={handleClose} />
-                <div className="fixed inset-x-0 bottom-0 z-[101] bg-card border-t border-border rounded-t-[2rem] shadow-[0_-8px_30px_rgb(0,0,0,0.12)] max-h-[92dvh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+                {/* Fade rather than slide-in-from-bottom: the Amount field is
+                    focused the instant this mounts, and iOS computes where to
+                    scroll the focused field to clear the keyboard using the
+                    sheet's position at that moment. With a translateY
+                    animation still in flight that math runs against a moving
+                    target and the sheet ends up parked in the wrong place. A
+                    fade has no transform, so the sheet is already in its
+                    final position when focus lands. */}
+                <div className="fixed inset-x-0 bottom-0 z-[101] bg-card border-t border-border rounded-t-[2rem] shadow-[0_-8px_30px_rgb(0,0,0,0.12)] max-h-[92dvh] overflow-y-auto animate-in fade-in duration-150">
                     <form key={errorKey} action={formAction} className="p-6 space-y-3">
                         <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mb-5" />
                         <p className="text-base font-semibold text-foreground mb-1">
                             Add {type === "INCOME" ? "Income" : "Expense"}
                         </p>
-                        {fields}
+                        {renderFields(mobileAmountRef)}
                     </form>
                 </div>
             </div>
 
             {/* DESKTOP: inline card */}
             <form key={errorKey} action={formAction} className="hidden lg:block bg-muted/50 border border-border rounded-xl p-4 space-y-3">
-                {fields}
+                {renderFields(desktopAmountRef)}
             </form>
         </>
     )
@@ -1072,6 +1100,11 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
             <input type="hidden" name="monthlySheetId" value={sheetId} />
 
             <div>
+                <label className="text-xs text-muted-foreground mb-1 block font-medium">Amount (€)</label>
+                <AmountInput defaultValue={state?.values?.amount ?? ""} required />
+            </div>
+
+            <div>
                 <div className="flex items-center justify-between mb-1">
                     <label className="text-xs text-muted-foreground font-medium">Category</label>
                     {!isShared && <CapitalCategoryManager categories={capitalCategories} />}
@@ -1088,11 +1121,6 @@ function AddCapitalForm({ sheetId, capitalCategories, existingCategoryIds, isSha
                         All categories already have an entry this month.
                     </p>
                 )}
-            </div>
-
-            <div>
-                <label className="text-xs text-muted-foreground mb-1 block font-medium">Amount (€)</label>
-                <AmountInput defaultValue={state?.values?.amount ?? ""} required />
             </div>
 
             {state?.error && <p className="text-destructive text-xs font-medium">{state.error}</p>}
