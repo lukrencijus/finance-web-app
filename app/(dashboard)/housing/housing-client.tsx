@@ -41,7 +41,15 @@ type HousingMonthData = {
     entries: HousingEntry[]
 } | null
 
-type HistoryItem = { id: string; month: number; year: number; total: number; filled: number }
+type HistoryItem = {
+    id: string
+    month: number
+    year: number
+    total: number
+    filled: number
+    /** Difference against the previous recorded month; null for the oldest one. */
+    change: number | null
+}
 
 /** Quantities use the same Lithuanian formatting as money, minus the € sign. */
 function formatQuantity(value: number, unit: string): string {
@@ -166,6 +174,7 @@ export function HousingClient({
     categories,
     housingMonth,
     history,
+    allMonths,
     month,
     year,
     isCurrentMonth,
@@ -175,6 +184,7 @@ export function HousingClient({
     categories: HousingCategory[]
     housingMonth: HousingMonthData
     history: HistoryItem[]
+    allMonths: { month: number; year: number }[]
     month: number
     year: number
     isCurrentMonth: boolean
@@ -207,7 +217,7 @@ export function HousingClient({
             </div>
 
             <MonthPicker
-                allSheets={history}
+                allSheets={allMonths}
                 currentMonth={month}
                 currentYear={year}
                 basePath="/housing"
@@ -260,29 +270,40 @@ export function HousingClient({
             {history.length > 0 && (
                 <div className="space-y-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground px-1">
-                        History
+                        Recent months
                     </p>
                     <ul className="bg-card border border-border rounded-2xl divide-y divide-border overflow-hidden">
-                        {history.map(item => {
-                            const isViewed = item.month === month && item.year === year
-                            return (
-                                <li key={item.id}>
-                                    <Link href={`/housing?month=${item.month}&year=${item.year}`}
-                                        className={`flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors ${isViewed ? "bg-primary/5" : ""}`}>
-                                        <span className="text-sm">
+                        {history.map(item => (
+                            <li key={item.id}>
+                                <Link href={`/housing?month=${item.month}&year=${item.year}`}
+                                    className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
+                                    <span className="min-w-0">
+                                        <span className="block text-sm truncate">
                                             {MONTH_NAMES[item.month - 1]} {item.year}
-                                            <span className="ml-2 text-[11px] text-muted-foreground">
-                                                {item.filled} of {categories.length} filled
-                                            </span>
                                         </span>
-                                        <span className="text-sm font-semibold tabular-nums">
+                                        <span className="block text-[11px] text-muted-foreground">
+                                            {item.filled} of {categories.length} filled
+                                        </span>
+                                    </span>
+                                    <span className="text-right shrink-0">
+                                        <span className="block text-sm font-semibold tabular-nums">
                                             {formatCurrency(item.total)}
                                         </span>
-                                    </Link>
-                                </li>
-                            )
-                        })}
+                                        {item.change !== null && item.change !== 0 && (
+                                            // Housing costs are all outgoings, so more is worse:
+                                            // red for a rise, green for a drop.
+                                            <span className={`block text-[11px] tabular-nums ${item.change > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
+                                                {item.change > 0 ? "+" : "−"}{formatCurrency(Math.abs(item.change))}
+                                            </span>
+                                        )}
+                                    </span>
+                                </Link>
+                            </li>
+                        ))}
                     </ul>
+                    <p className="text-[11px] text-muted-foreground px-1">
+                        Older months are in the month picker above.
+                    </p>
                 </div>
             )}
 
