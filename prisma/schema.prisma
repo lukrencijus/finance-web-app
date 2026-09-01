@@ -46,6 +46,7 @@ model Account {
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
@@ -54,6 +55,8 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model VerificationToken {
@@ -93,6 +96,7 @@ model MonthlySheet {
   createdAt     DateTime      @default(now())
   
   @@unique([month, year, userId]) // Does not allow multiple sheets for the same month and year for a user
+  @@index([userId, year, month])
 }
 
 model Transaction {
@@ -117,6 +121,10 @@ model Transaction {
   splitMonths    Int?         // total parts (null = not a split)
   splitIndex     Int?         // which part
   splitGroupId   String?      // links all parts of one split together
+
+  @@index([monthlySheetId])
+  @@index([categoryId])
+  @@index([splitGroupId])
 }
 
 model Capital {
@@ -127,6 +135,9 @@ model Capital {
   monthlySheet       MonthlySheet    @relation(fields: [monthlySheetId], references: [id], onDelete: Cascade)
   capitalCategoryId  String
   capitalCategory    CapitalCategory @relation(fields: [capitalCategoryId], references: [id], onDelete: Cascade)
+
+  @@index([monthlySheetId])
+  @@index([capitalCategoryId])
 }
 
 model CapitalCategory {
@@ -161,6 +172,7 @@ model SharedAccess {
   createdAt      DateTime @default(now())
 
   @@unique([ownerId, sharedWithId])
+  @@index([sharedWithId])
 }
 
 /// A shared household. Housing costs hang off the apartment rather than off a
@@ -191,6 +203,7 @@ model ApartmentMember {
   createdAt   DateTime  @default(now())
 
   @@unique([apartmentId, userId])
+  @@index([userId])
 }
 
 /// Invite by email so it can be sent before the invitee has an account. It sits
@@ -206,6 +219,8 @@ model ApartmentInvite {
   createdAt   DateTime  @default(now())
 
   @@unique([apartmentId, email])
+  @@index([email, status])
+  @@index([invitedById])
 }
 
 /// One cost line of the household: rent, parking, electricity, ... Owned by the
@@ -238,6 +253,7 @@ model HousingMonth {
   entries     HousingEntry[]
 
   @@unique([apartmentId, month, year])
+  @@index([apartmentId, year, month])
 }
 
 /// One category's figures for one month. `amount` is always euros and is what
@@ -256,4 +272,5 @@ model HousingEntry {
   updatedAt         DateTime        @default(now()) @updatedAt
 
   @@unique([housingMonthId, housingCategoryId])
+  @@index([housingCategoryId])
 }

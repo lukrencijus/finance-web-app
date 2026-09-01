@@ -122,6 +122,7 @@ Ryšiai tarp lentelių nustatyti naudojant išorinius raktus, o vartotojų teisi
 - Pridėtos 6 buto mokesčių lentelės (iš viso 15): Apartment, ApartmentMember, ApartmentInvite, HousingCategory, HousingMonth, HousingEntry.
 - HousingMonth yra atskiras mėnesio identifikatorius, susietas su butu, o ne su MonthlySheet - buto duomenys priklauso butui, ne konkrečiam vartotojui.
 - HousingEntry unikalus pagal housingMonthId + housingCategoryId, todėl vienam mėnesiui tenka lygiai viena kiekvienos kategorijos eilutė.
+- Visiems išoriniams raktams pridėti indeksai. SQLite jų nekuria automatiškai, todėl anksčiau paieška pagal FK (pvz. operacijos pagal monthlySheetId) reikalavo pilno lentelės skenavimo - tai tiesiogiai susiję su nefunkciniu našumo reikalavimu. Papildomai sudėtiniai indeksai MonthlySheet(userId, year, month) ir HousingMonth(apartmentId, year, month) atitinka rikiavimo tvarką, todėl SQLite nebekuria laikinos rikiavimo struktūros.
 <div class="page-break" style="page-break-before: always;"></div>
 
 # Activity UML diagrama
