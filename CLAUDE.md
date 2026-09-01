@@ -41,8 +41,20 @@ Three features complicate this, all in `lib/sheets.ts` and `monthly-sheet/action
 - **Splits** spread one amount across 2–24 months, eagerly creating future sheets; rounding remainder goes to the last part. Empty future sheets are cleaned up on delete.
 - **Sharing** grants another user VIEW or EDIT on your sheets, surfaced under `/shared/[userId]/`.
 
+`Apartment` is a second, parallel anchor for the housing-costs feature (`/housing`, `lib/housing.ts`) and hangs off nothing above: `HousingMonth` is per apartment, not per user, so both members edit the same numbers. Authorization there is `ApartmentMember`, *not* `SharedAccess`/`hasEditAccess` — and housing deliberately has no `/shared/[userId]/` mirror. Constants a client component needs live in `lib/housing-units.ts`; importing them from `lib/housing.ts` drags Prisma into the browser bundle and fails the build.
+
 Auth bootstrap: the first registered user becomes ADMIN/ACTIVE; everyone else is PENDING until an admin approves them.
 
 ## Docs
 
 Docs are in **Lithuanian**; code, comments, and UI strings are in **English**. `doc/Galutinis_Planas.md` tracks planned vs. delivered functionality across four iterations, and the `doc/*_updated.puml` diagrams are part of the graded deliverable — update them alongside schema or user-flow changes.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

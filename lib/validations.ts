@@ -97,3 +97,59 @@ export const updateProfileSchema = z.object({
   name: personNameSchema,
   ntfyTopic: ntfyTopicSchema.optional(),
 })
+
+/**
+ * Like parseAmount, but an empty field means "not recorded yet" rather than a
+ * validation error. Housing months are filled in over several days as the bills
+ * arrive, so most fields are legitimately blank most of the time.
+ */
+export function parseOptionalAmount(raw: FormDataEntryValue | null): number | null | typeof NaN {
+  const normalized = String(raw ?? "").trim()
+  if (normalized === "") return null
+  return parseAmount(raw)
+}
+
+export const apartmentSchema = z.object({
+  name: z.string()
+    .trim()
+    .min(2, "Name must be at least 2 characters")
+    .max(40, "Name must be at most 40 characters"),
+})
+
+export const apartmentInviteSchema = z.object({
+  email: z.string()
+    .trim()
+    .toLowerCase()
+    .email("Invalid email format"),
+})
+
+export const housingCategorySchema = z.object({
+  name: z.string()
+    .min(2, "Name must be at least 2 characters")
+    .max(30, "Name must be at most 30 characters")
+    .trim(),
+  unit: z.enum(["EUR", "M3", "KWH"]),
+  icon: z.string()
+    .refine(val => val === "" || singleEmojiRegex.test(val), {
+      message: "Icon must be a single emoji"
+    })
+    .optional(),
+  color: z.string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color")
+    .default("#64748B"),
+})
+
+const optionalMoney = z.number()
+  .nonnegative("Value must be 0 or greater")
+  .max(999_999_999, "Value is too large")
+  .nullable()
+
+export const housingEntrySchema = z.object({
+  housingMonthId: z.string().min(1),
+  housingCategoryId: z.string().min(1),
+  amount: optionalMoney,
+  quantity: optionalMoney,
+  note: z.string()
+    .max(100, "Note must be at most 100 characters")
+    .optional(),
+})

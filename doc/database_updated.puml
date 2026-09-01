@@ -92,6 +92,64 @@ entity "SharedAccess" as sharing {
   permission : TEXT (VIEW, EDIT)
 }
  
+entity "Apartment" as apt {
+  id : TEXT <<PK>>
+  --
+  name : TEXT
+  createdAt, updatedAt
+}
+
+entity "ApartmentMember" as aptmem {
+  id : TEXT <<PK>>
+  --
+  apartmentId : TEXT <<FK>>
+  userId : TEXT <<FK>>
+  role : TEXT (OWNER, MEMBER)
+  <<unique: apartmentId + userId>>
+}
+
+entity "ApartmentInvite" as aptinv {
+  id : TEXT <<PK>>
+  --
+  apartmentId : TEXT <<FK>>
+  invitedById : TEXT <<FK>>
+  email : TEXT
+  status : TEXT (PENDING, ACCEPTED, DECLINED)
+  <<unique: apartmentId + email>>
+}
+
+entity "HousingCategory" as houscat {
+  id : TEXT <<PK>>
+  --
+  apartmentId : TEXT <<FK>>
+  name : TEXT
+  unit : TEXT (EUR, M3, KWH)
+  icon : TEXT
+  color : TEXT
+  order : INT
+  <<unique: apartmentId + name>>
+}
+
+entity "HousingMonth" as housmon {
+  id : TEXT <<PK>>
+  --
+  apartmentId : TEXT <<FK>>
+  month : INT
+  year : INT
+  <<unique: apartmentId + month + year>>
+}
+
+entity "HousingEntry" as housent {
+  id : TEXT <<PK>>
+  --
+  housingMonthId : TEXT <<FK>>
+  housingCategoryId : TEXT <<FK>>
+  amount : FLOAT (EUR)
+  quantity : FLOAT (m3 / kWh)
+  note : TEXT
+  <<unique: housingMonthId + housingCategoryId>>
+}
+ 
 user ||--o{ account : ""
 user ||--o{ session : ""
 user ||--o{ sheet : "owns"
@@ -103,5 +161,13 @@ sheet ||--o{ trans : "contains"
 sheet ||--o{ capital : "tracks"
 cat ||--o{ trans : "classifies"
 capcat ||--o{ capital : "categorizes"
+user ||--o{ aptmem : "belongs to"
+user ||--o{ aptinv : "sends"
+apt ||--o{ aptmem : "has members"
+apt ||--o{ aptinv : "has invites"
+apt ||--o{ houscat : "defines"
+apt ||--o{ housmon : "records"
+housmon ||--o{ housent : "contains"
+houscat ||--o{ housent : "classifies"
  
 @enduml
