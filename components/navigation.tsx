@@ -37,6 +37,7 @@ export const Navigation = () => {
     ] : [
         { href: "/", label: "Dashboard" },
         { href: "/monthly-sheet", label: "Monthly Sheet" },
+        { href: "/housing", label: "Housing Costs" },
         { href: "/recurring-transactions", label: "Recurring Transactions" },
         { href: "/categories", label: "Transaction Categories" },
         { href: "/capital", label: "Capital Categories" },

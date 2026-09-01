@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useParams } from "next/navigation"
-import { Home, CalendarDays, Settings, LayoutGrid, Wallet, RefreshCw, LogOut, Menu, X, Shield, AlertCircle } from "lucide-react"
+import { Home, CalendarDays, Settings, LayoutGrid, Wallet, RefreshCw, LogOut, Menu, X, Shield, AlertCircle, Building2 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { signOut } from "next-auth/react"
@@ -42,12 +42,15 @@ export function MobileBottomNav({ isAdmin }: MobileBottomNavProps) {
         { href: `/shared/${sharedUserId}/categories`, label: "Categories", icon: LayoutGrid },
         { href: `/shared/${sharedUserId}/capital`, label: "Capital", icon: Wallet },
     ] : [
+        { href: "/housing", label: "Housing", icon: Building2 },
         { href: "/recurring-transactions", label: "Recurring", icon: RefreshCw },
         { href: "/categories", label: "Categories", icon: LayoutGrid },
         { href: "/capital", label: "Capital", icon: Wallet },
     ]
 
-    const isInsideMenu = menuRoutes.some(route => pathname === route.href) || pathname === "/admin/users";
+    const isInsideMenu = menuRoutes.some(route => pathname === route.href)
+        || pathname.startsWith("/housing")
+        || pathname === "/admin/users";
 
     return (
         <>

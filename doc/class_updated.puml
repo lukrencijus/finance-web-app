@@ -92,6 +92,64 @@ class SharedAccess {
   +revokeAccess(): void
 }
  
+class Apartment {
+  +id: string
+  +name: string
+  +createdAt: DateTime
+  +invite(email): void
+  +removeMember(memberId): void
+  +rename(name): void
+}
+ 
+class ApartmentMember {
+  +id: string
+  +apartmentId: string
+  +userId: string
+  +role: MemberRoleType
+  +leave(): void
+}
+ 
+class ApartmentInvite {
+  +id: string
+  +apartmentId: string
+  +invitedById: string
+  +email: string
+  +status: InviteStatusType
+  +accept(): void
+  +decline(): void
+}
+ 
+class HousingCategory {
+  +id: string
+  +apartmentId: string
+  +name: string
+  +unit: HousingUnitType
+  +icon: string
+  +color: string
+  +order: int
+  +crud(): void
+  +reorder(): void
+}
+ 
+class HousingMonth {
+  +id: string
+  +apartmentId: string
+  +month: int
+  +year: int
+  +calculateTotal(): float
+}
+ 
+class HousingEntry {
+  +id: string
+  +housingMonthId: string
+  +housingCategoryId: string
+  +amount: float
+  +quantity: float
+  +note: string
+  +save(): void
+  +clear(): void
+}
+ 
 enum RoleType { 
   ADMIN
   USER 
@@ -111,6 +169,23 @@ enum PermissionType {
   VIEW
   EDIT 
 }
+
+enum MemberRoleType {
+  OWNER
+  MEMBER
+}
+
+enum InviteStatusType {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum HousingUnitType {
+  EUR
+  M3
+  KWH
+}
  
 Admin --|> User : inheritance
 User "1" *-- "0..*" MonthlySheet : owns >
@@ -121,5 +196,12 @@ MonthlySheet "1" *-- "0..*" Capital : tracks snapshots >
 Category "1" -- "0..*" Transaction : classifies >
 CapitalCategory "1" -- "0..*" Capital : classifies >
 User "1" -- "0..*" SharedAccess : shares profile >
+User "1" -- "0..*" ApartmentMember : joins >
+Apartment "1" *-- "1..*" ApartmentMember : has members >
+Apartment "1" *-- "0..*" ApartmentInvite : has invites >
+Apartment "1" *-- "0..*" HousingCategory : defines >
+Apartment "1" *-- "0..*" HousingMonth : records >
+HousingMonth "1" *-- "0..*" HousingEntry : contains >
+HousingCategory "1" -- "0..*" HousingEntry : classifies >
  
 @enduml

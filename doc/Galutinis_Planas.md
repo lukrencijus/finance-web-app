@@ -56,6 +56,11 @@ Vadovas: dr. Andrius Misiukas Misiūnas
 - Pasikartojančios operacijos: galimybė nustatyti, kad "Nuoma" ar "Alga" įsirašytų automatiškai kas mėnesį.
 - Išlaidų skaidymas: galimybė vienkartines metines prenumeratas ar stambius pirkinius tolygiai paskirstyti per pasirinktą mėnesių skaičių. Tai leidžia vartotojui matyti realų mėnesio biudžeto apkrovimą, o ne vienkartinį "duobėtą" balansą.
 - Adaptyvus dizainas: optimizacija, kad viskas atrodytų gražiai tiek ant kompiuterio tiek ant telefono.
+## V iteracija (nebuvo pradiniame plane)
+- Buto mokesčių sekimas: atskiras puslapis, kuriame kas mėnesį fiksuojama, kiek sumokėta nuomos, parkingo ir komunalinių (šaltas ir karštas vanduo, šildymas, elektra, šiukšlės, dujos, bendrija).
+	- Konfigūruojamos mokesčių kategorijos su matavimo vienetu: EUR (tik suma), M3 (kubiniai metrai + suma) arba KWH (kilovatvalandės + suma). Kiekiai saugomi šalia sumos ir į bendrą mėnesio sumą neįskaičiuojami.
+	- Bendras butas: nauja Apartment esybė su nariais (ApartmentMember), kad kartu gyvenantys žmonės pildytų ir matytų tuos pačius duomenis lygiomis teisėmis, o ne kaip svečias per SharedAccess.
+	- Pakvietimai el. paštu (ApartmentInvite): pakvietimas laukia, kol pakviestasis užsiregistruoja ir administratorius patvirtina jo paskyrą.
 # Nefunkciniai reikalavimai
 - Prieinamumas: sistema turi palaikyti Dark/White režimus ne tik dėl estetikos, bet ir dėl vartotojų, turinčių regos sutrikimų.
 - Privatumas: po pasidalinimo profiliu, vartotojas turi turėti galimybę bet kada atšaukti prieigą kitam vartotojui.
@@ -91,6 +96,8 @@ Vartotojas gali registruotis, prisijungti, valdyti kategorijas ir operacijas, pe
 ![[Final Plan-1779698637298.webp]]<p align="center"><em>6 pav. Atnaujinta use-case UML diagrama</em></p>
 - Pridėta - "Valdyti pasikartojančias operacijas" (atskiras puslapis)
 - Kitas vartotojas gali ne tik peržiūrėti bet ir valdyti kito vartotojo operacijas.
+- Pridėti buto mokesčių scenarijai: "Vesti buto mokesčius", "Valdyti buto mokesčių kategorijas", "Sukurti butą / pakviesti gyventoją" ir jį praplečiantis "Prisijungti prie buto pagal pakvietimą".
+- Kitas vartotojas, prisijungęs prie buto, tampa lygiaverčiu jo nariu - skirtingai nei dalinantis profiliu, čia nėra savininko ir svečio santykio.
 <div class="page-break" style="page-break-before: always;"></div>
 
 # Scheme of database
@@ -112,6 +119,9 @@ Ryšiai tarp lentelių nustatyti naudojant išorinius raktus, o vartotojų teisi
 - Išplėstas SharedAccess su permission lauku.
 - Transaction modelis papildytas split laukais.
 - Capital taip pat turi categories kaip ir transactions.
+- Pridėtos 6 buto mokesčių lentelės (iš viso 15): Apartment, ApartmentMember, ApartmentInvite, HousingCategory, HousingMonth, HousingEntry.
+- HousingMonth yra atskiras mėnesio identifikatorius, susietas su butu, o ne su MonthlySheet - buto duomenys priklauso butui, ne konkrečiam vartotojui.
+- HousingEntry unikalus pagal housingMonthId + housingCategoryId, todėl vienam mėnesiui tenka lygiai viena kiekvienos kategorijos eilutė.
 <div class="page-break" style="page-break-before: always;"></div>
 
 # Activity UML diagrama
@@ -150,6 +160,8 @@ Ryšiai tarp klasių nurodo griežtą priklausomybę, pavyzdžiui, operacijos ir
 - SharedAccess papildyta permission atributu
 - MonthlySheet metodas getMLInsights() pervadintas į getDashboardData() - realizuota kaip statistikos agregavimas, ne ML
 - Admin klasėje pridėti deleteUser() ir rejectUser() metodai
+- Pridėtos buto mokesčių klasės: Apartment, ApartmentMember, ApartmentInvite, HousingCategory, HousingMonth, HousingEntry
+- Pridėti enum tipai MemberRoleType (OWNER, MEMBER), InviteStatusType (PENDING, ACCEPTED, DECLINED) ir HousingUnitType (EUR, M3, KWH)
 <div class="page-break" style="page-break-before: always;"></div>
 
 # Projekto repozitorija
@@ -182,6 +194,12 @@ Duomenų bazė - SQLite (failas dev.db), valdoma per Prisma ORM su @prisma/adapt
 | Capital         | Turto įrašas konkrečiam sheet'ui ir CapitalCategory                             |
 | CapitalCategory | Vartotojo apibrėžta turto kategorija su spalva                                  |
 | SharedAccess    | Profilio dalinimasis: owner + sharedWith + permission                           |
+| Apartment       | Bendras butas, prie kurio rišami buto mokesčiai                                  |
+| ApartmentMember | Buto narys: apartmentId + userId + role (OWNER/MEMBER)                          |
+| ApartmentInvite | Pakvietimas į butą pagal el. paštą su būsena (PENDING/ACCEPTED/DECLINED)        |
+| HousingCategory | Buto mokesčio kategorija su matavimo vienetu (EUR/M3/KWH)                       |
+| HousingMonth    | Buto mokesčių mėnuo: apartmentId + month + year                                 |
+| HousingEntry    | Vienos kategorijos vieno mėnesio įrašas: suma (EUR), kiekis (m³/kWh), pastaba   |
 <div class="page-break" style="page-break-before: always;"></div>
 
 ## Automatiškai sugeneruoti failai ir katalogai
@@ -194,9 +212,9 @@ Duomenų bazė - SQLite (failas dev.db), valdoma per Prisma ORM su @prisma/adapt
 | components/ui/button.tsx | npx shadcn add button - shadcn komponentas     |
 | components/ui/sheet.tsx  | npx shadcn add sheet - shadcn komponentas      |
 ## Parašytas kodas
-- Konfigūracijos failai: auth.ts, proxy.ts, prisma/schema.prisma, lib/prisma.ts, lib/sheets.ts, lib/current-user.ts, lib/validations.ts, .env.example
+- Konfigūracijos failai: auth.ts, proxy.ts, prisma/schema.prisma, lib/prisma.ts, lib/sheets.ts, lib/current-user.ts, lib/validations.ts, lib/housing.ts, lib/housing-units.ts, .env.example
 - Puslapiai ir Server Actions: app/layout.tsx, app/(auth), app/pending/page.tsx, app/(dashboard)
-- Komponentai: header.tsx, header-logo.tsx, header-user-actions.tsx, navigation.tsx, mobile-bottom-nav.tsx, nav-button.tsx, category-manager.tsx, category-manager-content.tsx, capital-category-manager.tsx, capital-category-manager-content.tsx
+- Komponentai: header.tsx, header-logo.tsx, header-user-actions.tsx, navigation.tsx, mobile-bottom-nav.tsx, nav-button.tsx, category-manager.tsx, category-manager-content.tsx, capital-category-manager.tsx, capital-category-manager-content.tsx, housing-category-manager-content.tsx
 
 ## Pagrindinės bibliotekos
 
@@ -217,6 +235,7 @@ Duomenų bazė - SQLite (failas dev.db), valdoma per Prisma ORM su @prisma/adapt
 - Prie Category ir CapitalCategory modelių pridėtas order laukas, o UI naudoja @dnd-kit biblioteką drag-and-drop funkcionalumui - vartotojas gali rankiniu būdu keisti kategorijų eiliškumą.
 - Use-case diagramoje ir pradiniame plane buvo numatytas getMLInsights() metodas. Realizacijoje šis funkcionalumas realizuotas kaip statistika iš DB - lyginamos mėnesių sumos ir skaičiuojami procentiniai pokyčiai, nenaudojant ML modelio.
 - Prisijungimas - pridėtas Google OAuth.
+- Pradiniame plane nebuvo numatytas buto mokesčių sekimas. Jis realizuotas kaip atskiras modulis su savo bendrinimo modeliu: SharedAccess suteikia svečiui prieigą prie *tavo* duomenų, o butas priklauso visiems jo nariams vienodai, todėl buto mokesčiai nepasiekiami per /shared/[userId] puslapius.
 <div class="page-break" style="page-break-before: always;"></div>
 
 # Paleidimo instrukcija

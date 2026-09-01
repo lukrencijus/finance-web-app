@@ -25,6 +25,8 @@ model User {
   capitalCategories  CapitalCategory[]
   sharedWithMe  SharedAccess[] @relation("SharedToUser")
   myShares      SharedAccess[] @relation("SharedFromUser")
+  apartments        ApartmentMember[]
+  apartmentInvites  ApartmentInvite[] @relation("ApartmentInvitesSent")
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -159,4 +161,99 @@ model SharedAccess {
   createdAt      DateTime @default(now())
 
   @@unique([ownerId, sharedWithId])
+}
+
+/// A shared household. Housing costs hang off the apartment rather than off a
+/// MonthlySheet, because two people living together need one set of numbers
+/// that neither of them "owns" - see ApartmentMember.
+model Apartment {
+  id         String   @id @default(cuid())
+  name       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  members    ApartmentMember[]
+  invites    ApartmentInvite[]
+  categories HousingCategory[]
+  months     HousingMonth[]
+}
+
+/// Membership is the only authorization check for anything housing-related.
+/// Deliberately not SharedAccess: that model is one-directional (owner grants a
+/// guest a view of *their* data) and grants access to every sheet at once.
+model ApartmentMember {
+  id          String    @id @default(cuid())
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String    @default("MEMBER") // OWNER (can invite/remove) or MEMBER
+  createdAt   DateTime  @default(now())
+
+  @@unique([apartmentId, userId])
+}
+
+/// Invite by email so it can be sent before the invitee has an account. It sits
+/// PENDING until they register, are approved by an admin, and accept it.
+model ApartmentInvite {
+  id          String    @id @default(cuid())
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  email       String    // stored lowercased; matched against User.email on accept
+  status      String    @default("PENDING") // PENDING, ACCEPTED or DECLINED
+  invitedById String
+  invitedBy   User      @relation("ApartmentInvitesSent", fields: [invitedById], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([apartmentId, email])
+}
+
+/// One cost line of the household: rent, parking, electricity, ... Owned by the
+/// apartment, so both members see and edit the same list.
+model HousingCategory {
+  id          String    @id @default(cuid())
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  name        String
+  unit        String    @default("EUR") // EUR, M3 (m³ of water) or KWH
+  icon        String?
+  color       String    @default("#64748B")
+  order       Int?      @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+
+  entries     HousingEntry[]
+
+  @@unique([apartmentId, name])
+}
+
+model HousingMonth {
+  id          String    @id @default(cuid())
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  month       Int
+  year        Int
+  createdAt   DateTime  @default(now())
+
+  entries     HousingEntry[]
+
+  @@unique([apartmentId, month, year])
+}
+
+/// One category's figures for one month. `amount` is always euros and is what
+/// the month total sums; `quantity` carries the m³/kWh reading alongside it for
+/// metered categories and is never added to money.
+model HousingEntry {
+  id                String          @id @default(cuid())
+  housingMonthId    String
+  housingMonth      HousingMonth    @relation(fields: [housingMonthId], references: [id], onDelete: Cascade)
+  housingCategoryId String
+  housingCategory   HousingCategory @relation(fields: [housingCategoryId], references: [id], onDelete: Cascade)
+
+  amount            Float?          // euros paid; null while not filled in
+  quantity          Float?          // m³ or kWh consumed this month; metered categories only
+  note              String?
+  updatedAt         DateTime        @default(now()) @updatedAt
+
+  @@unique([housingMonthId, housingCategoryId])
 }

@@ -64,6 +64,36 @@ repeat
     split again
       :Manage Capital Categories;
     split again
+      ' --- Housing Costs (shared apartment) ---
+      :Open Housing Costs page;
+      if (Belongs to an apartment?) then (no)
+        split
+          :Create apartment (seeds default cost categories);
+        split again
+          :Accept / decline a pending invite;
+        end split
+      else (yes)
+        :Load apartment and selected month;
+        if (HousingMonth exists?) then (no)
+          :Create HousingMonth (current month automatically);
+        endif
+        split
+          :Select cost category;
+          :Input amount in EUR;
+          if (Category is metered (M3 / KWH)?) then (yes)
+            :Input consumed quantity;
+          endif
+          :Input note (optional);
+          :Save HousingEntry (empty fields clear the line);
+        split again
+          :Add/Edit/Delete/Reorder Housing Categories (name, unit, icon, color);
+        split again
+          :Invite housemate by email;
+          :Remove member / rename / delete apartment (OWNER only);
+        end split
+        :Recalculate month total (EUR only, quantities excluded);
+      endif
+    split again
       if (Is Admin?) then (yes)
         :Access Admin Panel;
         :Approve / Reject / Delete users;

@@ -19,6 +19,10 @@ package "Asmeninių finansų sekimo internetinė informacinė sistema" {
   usecase "Pasidalinti profiliu" as UC8
   usecase "Peržiūrėti / Valdyti kito vartotojo operacijas" as UC9
   usecase "Valdyti pasikartojančias operacijas" as UC10
+  usecase "Vesti buto mokesčius" as UC11
+  usecase "Valdyti buto mokesčių kategorijas" as UC12
+  usecase "Sukurti butą / pakviesti gyventoją" as UC13
+  usecase "Prisijungti prie buto pagal pakvietimą" as UC14
 
   package "Admin Funkcijos" {
     usecase "Patvirtinti / atmesti naujus vartotojus" as UC_Approve
@@ -35,11 +39,19 @@ User --> UC6
 User --> UC7
 User --> UC8
 User --> UC10
+User --> UC11
+User --> UC12
+User --> UC13
 
 Admin --> UC_Approve
 Admin --> UC_UserCRUD
 
 UC8 ..> UC9 : <<extend>>
 UC9 <-- OtherUser
+
+UC13 ..> UC14 : <<extend>>
+UC14 <-- OtherUser
+OtherUser --> UC11
+OtherUser --> UC12
 
 @enduml
